@@ -37,7 +37,7 @@ $sql = "UPDATE users SET name = ?, mobile = ?, email = ?, gender = ?, joining_da
 $types = 'sssssiisisdii';
 $params = [$name, $mobile, $em, $gender, $jd, $un, $roleId, $sh, $gd, $salaryType, $basicSalary, $salaryStat, $isactive];
 
-if ($password !== '') { $sql .= ", password_hash = ?"; $types .= 's'; $params[] = $password; }
+if ($password !== '') { $sql .= ", password_hash = ?"; $types .= 's'; $params[] = hashPassword($password); }
 
 $sql .= " WHERE id = ? AND isemployee = 1";
 $types .= 'i'; $params[] = $id;

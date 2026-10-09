@@ -11,7 +11,7 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 // Validation error thrown inside a transaction; its message is shown to the user
 class NlUserError extends RuntimeException {}
-SSS
+
 set_exception_handler(function ($e) {
     if ($e instanceof NlUserError) jsonResponse(false, $e->getMessage());
     error_log('[NewLife] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());

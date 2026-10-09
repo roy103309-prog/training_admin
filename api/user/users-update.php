@@ -34,7 +34,7 @@ $locationIdVal = $locationId > 0 ? $locationId : null;
 $conn->begin_transaction();
 try {
     if (!empty($password)) {
-        $passwordHash = $password; // plain text
+        $passwordHash = hashPassword($password);
         $stmt = $conn->prepare("UPDATE users SET name = ?, mobile = ?, password_hash = ?, role_id = ?, location_id = ?, issuperadmin = ?, isactive = ? WHERE id = ?");
         $stmt->bind_param('sssiiiii', $name, $mobile, $passwordHash, $roleIdVal, $locationIdVal, $issuperadmin, $isactive, $id);
     } else {

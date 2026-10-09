@@ -22,12 +22,13 @@ $row = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 if (!$row) jsonResponse(false, 'User not found');
 
-if ($currentPassword !== $row['password_hash']) {
+if (!checkPassword($currentPassword, $row['password_hash'])) {
     jsonResponse(false, 'Current password is incorrect');
 }
 
+$newHash = hashPassword($newPassword);
 $stmt = $conn->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
-$stmt->bind_param('si', $newPassword, $userId);
+$stmt->bind_param('si', $newHash, $userId);
 if (!$stmt->execute()) jsonResponse(false, 'Update failed');
 $stmt->close();
 

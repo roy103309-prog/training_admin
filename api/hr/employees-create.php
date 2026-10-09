@@ -44,8 +44,9 @@ try {
     $un = $username!== '' ? $username : null;
     $sh = $shift   !== '' ? $shift   : null;
     $gd = $gradeId > 0    ? $gradeId : null;
+    $pw = hashPassword($password);
     $stmt->bind_param('sssssssiisisdii',
-        $name, $mobile, $password, $em, $gender, $jd, $un,
+        $name, $mobile, $pw, $em, $gender, $jd, $un,
         $roleId, $locationId, $sh, $gd, $salaryType, $basicSalary, $salaryStat,
         $isactive);
     $stmt->execute();

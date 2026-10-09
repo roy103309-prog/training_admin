@@ -33,7 +33,7 @@ $stmt->close();
 // Default primary location = first selected branch (or provided location_id)
 if ($locationId <= 0 && !empty($locationIds)) $locationId = $locationIds[0];
 
-$passwordHash = $password; // plain text
+$passwordHash = hashPassword($password);
 $roleIdVal = $roleId > 0 ? $roleId : null;
 $locationIdVal = $locationId > 0 ? $locationId : null;
 

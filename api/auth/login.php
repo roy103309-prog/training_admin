@@ -43,8 +43,10 @@ if ($result->num_rows > 0) {
 $result->free();
 $stmt->close();
 
+$ownerVerified = null; // tenant row whose owner password matched, for the hash upgrade below
 if ($tenant) {
-    if ($password === $tenant['password_hash']) {
+    if (checkPassword($password, $tenant['password_hash'])) {
+        $ownerVerified = ['id' => (int)$tenant['id'], 'hash' => $tenant['password_hash']];
         if ($tenant['status'] !== 'active') {
             jsonResponse(false, 'Your account is suspended. Please contact support.');
         }
@@ -79,7 +81,7 @@ if ($tenant) {
                 jsonResponse(false, 'Your account is inactive. Please contact administrator.');
             }
 
-            if ($password !== $user['password_hash']) {
+            if (!checkPassword($password, $user['password_hash'])) {
                 jsonResponse(false, 'Invalid credentials');
             }
         } else {
@@ -124,7 +126,7 @@ if (!$user) {
                 $result->free();
                 $stmt->close();
 
-                if ($tempUser['isactive'] && $password === $tempUser['password_hash']) {
+                if ($tempUser['isactive'] && checkPassword($password, $tempUser['password_hash'])) {
                     $user = $tempUser;
                     $tenant = $tenantRow;
                     $tenantConn = $conn;
@@ -155,8 +157,20 @@ if (!$user['isactive']) {
     jsonResponse(false, 'Your account is inactive. Please contact administrator.');
 }
 
-if ($password !== $user['password_hash']) {
+if (!checkPassword($password, $user['password_hash'])) {
     jsonResponse(false, 'Invalid credentials');
+}
+
+// Replace any plain-text password with a hash now that we know it is correct
+if (passwordNeedsUpgrade($user['password_hash'])) {
+    $newHash = hashPassword($password);
+    $up = $tenantConn->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+    if ($up) { $up->bind_param('si', $newHash, $user['id']); $up->execute(); $up->close(); }
+}
+if ($ownerVerified && passwordNeedsUpgrade($ownerVerified['hash'])) {
+    $newHash = hashPassword($password);
+    $up = $masterConn->prepare("UPDATE tenants SET password_hash = ? WHERE id = ?");
+    if ($up) { $up->bind_param('si', $newHash, $ownerVerified['id']); $up->execute(); $up->close(); }
 }
 
 // Create session

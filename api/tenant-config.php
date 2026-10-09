@@ -78,6 +78,27 @@ function jsonResponse($success, $message = '', $data = []) {
     exit;
 }
 
+// Hash a password for storing in a password_hash column
+function hashPassword($plain) {
+    return password_hash((string)$plain, PASSWORD_DEFAULT);
+}
+
+// Check a password against a stored value. Older rows still hold plain text,
+// so a value that is not a hash is compared directly; login upgrades those rows.
+function checkPassword($plain, $stored) {
+    $plain = (string)$plain;
+    $stored = (string)$stored;
+    if ($stored === '') return false;
+    if (password_get_info($stored)['algo']) return password_verify($plain, $stored);
+    return hash_equals($stored, $plain);
+}
+
+// True when the stored value is plain text or uses an outdated hash
+function passwordNeedsUpgrade($stored) {
+    $stored = (string)$stored;
+    return !password_get_info($stored)['algo'] || password_needs_rehash($stored, PASSWORD_DEFAULT);
+}
+
 // Check if user is authenticated
 function requireAuth() {
     if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_logged_in']) || !isset($_SESSION['tenant_database'])) {

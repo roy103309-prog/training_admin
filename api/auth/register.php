@@ -60,8 +60,7 @@ if ($result->num_rows > 0) {
 $result->free();
 $stmt->close();
 
-// Store password as plain text
-$passwordHash = $password;
+$passwordHash = hashPassword($password);
 
 // Create tenant record first (without database_name)
 $stmt = $masterConn->prepare("
