@@ -1,0 +1,133 @@
+<style>
+    .report-table.tb-compact tbody td { padding: 4px 8px; font-size: 12px; }
+    .report-table.tb-compact .tb-section td { background: #e9ecef; color: #1a1a1a; padding: 6px 8px; font-size: 13px; text-align: center !important; }
+    .report-table.tb-compact .tb-subtotal td { background: #f1f3f5; border-top: 1px solid #999; border-bottom: 1px solid #999; }
+    .report-table.tb-compact tbody tr { background: #fff; }
+</style>
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Trial Balance Report</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+</div>
+
+<div class="report-page">
+    <!-- Filter -->
+    <div class="card filter-bar mb-3"><div class="card-body py-2">
+        <div class="d-flex flex-wrap gap-2 align-items-end">
+            <div><label class="form-label small mb-1">From Date</label>
+                <input type="date" class="form-control form-control-sm" id="tbFrom"></div>
+            <div><label class="form-label small mb-1">To Date</label>
+                <input type="date" class="form-control form-control-sm" id="tbTo"></div>
+            <div class="ms-auto d-flex gap-1 align-items-end">
+                <button class="btn btn-primary btn-sm"           id="tbGen"><i class="bx bx-search"></i> Generate</button>
+                <button class="btn btn-outline-secondary btn-sm" id="tbPrint"><i class="bx bx-printer"></i> Print</button>
+                <button class="btn btn-outline-secondary btn-sm" id="tbReset"><i class="bx bx-refresh"></i> Reset</button>
+            </div>
+        </div>
+    </div></div>
+
+    <!-- Preview -->
+    <div id="reportPreview" class="report-preview" style="display:none;">
+        <div class="p-3 pb-0"><div id="reportHeader"></div></div>
+        <div class="px-3 pb-3" id="tbBody"></div>
+        <div class="px-3 pb-3 text-center">
+            <small class="text-muted">Generated <span id="footerDate"></span> | Hotel365ERP | Bogura Tech Hub</small>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    init: function () {
+        var self = this;
+        // Defaults: from = first day of month, to = today
+        var today = new Date();
+        var monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        $('#tbFrom').val(monthStart.toISOString().slice(0,10));
+        $('#tbTo').val(today.toISOString().slice(0,10));
+        $('#tbGen').off('click.tb').on('click.tb', function () { self._generate(); });
+        $('#tbReset').off('click.tb').on('click.tb', function () {
+            var t = new Date();
+            $('#tbFrom').val(new Date(t.getFullYear(), t.getMonth(), 1).toISOString().slice(0,10));
+            $('#tbTo').val(t.toISOString().slice(0,10));
+            $('#reportPreview').hide();
+        });
+        $('#tbPrint').off('click.tb').on('click.tb', function () {
+            if (typeof window.printReport === 'function') window.printReport();
+        });
+        // Auto-load
+        setTimeout(function () { self._generate(); }, 60);
+    },
+    destroy: function () { $('#tbGen,#tbReset,#tbPrint').off('.tb'); },
+
+    _money: function (v) {
+        if (v === null || v === undefined) return '<span class="text-muted">-</span>';
+        var n = parseFloat(v) || 0;
+        return '৳' + n.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+
+    _sectionRows: function (title, sec) {
+        var self = this;
+        var SECTION_STYLE  = 'background:#fff;font-weight:700;text-align:center;padding:6px 8px;border-top:1px solid #444;border-bottom:1px solid #444;';
+        var SUBTOTAL_STYLE = 'background:#fff;font-weight:700;border-top:1px solid #999;border-bottom:1px solid #999;';
+        var rows = '<tr><td colspan="5" style="' + SECTION_STYLE + '">' + title + '</td></tr>';
+        if (!sec.rows.length) {
+            rows += '<tr><td colspan="5" class="text-center text-muted">No entries</td></tr>';
+        } else {
+            sec.rows.forEach(function (r) {
+                rows += '<tr>' +
+                    '<td>' + r.name + '</td>' +
+                    '<td class="text-right">' + self._money(r.opening) + '</td>' +
+                    '<td class="text-right">' + self._money(r.in)      + '</td>' +
+                    '<td class="text-right">' + self._money(r.out)     + '</td>' +
+                    '<td class="text-right">' + self._money(r.closing) + '</td>' +
+                '</tr>';
+            });
+        }
+        rows += '<tr>' +
+                    '<td style="' + SUBTOTAL_STYLE + '"><strong>' + title + ' Total</strong></td>' +
+                    '<td class="text-right" style="' + SUBTOTAL_STYLE + '"><strong>' + self._money(sec.total.opening) + '</strong></td>' +
+                    '<td class="text-right" style="' + SUBTOTAL_STYLE + '"><strong>' + self._money(sec.total.in)      + '</strong></td>' +
+                    '<td class="text-right" style="' + SUBTOTAL_STYLE + '"><strong>' + self._money(sec.total.out)     + '</strong></td>' +
+                    '<td class="text-right" style="' + SUBTOTAL_STYLE + '"><strong>' + self._money(sec.total.closing) + '</strong></td>' +
+                '</tr>';
+        return rows;
+    },
+
+    _generate: function () {
+        var self = this;
+        var from = $('#tbFrom').val();
+        var to   = $('#tbTo').val();
+        if (!from || !to) { if (window.Toast) Toast.warning('Pick both dates'); return; }
+        if (from > to)    { if (window.Toast) Toast.warning('From must be before To'); return; }
+        $('#tbBody').html('<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Loading...</div>');
+        $('#reportPreview').show();
+
+        if (typeof window.loadReportHeader === 'function') {
+            window.loadReportHeader('Trial Balance Report', from, to);
+        }
+
+        $.get('api/accounts/reports/trial-balance.php', { from: from, to: to }, function (r) {
+            if (!r.success) { $('#tbBody').html('<div class="alert alert-danger">' + (r.message || 'Failed') + '</div>'); return; }
+            var s = r.data.sections;
+            var body =
+                self._sectionRows('Assets',      s.assets) +
+                self._sectionRows('Income',      s.income) +
+                self._sectionRows('Expense',     s.expense) +
+                self._sectionRows('Liabilities', s.liabilities);
+            var html =
+                '<div class="table-responsive"><table class="report-table tb-compact"><thead><tr>' +
+                    '<th>Ledger</th>' +
+                    '<th class="text-right">Opening Balance</th>' +
+                    '<th class="text-right">In Amount</th>' +
+                    '<th class="text-right">Out Amount</th>' +
+                    '<th class="text-right">Closing Balance</th>' +
+                '</tr></thead><tbody>' + body + '</tbody></table></div>';
+            $('#tbBody').html(html);
+        }).fail(function () {
+            $('#tbBody').html('<div class="alert alert-danger">Network error</div>');
+        });
+    }
+};
+</script>

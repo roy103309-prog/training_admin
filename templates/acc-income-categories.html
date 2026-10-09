@@ -1,0 +1,87 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Income Category</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0"><button class="btn btn-primary" id="btnAdd"><i class="bx bx-plus"></i> Add</button></div>
+</div>
+<div class="card"><div class="card-body">
+    <div class="table-responsive"><table class="table table-striped align-middle">
+        <thead><tr><th>ID</th><th>Name</th><th>Code</th><th class="text-end">Opening</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="6" class="text-center">Loading...</td></tr></tbody>
+    </table></div>
+</div></div>
+
+<div class="modal fade" id="cModal"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 id="cTitle">Add</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" id="cId">
+        <div class="mb-3"><label class="form-label">Name *</label><input class="form-control" id="cName"></div>
+        <div class="row g-2 mb-3">
+            <div class="col-6"><label class="form-label">Code</label><input class="form-control" id="cCode"></div>
+            <div class="col-6"><label class="form-label">Opening Balance</label><input type="number" step="0.01" class="form-control" id="cOpening" value="0"></div>
+        </div>
+        <div class="form-check form-switch"><input type="checkbox" class="form-check-input" id="cActive" checked><label class="form-check-label" for="cActive">Active</label></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" id="cSave">Save</button></div>
+</div></div></div>
+
+<script>
+window.Page = (function(){
+    var KIND = 'income';
+    return {
+        init: function(){
+            var self = this;
+            self._load();
+            $('#btnAdd').off('click.c').on('click.c', function(){
+                $('#cId').val(''); $('#cName').val(''); $('#cCode').val(''); $('#cOpening').val(0); $('#cActive').prop('checked', true);
+                $('#cTitle').text('Add'); $('#cModal').modal('show');
+            });
+            $('#cSave').off('click.c').on('click.c', function(){ self._save(); });
+            $(document).off('click.c-edit').on('click.c-edit', '.c-edit', function(){ self._edit($(this).data('id')); });
+            $(document).off('click.c-del').on('click.c-del',  '.c-del',  function(){ if(confirm('Delete?')) self._del($(this).data('id')); });
+        },
+        destroy: function(){ $('#btnAdd,#cSave').off('.c'); $(document).off('click.c-edit click.c-del'); },
+        _load: function(){
+            var self = this;
+            $.get('api/accounts/category-list.php', { kind: KIND }, function(r){
+                if (!r.success) return;
+                self._items = r.data.items;
+                if (!r.data.items.length) { $('#tableBody').html('<tr><td colspan="6" class="text-center">No data</td></tr>'); return; }
+                $('#tableBody').html(r.data.items.map(function(x){
+                    var st = parseInt(x.isactive,10) ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>';
+                    return '<tr><td>'+x.id+'</td><td>'+x.name+'</td><td>'+(x.code||'-')+'</td>' +
+                           '<td class="text-end">৳'+parseFloat(x.opening_balance||0).toFixed(2)+'</td><td>'+st+'</td>' +
+                           '<td class="text-end"><button class="btn btn-sm btn-primary c-edit" data-id="'+x.id+'"><i class="bx bx-edit"></i></button> ' +
+                           '<button class="btn btn-sm btn-danger c-del" data-id="'+x.id+'"><i class="bx bx-trash"></i></button></td></tr>';
+                }).join(''));
+            });
+        },
+        _save: function(){
+            var self = this;
+            var d = {
+                kind: KIND,
+                id: parseInt($('#cId').val(),10) || 0,
+                name: $('#cName').val().trim(),
+                code: $('#cCode').val().trim(),
+                opening_balance: parseFloat($('#cOpening').val()) || 0,
+                isactive: $('#cActive').is(':checked') ? 1 : 0
+            };
+            $.ajax({ url:'api/accounts/category-save.php', method:'POST', contentType:'application/json', data: JSON.stringify(d) })
+            .done(function(r){ if (r.success) { $('#cModal').modal('hide'); self._load(); } if (window.Toast) Toast.info(r.message); else alert(r.message); });
+        },
+        _edit: function(id){
+            var x = (this._items || []).find(function(i){ return i.id == id; });
+            if (!x) return;
+            $('#cId').val(x.id); $('#cName').val(x.name); $('#cCode').val(x.code || ''); $('#cOpening').val(x.opening_balance || 0);
+            $('#cActive').prop('checked', parseInt(x.isactive,10) === 1);
+            $('#cTitle').text('Edit'); $('#cModal').modal('show');
+        },
+        _del: function(id){
+            var self = this;
+            $.ajax({ url:'api/accounts/category-delete.php', method:'POST', contentType:'application/json', data: JSON.stringify({kind: KIND, id: id}) })
+            .done(function(r){ if (r.success) self._load(); if (window.Toast) Toast.info(r.message); else alert(r.message); });
+        }
+    };
+})();
+</script>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+        (function() {
+            var path = window.location.pathname || '/';
+            var lower = path.toLowerCase();
+            var markers = ['/admin/', '/admin', '/app.html', '/app/', '/app', '/login/', '/login', '/index.html'];
+            var cutIndex = -1;
+
+            for (var i = 0; i < markers.length; i++) {
+                var idx = lower.indexOf(markers[i]);
+                if (idx !== -1 && (cutIndex === -1 || idx < cutIndex)) {
+                    cutIndex = idx;
+                }
+            }
+
+            var root = (cutIndex >= 0) ? path.slice(0, cutIndex) : path.replace(/\/[^\/]*$/, '');
+            root = root.replace(/\/+$/, '');
+
+            var base = document.createElement('base');
+            base.setAttribute('href', (root ? root : '') + '/');
+            document.head.appendChild(base);
+
+            // Pre-apply theme before stylesheets load — prevents light-mode flash
+            try {
+                var t = localStorage.getItem('theme_style') || '';
+                var root = document.documentElement;
+                if (t === 'dark-theme') {
+                    root.classList.add('dark-theme');
+                    root.setAttribute('data-bs-theme', 'dark');
+                    var DV = {
+                        '--ui-header-bg':     '#12181a',
+                        '--ui-header-border': 'rgba(237,237,237,0.12)',
+                        '--ui-header-text':   '#e4e5e6',
+                        '--ui-sidebar-bg':    '#0f1417',
+                        '--ui-sidebar-text':  '#c7c9cc',
+                        '--ui-sidebar-submenu-bg': '#12181a',
+                        '--bs-body-bg':       '#070d0e',
+                        '--bs-body-color':    '#e4e5e6'
+                    };
+                    Object.keys(DV).forEach(function (k) { root.style.setProperty(k, DV[k], 'important'); });
+                } else {
+                    root.setAttribute('data-bs-theme', 'light');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="icon" href="assets/images/hotel365-logo-fevicon.png" type="image/png" />
+    <link href="assets/plugins/simplebar/css/simplebar.css" rel="stylesheet" />
+    <link href="assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css" rel="stylesheet" />
+    <link href="assets/plugins/metismenu/css/metisMenu.min.css" rel="stylesheet" />
+    <link href="assets/css/pace.min.css" rel="stylesheet" />
+    <script src="assets/js/pace.min.js"></script>
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/bootstrap-extended.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link href="assets/css/app.css" rel="stylesheet">
+    <link href="assets/css/icons.css" rel="stylesheet">
+    <link href="assets/css/pos.css" rel="stylesheet">
+    <link href="assets/css/report.css" rel="stylesheet">
+    <link href="assets/plugins/select2/css/select2.min.css" rel="stylesheet">
+    <link href="assets/css/ui-theme.css?v=2" rel="stylesheet">
+    <script>
+        (function() {
+            var t = Date.now();
+            document.querySelectorAll('link[rel="stylesheet"]').forEach(function(l) {
+                if (l.href.indexOf('http') !== 0) l.href = l.href.replace(/\?.*$/, '') + '?t=' + t;
+            });
+        })();
+    </script>
+    <style>
+        .form-control, .form-select, .form-check-input, .input-group-text {
+            border: 1px solid #8B0000 !important;
+        }
+        .form-control:focus, .form-select:focus, .form-check-input:focus {
+            border-color: #8B0000 !important;
+            box-shadow: 0 0 0 0.2rem rgba(139,0,0,0.20) !important;
+        }
+    </style>
+    <!-- Theme Style CSS (Day / Night only) -->
+    <link rel="stylesheet" href="assets/css/dark-theme.css"/>
+    <title>Hotel 365</title>
+</head>
+<body>
+    <script>
+        // Day/Night theme bootstrap (only theme_style is honoured)
+        (function(){
+            var ts=''; try{ ts = localStorage.getItem('theme_style') || ''; }catch(e){}
+            if (ts) document.documentElement.className = ts;
+        })();
+    </script>
+    <div class="wrapper">
+        <div id="sidebar-container"></div>
+        <div id="header-container"></div>
+
+        <div class="page-wrapper">
+            <div class="page-content" id="spa-content">
+                <div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--start overlay-->
+        <div class="overlay toggle-icon"></div>
+        <!--end overlay-->
+        <!--Start Back To Top Button-->
+        <a href="javaScript:;" class="back-to-top"><i class='bx bxs-up-arrow-alt'></i></a>
+        <!--End Back To Top Button-->
+        <div id="footer-container"></div>
+    </div>
+
+    <!-- SPA page-level styles injected here -->
+    <div id="spa-styles"></div>
+
+    <!-- Modals container for dynamically loaded modals -->
+    <div id="spa-modals"></div>
+
+    <!-- Core libraries -->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/plugins/select2/js/select2.min.js"></script>
+    <script src="assets/plugins/simplebar/js/simplebar.min.js"></script>
+    <script src="assets/plugins/metismenu/js/metisMenu.min.js"></script>
+    <script src="assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js"></script>
+    <script src="assets/js/toast.js"></script>
+    <script src="assets/js/path-config.js"></script>
+    <script src="assets/js/ui-theme.js?v=3"></script>
+    <script src="assets/js/print-preview.js"></script>
+    <script src="assets/js/report-engine.js"></script>
+    <!--app JS (theme switcher, dark mode, sidebar toggle)-->
+    <script src="assets/js/app.js"></script>
+
+    <!-- SPA routing modules -->
+    <script src="assets/js/route-map.js?v=nl1"></script>
+    <script src="assets/js/page-loader.js"></script>
+    <script src="assets/js/menu.js"></script>
+    <script src="assets/js/router.js"></script>
+
+    <script src="assets/js/notifications-bell.js"></script>
+    <!-- App core (session, sidebar, header) — calls Router.init() when ready -->
+    <script src="assets/js/new-app.js?v=nl1"></script>
+</body>
+</html>

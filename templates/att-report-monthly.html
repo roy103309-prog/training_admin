@@ -1,0 +1,163 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Monthly Attendance Report</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+</div>
+
+<div class="report-page">
+    <div class="card filter-bar mb-3"><div class="card-body py-2">
+        <div class="d-flex flex-wrap gap-2 align-items-end">
+            <div><label class="form-label small mb-1">Year</label>
+                <input type="number" class="form-control form-control-sm" id="mrYear" style="width:110px;"></div>
+            <div><label class="form-label small mb-1">Month</label>
+                <select class="form-select form-select-sm" id="mrMonth" style="width:140px;">
+                    <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+                    <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+                    <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+                    <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+                </select></div>
+            <div class="ms-auto d-flex gap-1 align-items-end">
+                <button class="btn btn-primary btn-sm"           id="mrGen"><i class="bx bx-search"></i> Generate</button>
+                <button class="btn btn-outline-secondary btn-sm" id="mrPrint"><i class="bx bx-printer"></i> Print</button>
+                <button class="btn btn-outline-secondary btn-sm" id="mrReset"><i class="bx bx-refresh"></i> Reset</button>
+            </div>
+        </div>
+    </div></div>
+
+    <div id="reportPreview" class="report-preview" style="display:none;">
+        <div class="p-3 pb-0"><div id="reportHeader"></div></div>
+        <div class="px-3" id="mrLegend"></div>
+        <div class="px-3 pb-3" id="mrBody"></div>
+        <div class="px-3 pb-3 text-center">
+            <small class="text-muted">Generated <span id="footerDate"></span> | Hotel365ERP | Bogura Tech Hub</small>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    init: function () {
+        var self = this;
+        var now = new Date();
+        $('#mrYear').val(now.getFullYear());
+        $('#mrMonth').val(now.getMonth() + 1);
+        $('#mrGen').off('click.mr').on('click.mr', function () { self._generate(); });
+        $('#mrReset').off('click.mr').on('click.mr', function () {
+            var n = new Date();
+            $('#mrYear').val(n.getFullYear()); $('#mrMonth').val(n.getMonth() + 1);
+            $('#reportPreview').hide();
+        });
+        $('#mrPrint').off('click.mr').on('click.mr', function () {
+            if (typeof window.printReport === 'function') window.printReport();
+        });
+        setTimeout(function () { self._generate(); }, 60);
+    },
+    destroy: function () { $('#mrGen,#mrReset,#mrPrint').off('.mr'); },
+
+    _headColors: function () {
+        function v(name, fb) {
+            try { var x = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return x || fb; }
+            catch (e) { return fb; }
+        }
+        var bg = v('--ui-report-table-head-bg', '') || v('--ui-root-primary', '#1a1a1a');
+        return { bg: bg, text: v('--ui-report-table-head-text', '#ffffff') };
+    },
+
+    _styleBlock: function () {
+        // Inlined inside #reportPreview so printReport's clone carries it to the print tab.
+        // print-color-adjust:exact forces backgrounds/colors onto paper.
+        var hc = this._headColors();
+        return '<style>' +
+            '.mr-table{border-collapse:collapse;width:100%;font-size:11px;}' +
+            '.mr-table th,.mr-table td{border:1px solid #555;padding:3px 4px;text-align:center;white-space:nowrap;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}' +
+            '.mr-table thead th{background:' + hc.bg + ' !important;color:' + hc.text + ' !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}' +
+            '.mr-table thead th.mr-wknd{background:#444 !important;color:#fff !important;}' +
+            '.mr-table .mr-name{text-align:left;min-width:130px;background:#fff;}' +
+            '.mr-table .mr-code{text-align:left;min-width:70px;background:#fff;}' +
+            '.mr-cell-P{color:#198754 !important;font-weight:700;}' +
+            '.mr-cell-L{color:#d39e00 !important;font-weight:700;}' +
+            '.mr-cell-A{color:#dc3545 !important;font-weight:700;}' +
+            '.mr-cell-V{color:#6f42c1 !important;font-weight:700;}' +
+            '.mr-cell-M{color:#0aa2c0 !important;font-weight:700;}' +
+            '.mr-cell-O{color:#adb5bd !important;}' +
+            '.mr-cell-H{color:#6c757d !important;font-weight:700;}' +
+            '.mr-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;margin-bottom:10px;}' +
+            '.mr-legend span b{font-weight:700;}' +
+            '@media print{.mr-table thead th{background:' + hc.bg + ' !important;color:' + hc.text + ' !important;}}' +
+        '</style>';
+    },
+
+    _legend: function () {
+        return '<div class="mr-legend">' +
+            '<span class="mr-cell-P"><b>| P.</b> Present |</span>' +
+            '<span class="mr-cell-L"><b> L.</b> Late |</span>' +
+            '<span class="mr-cell-A"><b> A.</b> Absent |</span>' +
+            '<span class="mr-cell-V"><b> V.</b> Leave |</span>' +
+            '<span class="mr-cell-M"><b> M.</b> Movement |</span>' +
+            '<span class="mr-cell-O"><b> O.</b> Weekly Off |</span>' +
+            '<span class="mr-cell-H"><b> H.</b> Holiday |</span>' +
+            '<span><b> -</b> Not Marked</span>' +
+        '</div>';
+    },
+
+    _generate: function () {
+        var self = this;
+        var year = parseInt($('#mrYear').val(), 10) || 0;
+        var month = parseInt($('#mrMonth').val(), 10) || 0;
+        if (year < 2000 || month < 1) { if (window.Toast) Toast.warning('Pick year & month'); return; }
+
+        $('#mrBody').html('<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Loading...</div>');
+        $('#mrLegend').html('');
+        $('#reportPreview').show();
+        var lastDay = new Date(year, month, 0).getDate();
+        var from = year + '-' + String(month).padStart(2,'0') + '-01';
+        var to   = year + '-' + String(month).padStart(2,'0') + '-' + String(lastDay).padStart(2,'0');
+        if (typeof window.loadReportHeader === 'function') {
+            window.loadReportHeader('Monthly Attendance — ' + from.slice(0,7), from, to);
+        }
+
+        $.get('api/attendance/report-monthly.php', { year: year, month: month }, function (r) {
+            if (!r.success) { $('#mrBody').html('<div class="alert alert-danger">' + (r.message || 'Failed') + '</div>'); return; }
+            var dim = r.data.days_in_month, rows = r.data.rows;
+            if (!rows.length) { $('#mrBody').html('<div class="alert alert-info">No active employees.</div>'); return; }
+
+            $('#mrLegend').html(self._styleBlock() + self._legend());
+
+            // Header: Code, Name, day numbers, then totals
+            var dayHdr = '';
+            for (var d = 1; d <= dim; d++) {
+                var dow = new Date(year, month - 1, d).getDay();
+                var wkndCls = (dow === 5 || dow === 6) ? ' class="mr-wknd"' : '';
+                dayHdr += '<th' + wkndCls + '>' + d + '</th>';
+            }
+            var thead = '<thead><tr>' +
+                '<th class="mr-code">Code</th><th class="mr-name">Employee</th>' +
+                dayHdr +
+                '<th>P</th><th>L</th><th>A</th><th>V</th><th>M</th><th>O</th><th>H</th><th>Late</th>' +
+                '</tr></thead>';
+
+            var tbody = '<tbody>' + rows.map(function (e) {
+                var cells = '';
+                for (var d = 1; d <= dim; d++) {
+                    var c = e.days[d] || '-';
+                    cells += '<td class="mr-cell-' + c + '">' + c + '</td>';
+                }
+                var t = e.totals;
+                var lateH = t.late ? (Math.floor(t.late/60) + 'h ' + (t.late%60) + 'm') : '-';
+                return '<tr>' +
+                    '<td class="mr-code">' + (e.employee_code || '-') + '</td>' +
+                    '<td class="mr-name">' + e.name + '</td>' +
+                    cells +
+                    '<td>' + t.P + '</td><td>' + t.L + '</td><td>' + t.A + '</td><td>' + t.V + '</td>' +
+                    '<td>' + t.M + '</td><td>' + t.O + '</td><td>' + t.H + '</td><td>' + lateH + '</td>' +
+                '</tr>';
+            }).join('') + '</tbody>';
+
+            $('#mrBody').html('<div class="table-responsive"><table class="mr-table">' + thead + tbody + '</table></div>');
+        }).fail(function () {
+            $('#mrBody').html('<div class="alert alert-danger">Network error</div>');
+        });
+    }
+};
+</script>

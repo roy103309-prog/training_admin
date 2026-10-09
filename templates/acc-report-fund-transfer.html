@@ -1,0 +1,127 @@
+<style>
+    .report-table.ft-compact tbody td { padding: 4px 8px; font-size: 12px; }
+    .report-table.ft-compact tbody tr { background: #fff; }
+    .report-table.ft-compact tfoot td { background: #fff; font-weight: 700; border-top: 2px solid #444; padding: 6px 8px; }
+</style>
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Fund Transfer Report</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+</div>
+
+<div class="report-page">
+    <div class="card filter-bar mb-3"><div class="card-body py-2">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2"><label class="form-label small mb-1">From Date</label>
+                <input type="date" class="form-control form-control-sm" id="ftFrom"></div>
+            <div class="col-md-2"><label class="form-label small mb-1">To Date</label>
+                <input type="date" class="form-control form-control-sm" id="ftTo"></div>
+            <div class="col-md-3"><label class="form-label small mb-1">From Account</label>
+                <select class="form-select form-select-sm" id="ftFromAcc"><option value="">All</option></select></div>
+            <div class="col-md-3"><label class="form-label small mb-1">To Account</label>
+                <select class="form-select form-select-sm" id="ftToAcc"><option value="">All</option></select></div>
+            <div class="col-md-2 d-flex gap-1 justify-content-end">
+                <button class="btn btn-primary btn-sm"           id="ftGen"><i class="bx bx-search"></i> Go</button>
+                <button class="btn btn-outline-secondary btn-sm" id="ftPrint"><i class="bx bx-printer"></i></button>
+                <button class="btn btn-outline-secondary btn-sm" id="ftReset"><i class="bx bx-refresh"></i></button>
+            </div>
+        </div>
+    </div></div>
+
+    <div id="reportPreview" class="report-preview" style="display:none;">
+        <div class="p-3 pb-0"><div id="reportHeader"></div></div>
+        <div class="px-3 pb-3" id="ftBody"></div>
+        <div class="px-3 pb-3 text-center">
+            <small class="text-muted">Generated <span id="footerDate"></span> | Hotel365ERP | Bogura Tech Hub</small>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    init: function () {
+        var self = this;
+        var t = new Date();
+        $('#ftFrom').val(new Date(t.getFullYear(), t.getMonth(), 1).toISOString().slice(0,10));
+        $('#ftTo').val(t.toISOString().slice(0,10));
+        $.get('api/accounts/assets-list.php', function (r) {
+            if (!r.success) return;
+            var opts = '<option value="">All</option>' + (r.data.items || []).map(function (x) {
+                return '<option value="' + x.id + '">' + x.name + '</option>';
+            }).join('');
+            $('#ftFromAcc,#ftToAcc').html(opts);
+        });
+        $('#ftGen').off('click.ft').on('click.ft', function () { self._generate(); });
+        $('#ftReset').off('click.ft').on('click.ft', function () {
+            var d = new Date();
+            $('#ftFrom').val(new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0,10));
+            $('#ftTo').val(d.toISOString().slice(0,10));
+            $('#ftFromAcc').val(''); $('#ftToAcc').val('');
+            $('#reportPreview').hide();
+        });
+        $('#ftPrint').off('click.ft').on('click.ft', function () {
+            if (typeof window.printReport === 'function') window.printReport();
+        });
+        setTimeout(function () { self._generate(); }, 60);
+    },
+    destroy: function () { $('#ftGen,#ftReset,#ftPrint').off('.ft'); },
+
+    _money: function (v) {
+        return '৳' + (parseFloat(v) || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+    _fmtDate: function (v) {
+        if (!v) return '-';
+        var d = new Date(v);
+        return isNaN(d.getTime()) ? v : d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+    },
+
+    _generate: function () {
+        var self = this;
+        var from = $('#ftFrom').val(), to = $('#ftTo').val();
+        if (!from || !to) { if (window.Toast) Toast.warning('Pick both dates'); return; }
+        if (from > to)    { if (window.Toast) Toast.warning('From must be ≤ To'); return; }
+        $('#ftBody').html('<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Loading...</div>');
+        $('#reportPreview').show();
+        if (typeof window.loadReportHeader === 'function') {
+            window.loadReportHeader('Fund Transfer Report', from, to);
+        }
+        $.get('api/accounts/reports/fund-transfer.php', {
+            from: from, to: to,
+            from_asset_id: $('#ftFromAcc').val() || 0,
+            to_asset_id:   $('#ftToAcc').val()   || 0
+        }, function (r) {
+            if (!r.success) { $('#ftBody').html('<div class="alert alert-danger">' + (r.message || 'Failed') + '</div>'); return; }
+            var rows = r.data.rows;
+            if (!rows.length) { $('#ftBody').html('<div class="alert alert-info">No transfers for selected filters.</div>'); return; }
+            var body = rows.map(function (x) {
+                return '<tr>' +
+                    '<td>' + self._fmtDate(x.voucher_date) + '</td>' +
+                    '<td>' + x.voucher_no + '</td>' +
+                    '<td>' + (x.from_name || '-') + '</td>' +
+                    '<td>' + (x.to_name   || '-') + '</td>' +
+                    '<td>' + (x.collected_by || '-') + '</td>' +
+                    '<td>' + (x.note || '-') + '</td>' +
+                    '<td class="text-right">' + self._money(x.total) + '</td>' +
+                '</tr>';
+            }).join('');
+            $('#ftBody').html(
+                '<div class="table-responsive"><table class="report-table ft-compact">' +
+                    '<thead><tr>' +
+                        '<th>Date</th><th>Voucher</th><th>From Account</th><th>To Account</th>' +
+                        '<th>Recorded By</th><th>Note</th>' +
+                        '<th class="text-right">Amount</th>' +
+                    '</tr></thead>' +
+                    '<tbody>' + body + '</tbody>' +
+                    '<tfoot><tr>' +
+                        '<td colspan="6" class="text-right">Total (' + r.data.summary.count + ' transfers)</td>' +
+                        '<td class="text-right">' + self._money(r.data.summary.total) + '</td>' +
+                    '</tr></tfoot>' +
+                '</table></div>'
+            );
+        }).fail(function () {
+            $('#ftBody').html('<div class="alert alert-danger">Network error</div>');
+        });
+    }
+};
+</script>

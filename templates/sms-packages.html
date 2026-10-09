@@ -1,0 +1,184 @@
+<div class="content">
+    <div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+        <div class="d-flex flex-column">
+            <div class="breadcrumb-title">Buy SMS</div>
+            <nav aria-label="breadcrumb" class="mt-1">
+                <ol class="breadcrumb mb-0 p-0"></ol>
+            </nav>
+        </div>
+        <div class="ms-auto ms-md-0">
+            <a href="admin/sms-transactions" data-route class="btn btn-primary"><i class="bx bx-history"></i> Transactions</a>
+        </div>
+    </div>
+
+    <!-- Balance Cards -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card border-start border-0 border-3 border-primary">
+                <div class="card-body">
+                    <p class="mb-1 text-muted small">Non-Masking Balance</p>
+                    <h3 class="mb-0 text-primary"><span id="balNonMasking">0.00</span> <small class="text-muted" style="font-size:0.6em">BDT</small></h3>
+                    <p class="mb-0 small text-muted">@ <span id="priceNonMasking">0.00</span>/sms · <span id="qtyNonMasking">0</span> SMS available</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-start border-0 border-3 border-success">
+                <div class="card-body">
+                    <p class="mb-1 text-muted small">Masking Balance</p>
+                    <h3 class="mb-0 text-success"><span id="balMasking">0.00</span> <small class="text-muted" style="font-size:0.6em">BDT</small></h3>
+                    <p class="mb-0 small text-muted">@ <span id="priceMasking">0.00</span>/sms · <span id="qtyMasking">0</span> SMS available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bx bx-credit-card"></i> Purchase SMS Credit</h5>
+                </div>
+                <div class="card-body">
+                    <form id="buyForm">
+                        <div class="mb-3">
+                            <label class="form-label">SMS Type</label>
+                            <select class="form-select" id="buySmsType">
+                                <option value="Non-Masking">Non-Masking</option>
+                                <option value="Masking">Masking</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Purchase Amount (BDT)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">৳</span>
+                                <input type="number" class="form-control" id="buyAmount" step="0.01" min="1" placeholder="Enter amount" required>
+                            </div>
+                            <div class="form-text">Minimum 1 BDT</div>
+                        </div>
+                        <div class="alert alert-info mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Price per SMS:</strong> ৳<span id="livePrice">0.00</span>
+                                </div>
+                                <div class="text-end">
+                                    <strong>You will get:</strong><br>
+                                    <span class="h4 mb-0 text-primary"><span id="liveQty">0</span> SMS</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Payment Reference (optional)</label>
+                            <input type="text" class="form-control" id="buyPaymentRef" placeholder="Txn ID / Ref No." />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Note</label>
+                            <input type="text" class="form-control" id="buyNote" placeholder="e.g. bKash payment" />
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg"><i class="bx bx-purchase-tag"></i> Buy Now</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted small">
+                    <i class="bx bx-info-circle"></i> Payment gateway integration coming soon. For now, balance is updated directly.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var currentPrices = { non_masking: 0, masking: 0 };
+
+$(document).ready(function() {
+    loadBalance();
+
+    $('#buyAmount').on('input', function() {
+        updateLiveQty();
+    });
+
+    $('#buySmsType').on('change', function() {
+        updateLiveQty();
+    });
+
+    $('#buyForm').submit(function(e) {
+        e.preventDefault();
+        var amount = parseFloat($('#buyAmount').val());
+        if (!amount || amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+
+        if (!confirm('Confirm purchase of ৳' + amount.toFixed(2) + ' for ' + $('#buySmsType').val() + ' SMS?')) return;
+
+        var payload = {
+            amount: amount,
+            sms_type: $('#buySmsType').val(),
+            payment_ref: $('#buyPaymentRef').val().trim(),
+            note: $('#buyNote').val().trim()
+        };
+
+        $.ajax({
+            url: 'api/sms/buy.php',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            dataType: 'json',
+            success: function(resp) {
+                if (resp.success) {
+                    alert('Purchase successful!\nAmount: ৳' + amount.toFixed(2) + '\nNew balance: ৳' + (resp.data.balance_after || 0).toFixed(2));
+                    $('#buyForm')[0].reset();
+                    loadBalance();
+                } else {
+                    alert('Error: ' + resp.message);
+                }
+            },
+            error: function(xhr) {
+                alert('Request failed: ' + xhr.responseText);
+            }
+        });
+    });
+});
+
+function loadBalance() {
+    $.ajax({
+        url: 'api/sms/balance.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data) {
+                var d = resp.data;
+
+                var balN  = parseFloat(d.non_masking || 0);
+                var priceN = parseFloat(d.non_masking_price || 0);
+                var qtyN   = priceN > 0 ? Math.floor(balN / priceN) : 0;
+                $('#balNonMasking').text(balN.toFixed(2));
+                $('#priceNonMasking').text(priceN.toFixed(2));
+                $('#qtyNonMasking').text(qtyN);
+
+                var balM  = parseFloat(d.masking || 0);
+                var priceM = parseFloat(d.masking_price || 0);
+                var qtyM   = priceM > 0 ? Math.floor(balM / priceM) : 0;
+                $('#balMasking').text(balM.toFixed(2));
+                $('#priceMasking').text(priceM.toFixed(2));
+                $('#qtyMasking').text(qtyM);
+
+                currentPrices.non_masking = priceN;
+                currentPrices.masking = priceM;
+                updateLiveQty();
+            }
+        }
+    });
+}
+
+function updateLiveQty() {
+    var amount = parseFloat($('#buyAmount').val()) || 0;
+    var type = $('#buySmsType').val();
+    var price = type === 'Masking' ? currentPrices.masking : currentPrices.non_masking;
+    var qty = price > 0 ? Math.floor(amount / price) : 0;
+    $('#livePrice').text(price.toFixed(2));
+    $('#liveQty').text(qty);
+}
+</script>

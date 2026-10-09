@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" href="assets/images/hotel365-logo-fevicon.png" type="image/png" />
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="assets/css/icons.css" rel="stylesheet">
+    <link href="assets/css/auth.css" rel="stylesheet">
+    <title>Login - Hotel Management System</title>
+</head>
+<body>
+    <div class="auth-bg"></div>
+    <div class="auth-blob blob-1"></div>
+    <div class="auth-blob blob-2"></div>
+    <div class="auth-blob blob-3"></div>
+    <div class="auth-blob blob-4"></div>
+
+    <div class="auth-shell">
+        <div class="auth-grid">
+            <!-- Brand panel -->
+            <div class="auth-brand">
+                <div class="brand-inner">
+                    <span class="logo-pill"><img src="assets/images/hotel365-logo-color.png" alt="Hotel 365"></span>
+                    <h1>Welcome Back To<br>Hotel 365</h1>
+                    <p>Manage HR, Payroll, Attendance, Accounts &amp; SMS — All From One Elegant Dashboard.</p>
+                    <ul class="auth-feat">
+                        <li><i class="bx bx-group"></i> HR, Payroll &amp; Attendance</li>
+                        <li><i class="bx bx-wallet"></i> Basic Accounts Management</li>
+                        <li><i class="bx bx-bar-chart-alt-2"></i> Real-Time Reports &amp; Insights</li>
+                    </ul>
+                </div>
+                <small style="opacity:.7; position:relative; z-index:1;" class="mt-2" > &copy; 2025 - <span id="authYear"></span> Bogura Tech Hub | All rights reserved</small>
+                <script>document.getElementById('authYear').textContent=new Date().getFullYear();</script>
+            </div>
+
+            <!-- Form panel -->
+            <div class="auth-form">
+                <img src="assets/images/hotel365-logo-color.png" class="mini-logo" alt="Hotel 365">
+                <div class="form-head">
+                    <h2>Sign in</h2>
+                    <h5 class="pt-2 sub" >Hotel 365<sup>ERP</sup><i>  v1.0.0</i></h5>
+                </div>
+
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
+
+                <form id="loginForm" class="mt-2">
+                    <div class="mb-3">
+                        <label for="inputMobile" class="form-label">Mobile or Email</label>
+                        <input type="text" class="form-control" id="inputMobile" placeholder="Enter mobile or email" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputPassword" class="form-label">Password</label>
+                        <div class="input-group" id="show_hide_password">
+                            <input type="password" class="form-control" id="inputPassword" placeholder="Enter password" required>
+                            <span class="input-group-text"><i class="bx bx-hide"></i></span>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked">
+                            <label class="form-check-label" for="flexSwitchCheckChecked">Remember me</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-auth" id="btnLogin">
+                        <span id="loginText">Sign in</span>
+                        <span id="loginSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
+                    <div class="switch-link">
+                        <p class="mb-0"><a href="#">Forgot Password</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Selection Modal -->
+    <div class="modal fade" id="locationModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Select Location</h5></div>
+                <div class="modal-body">
+                    <p class="mb-3">Please select your working location to continue</p>
+                    <select class="form-select" id="locationSelect"><option value="">-- Select Location --</option></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btnSelectLocation">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/path-config.js"></script>
+    <script>
+        $(document).ready(function () {
+            const fallbackRoot = (function() {
+                const path = window.location.pathname || '';
+                const lower = path.toLowerCase();
+                const markers = ['/login/', '/login', '/index.html'];
+                let cutIndex = -1;
+                markers.forEach(function(marker) {
+                    const idx = lower.indexOf(marker);
+                    if (idx !== -1 && (cutIndex === -1 || idx < cutIndex)) cutIndex = idx;
+                });
+                return (cutIndex >= 0 ? path.slice(0, cutIndex) : path.replace(/\/[^\/]*$/, '')).replace(/\/+$/, '');
+            })();
+
+            const PATHS = window.APP_PATHS || {
+                API_BASE: (fallbackRoot ? fallbackRoot : '') + '/api',
+                ADMIN_URL: (fallbackRoot ? fallbackRoot : '') + '/admin'
+            };
+
+            $.ajax({
+                url: PATHS.API_BASE + '/auth/check-session.php', method: 'GET',
+                success: function(response) { if (response && response.success) window.location.href = PATHS.ADMIN_URL; }
+            });
+
+            $("#show_hide_password .input-group-text").on('click', function () {
+                var $inp = $('#show_hide_password input'), $i = $('#show_hide_password i');
+                if ($inp.attr('type') === 'password') { $inp.attr('type','text'); $i.removeClass('bx-hide').addClass('bx-show'); }
+                else { $inp.attr('type','password'); $i.removeClass('bx-show').addClass('bx-hide'); }
+            });
+
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault();
+                const mobile = $('#inputMobile').val().trim();
+                const password = $('#inputPassword').val();
+                if (!mobile || !password) { showError('Please enter mobile/email and password'); return; }
+
+                $('#loginText').addClass('d-none');
+                $('#loginSpinner').removeClass('d-none');
+                $('#btnLogin').prop('disabled', true);
+                hideMessages();
+
+                $.ajax({
+                    url: PATHS.API_BASE + '/auth/login.php', method: 'POST', contentType: 'application/json',
+                    data: JSON.stringify({ mobile: mobile, password: password }),
+                    success: function(response) {
+                        if (response.success) {
+                            sessionStorage.setItem('user_data', JSON.stringify(response.data));
+                            const locations = response.data.locations || [];
+                            if (locations.length === 0) { showError('No locations available. Please contact administrator.'); resetButton(); return; }
+                            if (locations.length === 1) {
+                                showSuccess('Login successful! Redirecting...');
+                                setTimeout(function() { window.location.href = PATHS.ADMIN_URL; }, 500);
+                            } else {
+                                showSuccess('Login successful!'); resetButton(); showLocationModal(locations);
+                            }
+                        } else { showError(response.message || 'Login failed'); resetButton(); }
+                    },
+                    error: function(xhr) { const r = xhr.responseJSON; showError(r && r.message ? r.message : 'Login failed. Please try again.'); resetButton(); }
+                });
+            });
+
+            function showError(m){ $('#errorMessage').text(m).show(); $('#successMessage').hide(); }
+            function showSuccess(m){ $('#successMessage').text(m).show(); $('#errorMessage').hide(); }
+            function hideMessages(){ $('#errorMessage').hide(); $('#successMessage').hide(); }
+            function resetButton(){ $('#loginText').removeClass('d-none'); $('#loginSpinner').addClass('d-none'); $('#btnLogin').prop('disabled', false); }
+
+            function showLocationModal(locations) {
+                const select = $('#locationSelect');
+                select.empty().append('<option value="">-- Select Location --</option>');
+                locations.forEach(function(l) { select.append('<option value="'+l.id+'">'+l.name+'</option>'); });
+                const el = document.getElementById('locationModal');
+                if (!el) return;
+                document.body.classList.add('branch-select-open');
+                el.addEventListener('hidden.bs.modal', function(){ document.body.classList.remove('branch-select-open'); }, { once:true });
+                new bootstrap.Modal(el, { backdrop:'static', keyboard:false }).show();
+            }
+
+            $('#btnSelectLocation').on('click', function() {
+                const locationId = $('#locationSelect').val();
+                if (!locationId) { alert('Please select a location'); return; }
+                $.ajax({
+                    url: PATHS.API_BASE + '/auth/switch-location.php', method: 'POST', contentType: 'application/json',
+                    data: JSON.stringify({ location_id: locationId }),
+                    success: function(r){ if (r.success) window.location.href = PATHS.ADMIN_URL; else alert(r.message || 'Failed to set location'); },
+                    error: function(){ alert('Failed to set location. Please try again.'); }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

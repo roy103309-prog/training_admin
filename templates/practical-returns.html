@@ -1,0 +1,257 @@
+<style>
+.pr-stat { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; background: #fff; display: flex; gap: 12px; align-items: center; }
+.pr-stat .ic { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.pr-stat .t { font-size: 12px; color: #6c757d; }
+.pr-stat .v { font-size: 20px; font-weight: 700; line-height: 1.1; }
+.pr-type .btn { flex: 1; }
+.pr-badge-retrain { background: #dbeafe; color: #1d4ed8; }
+.pr-badge-plate_returned { background: #fef3c7; color: #b45309; }
+.pr-badge-failed { background: #fee2e2; color: #b91c1c; }
+</style>
+
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Job Return / Retrain</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0 d-flex gap-2 align-items-center">
+        <span class="badge bg-light text-dark border" id="prActiveNote"></span>
+        <button class="btn btn-outline-secondary" id="prPrint"><i class="bx bx-printer"></i> Print Register</button>
+        <button class="btn btn-outline-success" id="prCsv"><i class="bx bx-file"></i> Export CSV</button>
+    </div>
+</div>
+
+<div class="row g-2 mb-3">
+    <div class="col-6 col-lg-3"><div class="pr-stat"><div class="ic bg-light text-success"><i class="bx bx-calendar"></i></div><div><div class="t">Today's Jobs</div><div class="v" id="prTodayJobs">0</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="pr-stat"><div class="ic pr-badge-retrain"><i class="bx bx-revision"></i></div><div><div class="t">Retrain Practice</div><div class="v text-primary" id="prCntRetrain">0</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="pr-stat"><div class="ic pr-badge-plate_returned"><i class="bx bx-error"></i></div><div><div class="t">Plate Returned</div><div class="v text-warning" id="prCntPlate">0</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="pr-stat"><div class="ic pr-badge-failed"><i class="bx bx-error-circle"></i></div><div><div class="t">Failed / Defects</div><div class="v text-danger" id="prCntFailed">0</div></div></div></div>
+</div>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#prTabJobs" type="button"><i class="bx bx-revision"></i> আজকের জব তালিকা ও Retrain এন্ট্রি (<span id="prJobsCount">0</span>)</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#prTabHistory" type="button" id="prHistoryTab"><i class="bx bx-layer"></i> রিটার্ন ও রিট্রেইন হিস্টোরি রেজিস্টার (<span id="prHistCount">0</span>)</button></li>
+</ul>
+
+<div class="tab-content">
+    <!-- Jobs of a date -->
+    <div class="tab-pane fade show active" id="prTabJobs">
+        <div class="card"><div class="card-body">
+            <div class="row g-2 align-items-center">
+                <div class="col-md"><input class="form-control" id="prJobSearch" placeholder="স্টুডেন্ট নাম, আইডি, জব নং বা ক্যাটাগরি দিয়ে খুঁজুন..."></div>
+                <div class="col-auto"><label class="col-form-label">তারিখ:</label></div>
+                <div class="col-auto"><input type="date" class="form-control" id="prDate"></div>
+                <div class="col-auto"><select class="form-select no-select2 pr-cat" id="prJobCat"><option value="0">All Categories</option></select></div>
+            </div>
+        </div></div>
+        <div class="alert alert-warning d-flex justify-content-between align-items-center py-2">
+            <div><i class="bx bx-error"></i> <b>নিয়মাবলী:</b> শুধুমাত্র জব নেওয়ার নির্দিষ্ট তারিখেই <b>Retrain / Return Entry</b> করা যাবে। নির্বাচিত তারিখের (<b id="prDateText"></b>) জবের তালিকা:</div>
+            <span class="badge" id="prDateBadge"></span>
+        </div>
+        <div class="card"><div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead><tr><th>SL</th><th>Date</th><th>Student Name</th><th>Student ID</th><th>Category</th><th>Job No</th><th class="text-end">Payable</th><th class="text-end">Job Return / Retrain Action</th></tr></thead>
+                    <tbody id="prJobsBody"><tr><td colspan="8" class="text-center">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div></div>
+    </div>
+
+    <!-- History -->
+    <div class="tab-pane fade" id="prTabHistory">
+        <div class="card"><div class="card-body">
+            <div class="row g-2">
+                <div class="col-md"><input class="form-control" id="prHistSearch" placeholder="হিস্টোরি থেকে স্টুডেন্ট, আইডি, জব নং, মন্তব্য দিয়ে খুঁজুন..."></div>
+                <div class="col-md-3"><select class="form-select no-select2 pr-cat" id="prHistCat"><option value="0">All Categories</option></select></div>
+                <div class="col-md-3"><select class="form-select no-select2" id="prHistType"><option value="">All Return Types</option></select></div>
+            </div>
+        </div></div>
+        <div class="card"><div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead><tr><th>SL</th><th>Date</th><th>Student Name</th><th>Student ID</th><th>Position Category</th><th>Original Job No</th><th>Classification</th><th>Inspection Remarks &amp; Reason</th><th>Entered By</th><th></th></tr></thead>
+                    <tbody id="prHistBody"><tr><td colspan="10" class="text-center">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div></div>
+    </div>
+</div>
+
+<!-- Entry modal -->
+<div class="modal fade" id="prModal"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="mb-0">Job Return / Retrain Entry</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <div class="border rounded p-2 bg-light mb-3 small" id="prJobInfo"></div>
+        <label class="form-label">Classification (শ্রেণি) *</label>
+        <div class="d-flex gap-2 pr-type mb-3" id="prTypeBtns"></div>
+        <label class="form-label">Inspection Remarks &amp; Reason (পরিদর্শন মন্তব্য ও কারণ) *</label>
+        <textarea class="form-control" id="prRemarks" rows="3" maxlength="500" placeholder="যেমন: Root pass penetration slight undercut - 1 additional practice session guided by instructor"></textarea>
+        <div class="small text-muted mt-2"><i class="bx bx-info-circle"></i> এই এন্ট্রিতে স্টুডেন্টের জব ব্যালেন্স বদলায় না। নতুন প্র্যাকটিস জব লাগলে Daily Job Register থেকে নতুন জব ইস্যু করুন।</div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="prSave"><i class="bx bx-save"></i> Save Entry</button>
+    </div>
+</div></div></div>
+
+<script>
+window.Page = {
+    _today: null, _jobs: [], _hist: [], _types: {}, _job: null, _type: '', _timer: null,
+    init: function() {
+        var self = this;
+        self._today = NL.today();
+        $('#prDate').val(self._today);
+        $.get('api/practical-categories-list.php', function(r){
+            if (!r.success) return;
+            $('.pr-cat').append(r.data.items.map(function(c){ return '<option value="' + c.id + '">' + NL.esc(c.name) + '</option>'; }).join(''));
+        });
+        self._loadHistory(true);
+
+        $('#prDate,#prJobCat').off('change.pr').on('change.pr', function(){ self._loadJobs(); });
+        $('#prJobSearch').off('input.pr').on('input.pr', function(){ self._renderJobs(); });
+        $('#prHistCat,#prHistType').off('change.pr').on('change.pr', function(){ self._loadHistory(); });
+        $('#prHistSearch').off('input.pr').on('input.pr', function(){ clearTimeout(self._timer); self._timer = setTimeout(function(){ self._loadHistory(); }, 300); });
+        $('#prSave').off('click.pr').on('click.pr', function(){ self._save(); });
+        $('#prPrint').off('click.pr').on('click.pr', function(){ self._print(); });
+        $('#prCsv').off('click.pr').on('click.pr', function(){ PracticalPrint.csvTable('job-returns-' + self._today + '.csv', self._histColumns(), self._hist); });
+        $(document).off('click.pr-type').on('click.pr-type', '.pr-type .btn', function(){ self._setType($(this).data('type')); });
+        $(document).off('click.pr-new').on('click.pr-new', '.pr-new', function(){ self._open($(this).data('id'), $(this).data('type')); });
+        $(document).off('click.pr-edit').on('click.pr-edit', '.pr-edit', function(){ self._open($(this).data('id')); });
+        $(document).off('click.pr-del').on('click.pr-del', '.pr-del', function(){
+            if (!confirm('Delete this return / retrain entry?')) return;
+            $.ajax({ url: 'api/practical-returns-delete.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ id: $(this).data('id') }) })
+            .done(function(r){ if (r.success) { Toast.success(r.message); self._reload(); } else Toast.error(r.message); });
+        });
+    },
+    destroy: function() {
+        clearTimeout(this._timer);
+        $('#prDate,#prJobCat,#prJobSearch,#prHistCat,#prHistType,#prHistSearch,#prSave,#prPrint,#prCsv').off('.pr');
+        $(document).off('click.pr-type click.pr-new click.pr-edit click.pr-del');
+    },
+    _dmy: function(d) { return PracticalPrint.dmy(d); },
+    _badge: function(type) { return '<span class="badge pr-badge-' + NL.esc(type) + '">' + NL.esc(this._types[type] || type) + '</span>'; },
+    _reload: function() { this._loadHistory(); this._loadJobs(); },
+
+    // History + counts; the server's date decides which date allows entries
+    _loadHistory: function(first) {
+        var self = this;
+        $.get('api/practical-returns-list.php', { search: $('#prHistSearch').val(), category_id: $('#prHistCat').val(), classification: $('#prHistType').val() }, function(r){
+            if (!r.success) { Toast.error(r.message); return; }
+            var d = r.data;
+            if (first) {
+                self._types = d.types;
+                $('#prHistType').append(Object.keys(d.types).map(function(k){ return '<option value="' + k + '">' + NL.esc(d.types[k]) + '</option>'; }).join(''));
+                if (d.today !== self._today) { self._today = d.today; $('#prDate').val(d.today); }
+                self._loadJobs();
+            }
+            self._hist = d.items;
+            $('#prTodayJobs').text(d.today_jobs);
+            $('#prActiveNote').text(d.today_jobs > 0 ? 'আজকের সক্রিয় জব: ' + d.today_jobs : 'আজকের কোনো সক্রিয় জব নেই');
+            $('#prCntRetrain').text(d.counts.retrain); $('#prCntPlate').text(d.counts.plate_returned); $('#prCntFailed').text(d.counts.failed);
+            $('#prHistCount').text(d.items.length);
+            self._renderHistory();
+        });
+    },
+    _histColumns: function() {
+        var self = this;
+        return [
+            { t: 'Date', v: function(x){ return self._dmy(x.return_date); } },
+            { t: 'Student Name', v: function(x){ return x.student_name; } },
+            { t: 'Student ID', v: function(x){ return x.student_code; } },
+            { t: 'Category', v: function(x){ return x.category_name; } },
+            { t: 'Original Job No', v: function(x){ return x.job_no; } },
+            { t: 'Classification', v: function(x){ return self._types[x.classification] || x.classification; } },
+            { t: 'Remarks', v: function(x){ return x.remarks; } },
+            { t: 'Entered By', v: function(x){ return x.created_by_name; } }
+        ];
+    },
+    _renderHistory: function() {
+        var self = this;
+        $('#prHistBody').html(self._hist.map(function(x, i){
+            return '<tr><td>' + (i + 1) + '</td><td>' + self._dmy(x.return_date) + '</td>' +
+                '<td><a href="admin/students/view?id=' + x.student_id + '" class="nl-link fw-semibold">' + NL.esc(x.student_name || '(deleted)') + '</a></td>' +
+                '<td class="font-monospace text-success">' + NL.esc(x.student_code) + '</td><td>' + NL.esc(x.category_name) + '</td>' +
+                '<td class="font-monospace">' + NL.esc(x.job_no) + '</td><td>' + self._badge(x.classification) + '</td>' +
+                '<td style="max-width:360px">' + NL.esc(x.remarks) + '</td><td class="small">' + NL.esc(x.created_by_name || '') + '</td>' +
+                '<td class="text-end"><button class="btn btn-sm btn-outline-danger pr-del" data-id="' + x.id + '"><i class="bx bx-trash"></i></button></td></tr>';
+        }).join('') || '<tr><td colspan="10" class="text-center text-muted py-4">কোনো রিটার্ন / রিট্রেইন এন্ট্রি নেই।</td></tr>');
+    },
+
+    // Jobs of the chosen date
+    _loadJobs: function() {
+        var self = this, date = $('#prDate').val() || self._today;
+        var active = date === self._today;
+        $('#prDateText').text(self._dmy(date));
+        $('#prDateBadge').attr('class', 'badge ' + (active ? 'bg-warning text-dark' : 'bg-secondary')).text(active ? 'আজকের সক্রিয় তারিখ' : 'শুধু দেখার জন্য (এন্ট্রি বন্ধ)');
+        $.get('api/practical-jobs-list.php', { date: date, category_id: $('#prJobCat').val() }, function(r){
+            if (!r.success) { Toast.error(r.message); return; }
+            self._jobs = r.data.items;
+            $('#prJobsCount').text(self._jobs.length);
+            self._renderJobs();
+        });
+    },
+    _renderJobs: function() {
+        var self = this, q = $('#prJobSearch').val().trim().toLowerCase();
+        var active = ($('#prDate').val() || self._today) === self._today;
+        var rows = self._jobs.filter(function(j){
+            return !q || [j.student_name, j.student_code, j.job_no, j.category_name].join(' ').toLowerCase().indexOf(q) !== -1;
+        });
+        $('#prJobsBody').html(rows.map(function(j, i){
+            var action;
+            if (j.return_id) {
+                action = self._badge(j.return_type) + (j.return_remarks ? '<div class="small text-muted text-wrap" style="max-width:280px;margin-left:auto">' + NL.esc(j.return_remarks) + '</div>' : '') +
+                    (active ? '<div class="mt-1"><button class="btn btn-sm btn-outline-primary pr-edit" data-id="' + j.id + '"><i class="bx bx-edit"></i> Edit</button> ' +
+                              '<button class="btn btn-sm btn-outline-danger pr-del" data-id="' + j.return_id + '"><i class="bx bx-trash"></i></button></div>' : '');
+            } else if (active) {
+                action = '<div class="btn-group btn-group-sm">' +
+                    '<button class="btn btn-outline-primary pr-new" data-id="' + j.id + '" data-type="retrain"><i class="bx bx-revision"></i> Retrain</button>' +
+                    '<button class="btn btn-outline-warning pr-new" data-id="' + j.id + '" data-type="plate_returned">Plate Returned</button>' +
+                    '<button class="btn btn-outline-danger pr-new" data-id="' + j.id + '" data-type="failed">Failed</button></div>';
+            } else {
+                action = '<span class="text-muted small">এন্ট্রির সময় শেষ</span>';
+            }
+            return '<tr><td>' + (i + 1) + '</td><td>' + self._dmy(j.job_date) + '</td>' +
+                '<td><a href="admin/students/view?id=' + j.student_id + '" class="nl-link fw-semibold">' + NL.esc(j.student_name || '(deleted)') + '</a></td>' +
+                '<td class="font-monospace text-success">' + NL.esc(j.student_code) + '</td><td><span class="badge bg-light text-dark border">' + NL.esc(j.category_name) + '</span></td>' +
+                '<td class="font-monospace">' + NL.esc(j.job_no) + '</td><td class="text-end">৳' + NL.money(j.payable) + '</td><td class="text-end">' + action + '</td></tr>';
+        }).join('') || '<tr><td colspan="8" class="text-center text-muted py-4">' + (self._jobs.length ? 'খোঁজার সাথে কোনো জব মেলেনি।' : 'এই তারিখে এখনো কোনো স্টুডেন্ট জব ইস্যু করা হয়নি।') + '</td></tr>');
+    },
+
+    // Entry modal
+    _open: function(jobId, type) {
+        var self = this, j = self._jobs.find(function(x){ return x.id == jobId; });
+        if (!j) return;
+        self._job = j;
+        $('#prJobInfo').html('<b>' + NL.esc(j.student_name) + '</b> (' + NL.esc(j.student_code) + ')<br>Job <span class="font-monospace">' + NL.esc(j.job_no) + '</span> · ' + NL.esc(j.category_name) + ' · ' + self._dmy(j.job_date));
+        $('#prTypeBtns').html(Object.keys(self._types).map(function(k){ return '<button type="button" class="btn btn-outline-secondary" data-type="' + k + '">' + NL.esc(self._types[k]) + '</button>'; }).join(''));
+        self._setType(type || j.return_type || 'retrain');
+        $('#prRemarks').val(j.return_remarks || '');
+        $('#prModal').modal('show');
+        setTimeout(function(){ $('#prRemarks').trigger('focus'); }, 400);
+    },
+    _setType: function(type) {
+        this._type = type;
+        $('#prTypeBtns .btn').each(function(){
+            var on = $(this).data('type') === type;
+            $(this).toggleClass('btn-primary', on).toggleClass('btn-outline-secondary', !on);
+        });
+    },
+    _save: function() {
+        var self = this, remarks = $('#prRemarks').val().trim();
+        if (!remarks) { Toast.error('মন্তব্য / কারণ লিখুন'); return; }
+        var $btn = $('#prSave').prop('disabled', true);
+        $.ajax({ url: 'api/practical-returns-save.php', method: 'POST', contentType: 'application/json',
+                 data: JSON.stringify({ job_id: self._job.id, classification: self._type, remarks: remarks }) })
+        .done(function(r){ if (r.success) { Toast.success(r.message); $('#prModal').modal('hide'); self._reload(); } else Toast.error(r.message); })
+        .always(function(){ $btn.prop('disabled', false); });
+    },
+    _print: function() {
+        var self = this, c = { retrain: 0, plate_returned: 0, failed: 0 };
+        self._hist.forEach(function(x){ c[x.classification] = (c[x.classification] || 0) + 1; });
+        PracticalPrint.table('Job Return & Retrain Register', self._histColumns(), self._hist, {
+            summary: Object.keys(self._types).map(function(k){ return '<span>' + NL.esc(self._types[k]) + ': <b>' + (c[k] || 0) + '</b></span>'; }).join('')
+        });
+    }
+};
+</script>

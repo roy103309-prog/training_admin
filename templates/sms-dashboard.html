@@ -1,0 +1,187 @@
+<div class="content">
+    <div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+        <div class="d-flex flex-column">
+            <div class="breadcrumb-title">SMS Dashboard</div>
+            <nav aria-label="breadcrumb" class="mt-1">
+                <ol class="breadcrumb mb-0 p-0"></ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card radius-10 border-start border-0 border-3 border-success">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <p class="mb-0 text-secondary">Total Sent</p>
+                            <h4 class="my-1 text-success" id="smsDashTotalSent">0</h4>
+                        </div>
+                        <div class="widgets-icons-2 rounded-circle bg-gradient-ohhappiness text-white ms-auto"><i class="bx bxs-send"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card radius-10 border-start border-0 border-3 border-primary">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <p class="mb-0 text-secondary">Non-Masking Balance</p>
+                            <h4 class="my-1 text-primary"><span id="smsDashBalance">0.00</span> <small class="text-muted" style="font-size:0.6em">BDT</small></h4>
+                            <p class="mb-0 small text-muted">~ <span id="smsDashSmsQty">0</span> SMS @ <span id="smsDashPrice">0.00</span>/sms</p>
+                        </div>
+                        <div class="widgets-icons-2 rounded-circle bg-gradient-moonlit text-white ms-auto"><i class="bx bx-coin-stack"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card radius-10 border-start border-0 border-3 border-success">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <p class="mb-0 text-secondary">Masking Balance</p>
+                            <h4 class="my-1 text-success"><span id="smsDashMaskBalance">0.00</span> <small class="text-muted" style="font-size:0.6em">BDT</small></h4>
+                            <p class="mb-0 small text-muted">~ <span id="smsDashMaskQty">0</span> SMS @ <span id="smsDashMaskPrice">0.00</span>/sms</p>
+                        </div>
+                        <div class="widgets-icons-2 rounded-circle bg-gradient-ohhappiness text-white ms-auto"><i class="bx bx-coin-stack"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card radius-10 border-start border-0 border-3 border-info">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <p class="mb-0 text-secondary">Contacts</p>
+                            <h4 class="my-1 text-info" id="smsDashContacts">0</h4>
+                        </div>
+                        <div class="widgets-icons-2 rounded-circle bg-gradient-deepblue text-white ms-auto"><i class="bx bxs-user"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card radius-10 border-start border-0 border-3 border-warning">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <p class="mb-0 text-secondary">Templates</p>
+                            <h4 class="my-1 text-warning" id="smsDashTemplates">0</h4>
+                        </div>
+                        <div class="widgets-icons-2 rounded-circle bg-gradient-blooker text-white ms-auto"><i class="bx bxs-message-alt-detail"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card radius-10">
+        <div class="card-body">
+            <h5 class="mb-3">Recent SMS Activity</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Phone</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Units</th>
+                            <th class="text-end">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody id="smsDashRecentBody">
+                        <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    loadDashboard();
+});
+
+function loadDashboard() {
+    // Load recent SMS logs
+    $.ajax({
+        url: 'api/sms/logs.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data.logs) {
+                var logs = resp.data.logs;
+                var sent = logs.filter(l => l.status === 'Sent').length;
+                $('#smsDashTotalSent').text(sent);
+
+                var rows = logs.slice(0, 10).map(function(log) {
+                    return '<tr>' +
+                        '<td>' + (log.sent_at || log.created_at || '-') + '</td>' +
+                        '<td>' + (log.phone || '-') + '</td>' +
+                        '<td>' + (log.source || '-') + '</td>' +
+                        '<td><span class="badge bg-' + (log.status === 'Sent' ? 'success' : 'warning') + '">' + log.status + '</span></td>' +
+                        '<td>' + (log.units || 1) + '</td>' +
+                        '<td class="text-end">' + (log.cost || '0.00') + '</td>' +
+                        '</tr>';
+                }).join('');
+                $('#smsDashRecentBody').html(rows || '<tr><td colspan="6" class="text-center">No SMS sent yet</td></tr>');
+            }
+        }
+    });
+
+    // Load balance from FamilyPortal
+    $.ajax({
+        url: 'api/sms/balance.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data) {
+                var d = resp.data;
+
+                var balN   = parseFloat(d.non_masking || 0);
+                var priceN = parseFloat(d.non_masking_price || 0);
+                var qtyN   = priceN > 0 ? Math.floor(balN / priceN) : 0;
+                $('#smsDashBalance').text(balN.toFixed(2));
+                $('#smsDashPrice').text(priceN.toFixed(2));
+                $('#smsDashSmsQty').text(qtyN);
+
+                var balM   = parseFloat(d.masking || 0);
+                var priceM = parseFloat(d.masking_price || 0);
+                var qtyM   = priceM > 0 ? Math.floor(balM / priceM) : 0;
+                $('#smsDashMaskBalance').text(balM.toFixed(2));
+                $('#smsDashMaskPrice').text(priceM.toFixed(2));
+                $('#smsDashMaskQty').text(qtyM);
+            }
+        }
+    });
+
+    // Load contacts count
+    $.ajax({
+        url: 'api/sms/contacts.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data.contacts) {
+                $('#smsDashContacts').text(resp.data.contacts.length);
+            }
+        }
+    });
+
+    // Load templates count
+    $.ajax({
+        url: 'api/sms/templates.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data.templates) {
+                $('#smsDashTemplates').text(resp.data.templates.length);
+            }
+        }
+    });
+}
+</script>

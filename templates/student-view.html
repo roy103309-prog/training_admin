@@ -1,0 +1,270 @@
+<style>
+.sv-photo { width:120px; height:140px; object-fit:cover; border-radius:8px; border:1px solid #ddd; background:#fff; }
+.sv-meta dt { font-weight:500; color:#6c757d; }
+</style>
+
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Student Details</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0 d-flex gap-2">
+        <a href="admin/students/list" data-route class="btn btn-sm btn-outline-secondary"><i class="bx bx-arrow-back"></i> Student List</a>
+        <button class="btn btn-sm btn-success d-none" id="svPayBtn"><i class="bx bx-money"></i> Collect Fee</button>
+        <button class="btn btn-sm btn-primary d-none" id="svEditBtn"><i class="bx bx-edit"></i> Edit</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card"><div class="card-body text-center">
+            <img id="svPhoto" class="sv-photo mb-2" src="assets/images/avatars/avatar-2.png" onerror="this.src='assets/images/avatars/avatar-2.png'">
+            <h5 class="mb-0" id="svName">Loading...</h5>
+            <div class="text-muted" id="svId"></div>
+            <span class="badge bg-success mt-1" id="svStatus"></span>
+            <hr>
+            <div class="row text-center">
+                <div class="col-4"><div class="small text-muted">Fee</div><div class="fw-bold" id="svFee">0</div></div>
+                <div class="col-4"><div class="small text-muted">Paid</div><div class="fw-bold text-success" id="svPaid">0</div></div>
+                <div class="col-4"><div class="small text-muted">Due</div><div class="fw-bold text-danger" id="svDue">0</div></div>
+            </div>
+            <div class="row text-center mt-2">
+                <div class="col-6"><div class="small text-muted">Jobs Used</div><div class="fw-bold" id="svJobUsed">0</div></div>
+                <div class="col-6"><div class="small text-muted">Job Balance</div><div class="fw-bold text-primary" id="svJobBalance">0</div></div>
+            </div>
+        </div></div>
+        <div class="card"><div class="card-header bg-transparent d-flex justify-content-between"><h6 class="mb-0">Documents</h6></div>
+            <ul class="list-group list-group-flush" id="svDocs"></ul>
+        </div>
+        <div class="card"><div class="card-header bg-transparent d-flex justify-content-between align-items-center"><h6 class="mb-0">Overseas Placement</h6>
+            <button class="btn btn-sm btn-outline-primary" id="svOvBtn"><i class="bx bx-edit"></i> Update</button></div>
+            <div class="card-body"><dl class="row sv-meta mb-0 small" id="svOverseas"></dl></div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card"><div class="card-body">
+            <dl class="row sv-meta mb-0" id="svInfo"></dl>
+        </div></div>
+        <div class="card"><div class="card-header bg-transparent"><h6 class="mb-0">Payment History</h6></div><div class="card-body p-0">
+            <div class="table-responsive"><table class="table align-middle mb-0">
+                <thead><tr><th>Date</th><th class="text-end">Amount</th><th>Method</th><th>Notes</th><th>Voucher</th><th></th></tr></thead>
+                <tbody id="svPayments"></tbody>
+            </table></div>
+        </div></div>
+        <div class="card"><div class="card-header bg-transparent d-flex justify-content-between align-items-center"><h6 class="mb-0">Practical Jobs <small class="text-muted">(paid from deposit)</small></h6>
+            <a href="admin/practical/jobs" class="btn btn-sm btn-primary nl-link" id="svJobLink"><i class="bx bx-plus"></i> New Job</a></div><div class="card-body p-0">
+            <div class="table-responsive"><table class="table align-middle mb-0">
+                <thead><tr><th>Date</th><th>Job No</th><th>Category</th><th class="text-end">Price</th><th class="text-end">Discount</th><th class="text-end">Payable</th><th>Return</th></tr></thead>
+                <tbody id="svJobs"></tbody>
+            </table></div>
+        </div></div>
+        <div class="card"><div class="card-header bg-transparent d-flex justify-content-between align-items-center"><h6 class="mb-0">Certificates</h6>
+            <a href="admin/certificates" class="btn btn-sm btn-outline-primary nl-link" id="svCertLink">Manage certificates</a></div><div class="card-body p-0">
+            <div class="table-responsive"><table class="table align-middle mb-0">
+                <thead><tr><th>Type</th><th>Number / File</th><th>Title</th><th>Issue Date</th></tr></thead>
+                <tbody id="svCerts"></tbody>
+            </table></div>
+        </div></div>
+    </div>
+</div>
+
+<!-- Edit modal -->
+<div class="modal fade" id="svEditModal"><div class="modal-dialog modal-lg"><div class="modal-content">
+<form id="svEditForm" onsubmit="return false">
+    <div class="modal-header"><h5>Edit Student</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><div class="row g-3">
+        <input type="hidden" name="id">
+        <div class="col-md-6"><label class="form-label">Full Name *</label><input class="form-control" name="name"></div>
+        <div class="col-md-3"><label class="form-label">Admission Date</label><input type="date" class="form-control" name="admission_date"></div>
+        <div class="col-md-3"><label class="form-label">Status</label><select class="form-select no-select2" name="status"><option value="active">Active</option><option value="completed">Completed</option><option value="inactive">Inactive</option><option value="dropped">Dropped</option></select></div>
+        <div class="col-md-3"><label class="form-label">Date of Birth</label><input type="date" class="form-control" name="dob"></div>
+        <div class="col-md-3"><label class="form-label">Blood Group</label><input class="form-control" name="blood_group" maxlength="5"></div>
+        <div class="col-md-3"><label class="form-label">Mobile</label><input class="form-control" name="phone_number"></div>
+        <div class="col-md-3"><label class="form-label">NID</label><input class="form-control" name="nid"></div>
+        <div class="col-md-4"><label class="form-label">Passport</label><input class="form-control" name="passport_number"></div>
+        <div class="col-md-4"><label class="form-label">Father's Name</label><input class="form-control" name="father_name"></div>
+        <div class="col-md-4"><label class="form-label">Mother's Name</label><input class="form-control" name="mother_name"></div>
+        <div class="col-md-4"><label class="form-label">Guardian Relation</label><input class="form-control" name="guardian_relation"></div>
+        <div class="col-md-4"><label class="form-label">Guardian Mobile</label><input class="form-control" name="guardian_phone"></div>
+        <div class="col-md-4"><label class="form-label">Reference</label><input class="form-control" name="reference_name"></div>
+        <div class="col-md-6"><label class="form-label">Present Address</label><textarea class="form-control" rows="2" name="present_address"></textarea></div>
+        <div class="col-md-6"><label class="form-label">Permanent Address</label><textarea class="form-control" rows="2" name="permanent_address"></textarea></div>
+        <div class="col-md-6"><label class="form-label">Course</label><select class="form-select no-select2" name="course_id" id="svCourse"></select></div>
+        <div class="col-md-3"><label class="form-label">Course Fee</label><input type="number" min="0" step="0.01" class="form-control" name="course_fee"></div>
+        <div class="col-md-3"><label class="form-label">Duration</label><input class="form-control" name="duration"></div>
+        <div class="col-12"><label class="form-label">Reference Remarks</label><input class="form-control" name="reference_remarks"></div>
+        <div class="col-md-6"><label class="form-label">New Photo</label><input type="file" class="form-control" name="photo" accept="image/*"></div>
+        <div class="col-md-6"><label class="form-label">Add Documents</label><input type="file" class="form-control" name="documents[]" multiple accept=".pdf,.doc,.docx,image/*"></div>
+    </div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="svSave">Save</button></div>
+</form>
+</div></div></div>
+
+<!-- Payment modal -->
+<div class="modal fade" id="svPayModal"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5>Collect Fee</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <div class="alert alert-light py-2">Due: <strong id="svPayDue">0</strong></div>
+        <div class="row">
+            <div class="col-6 mb-3"><label class="form-label">Amount *</label><input type="number" min="0" step="0.01" class="form-control" id="svPayAmount"></div>
+            <div class="col-6 mb-3"><label class="form-label">Date</label><input type="date" class="form-control" id="svPayDate"></div>
+        </div>
+        <div class="mb-3"><label class="form-label">Payment Method</label><select class="form-select no-select2" id="svPayMethod"></select></div>
+        <div class="mb-3"><label class="form-label">Notes</label><input class="form-control" id="svPayNotes"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-success" id="svPaySave">Save Payment</button></div>
+</div></div></div>
+
+<!-- Overseas placement modal -->
+<div class="modal fade" id="svOvModal"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5>Overseas Placement</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><div class="row g-3">
+        <div class="col-6"><label class="form-label">Overseas Status</label><select class="form-select no-select2" id="svOvStatus">
+            <option value="not_applied">Not Applied / Training</option><option value="interview">Interview Attended</option><option value="selected">Selected</option></select></div>
+        <div class="col-6"><label class="form-label">Destination Country</label><input class="form-control" id="svOvCountry" maxlength="100"></div>
+        <div class="col-12"><label class="form-label">Company</label><select class="form-select no-select2" id="svOvCompany"></select>
+            <div class="small text-muted mt-1">Companies are added in Practical Jobs → Setting → Companies.</div></div>
+        <div class="col-12"><div class="form-check form-switch"><input type="checkbox" class="form-check-input" id="svOvPassport"><label class="form-check-label" for="svOvPassport">Passport submitted (পাসপোর্ট জমা দিয়েছে)</label></div></div>
+        <div class="col-12"><label class="form-label">Remarks</label><input class="form-control" id="svOvRemarks" maxlength="500"></div>
+    </div></div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" id="svOvSave">Save</button></div>
+</div></div></div>
+
+<script>
+window.Page = {
+    _id: 0, _data: null, _companies: [],
+    _ovStatuses: { not_applied: 'Not Applied', interview: 'Interview', selected: 'Selected' },
+    _returnTypes: { retrain: 'Retrain', plate_returned: 'Plate Returned', failed: 'Failed' },
+    init: function() {
+        var self = this, app = window.NL;
+        self._id = parseInt(new URLSearchParams(location.search).get('id'), 10) || 0;
+        if (!self._id) { $('#svName').text('Student not specified'); return; }
+        $('#svEditBtn').toggleClass('d-none', !app.hasPermission('edit'));
+        $('#svPayBtn').toggleClass('d-none', !app.can('student-payments', 'add'));
+        self._canPayDelete = app.can('student-payments', 'delete');
+        self._canEdit = app.hasPermission('edit');
+        self._load();
+        $.get('api/student-courses-list.php', function(r){
+            if (r.success) $('#svCourse').html(r.data.items.map(function(c){ return '<option value="' + c.id + '">' + NL.esc(c.name) + '</option>'; }).join(''));
+        });
+        $.get('api/payment/methods-list.php', { limit: 100 }, function(r){
+            if (r.success) $('#svPayMethod').html(r.data.items.filter(function(m){ return m.isactive == 1; }).reverse().map(function(m){ return '<option value="' + m.id + '">' + NL.esc(m.name) + '</option>'; }).join(''));
+        });
+        $('#svEditBtn').off('click.sv').on('click.sv', function(){ self._openEdit(); });
+        $('#svSave').off('click.sv').on('click.sv', function(){ self._save(); });
+        $('#svPayBtn').off('click.sv').on('click.sv', function(){
+            $('#svPayDue').text(Number(self._data.student.due_amount).toLocaleString());
+            $('#svPayAmount').val(self._data.student.due_amount); $('#svPayDate').val(NL.today()); $('#svPayNotes').val('');
+            $('#svPayModal').modal('show');
+        });
+        $('#svPaySave').off('click.sv').on('click.sv', function(){ self._pay(); });
+        $('#svOvBtn').off('click.sv').on('click.sv', function(){ self._openOverseas(); });
+        $('#svOvSave').off('click.sv').on('click.sv', function(){ self._saveOverseas(); });
+        $('#svOvCompany').off('change.sv').on('change.sv', function(){
+            var c = self._companies.find(function(x){ return x.id == $('#svOvCompany').val(); });
+            if (c && c.country && !$('#svOvCountry').val()) $('#svOvCountry').val(c.country);
+        });
+        $(document).off('click.sv-doc').on('click.sv-doc', '.sv-doc-del', function(){ if (confirm('Delete this document?')) self._post('api/student-documents-delete.php', { id: $(this).data('id') }); });
+        $(document).off('click.sv-pay').on('click.sv-pay', '.sv-pay-del', function(){ if (confirm('Delete this payment? Its Accounts voucher is removed too.')) self._post('api/student-payments-delete.php', { id: $(this).data('id') }); });
+    },
+    destroy: function() {
+        $('#svEditBtn,#svSave,#svPayBtn,#svPaySave,#svOvBtn,#svOvSave,#svOvCompany').off('.sv');
+        $(document).off('click.sv-doc click.sv-pay');
+    },
+    _load: function() {
+        var self = this;
+        $.get('api/student-get.php', { id: self._id }, function(r){
+            if (!r.success) { $('#svName').text(r.message); return; }
+            self._data = r.data;
+            self._render(r.data);
+        });
+    },
+    _render: function(d) {
+        var s = d.student, self = this;
+        var badge = { active: 'success', completed: 'primary', inactive: 'secondary', dropped: 'danger' };
+        $('#svPhoto').attr('src', s.photo ? NL.media(s.photo) : 'assets/images/avatars/avatar-2.png');
+        $('#svName').text(s.name); $('#svId').text(s.student_id);
+        $('#svStatus').attr('class', 'badge mt-1 bg-' + (badge[s.status] || 'secondary')).text(s.status);
+        $('#svFee').text(Number(s.course_fee).toLocaleString()); $('#svPaid').text(Number(s.paid_amount).toLocaleString()); $('#svDue').text(Number(s.due_amount).toLocaleString());
+        $('#svJobUsed').text(Number(s.job_used).toLocaleString() + ' (' + s.job_count + ')'); $('#svJobBalance').text(Number(s.job_balance).toLocaleString());
+        $('#svJobLink').attr('href', 'admin/practical/jobs?student=' + s.id);
+        $('#svJobs').html((d.jobs || []).map(function(j){
+            return '<tr><td>' + NL.esc(j.job_date) + '</td><td class="font-monospace">' + NL.esc(j.job_no) + '</td><td>' + NL.esc(j.category_name) + '</td>' +
+                '<td class="text-end">' + Number(j.price).toLocaleString() + '</td><td class="text-end">' + Number(j.discount).toLocaleString() + '</td>' +
+                '<td class="text-end fw-semibold">' + Number(j.payable).toLocaleString() + '</td>' +
+                '<td>' + (j.return_type ? '<span class="badge bg-warning text-dark" title="' + NL.esc(j.return_remarks) + '">' + NL.esc(self._returnTypes[j.return_type] || j.return_type) + '</span>' : '') + '</td></tr>';
+        }).join('') || '<tr><td colspan="7" class="text-center text-muted">No practical jobs yet</td></tr>');
+        var ovBadge = { selected: 'success', interview: 'warning text-dark', not_applied: 'secondary' };
+        $('#svOverseas').html([
+            ['Status', '<span class="badge bg-' + (ovBadge[s.overseas_status] || 'secondary') + '">' + NL.esc(self._ovStatuses[s.overseas_status] || s.overseas_status) + '</span>'],
+            ['Destination', NL.esc(s.destination_country) || '—'], ['Company', NL.esc(s.company_name) || '—'],
+            ['Passport', s.passport_submitted == 1 ? '<span class="text-success">Submitted</span>' : 'Not submitted'],
+            ['Remarks', NL.esc(s.overseas_remarks) || '—']
+        ].map(function(i){ return '<dt class="col-5">' + i[0] + '</dt><dd class="col-7">' + i[1] + '</dd>'; }).join(''));
+        var info = [['Course', s.course_name + ' (' + s.course_category + ')'], ['Duration', s.duration], ['Admission Date', s.admission_date],
+            ['Date of Birth', s.dob], ['Blood Group', s.blood_group], ['Mobile', s.phone_number], ['NID', s.nid], ['Passport', s.passport_number],
+            ["Father's Name", s.father_name], ["Mother's Name", s.mother_name], ['Guardian', [s.guardian_relation, s.guardian_phone].filter(Boolean).join(' · ')],
+            ['Reference', s.reference_name + (s.reference_remarks ? ' — ' + s.reference_remarks : '')],
+            ['Present Address', s.present_address], ['Permanent Address', s.permanent_address]];
+        $('#svInfo').html(info.map(function(i){ return '<dt class="col-sm-4">' + i[0] + '</dt><dd class="col-sm-8">' + (NL.esc(i[1]) || '—') + '</dd>'; }).join(''));
+        $('#svPayments').html(d.payments.map(function(p){
+            return '<tr><td>' + NL.esc(p.payment_date) + '</td><td class="text-end">' + Number(p.amount).toLocaleString() + '</td><td>' + NL.esc(p.payment_method || '-') + '</td>' +
+                '<td>' + NL.esc(p.notes) + '</td><td>' + NL.esc(p.voucher_no || '—') + '</td>' +
+                '<td class="text-end">' + (self._canPayDelete ? '<button class="btn btn-sm btn-outline-danger sv-pay-del" data-id="' + p.id + '"><i class="bx bx-trash"></i></button>' : '') + '</td></tr>';
+        }).join('') || '<tr><td colspan="6" class="text-center text-muted">No payments yet</td></tr>');
+        $('#svDocs').html(d.documents.map(function(doc){
+            return '<li class="list-group-item d-flex justify-content-between align-items-center"><a href="' + NL.esc(NL.media(doc.file_path)) + '" target="_blank"><i class="bx bx-file"></i> ' +
+                NL.esc(doc.original_name || doc.file_path.split('/').pop()) + '</a>' +
+                (self._canEdit ? '<button class="btn btn-sm btn-outline-danger sv-doc-del" data-id="' + doc.id + '"><i class="bx bx-trash"></i></button>' : '') + '</li>';
+        }).join('') || '<li class="list-group-item text-muted">No documents</li>');
+        $('#svCertLink').attr('href', 'admin/certificates?student_id=' + s.id);
+        $('#svCerts').html(d.certificates.map(function(c){
+            var file = c.file_path ? '<a href="' + NL.esc(NL.media(c.file_path)) + '" target="_blank">' + NL.esc(c.title || 'file') + '</a>' : NL.esc(c.certificate_no);
+            return '<tr><td>' + (c.source === 'uploaded' ? 'Uploaded' : 'Generated') + '</td><td>' + file + '</td><td>' + NL.esc(c.source === 'uploaded' ? (c.description || '') : c.title) + '</td><td>' + NL.esc(c.issue_date || '') + '</td></tr>';
+        }).join('') || '<tr><td colspan="4" class="text-center text-muted">No certificates</td></tr>');
+    },
+    _openEdit: function() {
+        var s = this._data.student, f = $('#svEditForm')[0];
+        f.reset();
+        ['id','name','admission_date','status','dob','blood_group','phone_number','nid','passport_number','father_name','mother_name','guardian_relation',
+         'guardian_phone','reference_name','present_address','permanent_address','course_fee','duration','reference_remarks'].forEach(function(k){ if (f[k]) f[k].value = s[k] || ''; });
+        $('#svCourse').val(s.course_id || '');
+        $('#svEditModal').modal('show');
+    },
+    _save: function() {
+        var self = this, $btn = $('#svSave').prop('disabled', true);
+        $.ajax({ url: 'api/student-update.php', method: 'POST', data: new FormData($('#svEditForm')[0]), processData: false, contentType: false })
+        .done(function(r){ if (r.success) { $('#svEditModal').modal('hide'); self._load(); Toast.success(r.message); } else Toast.error(r.message); })
+        .always(function(){ $btn.prop('disabled', false); });
+    },
+    _pay: function() {
+        var self = this;
+        var d = { student_id: self._id, amount: $('#svPayAmount').val(), payment_date: $('#svPayDate').val(), payment_method_id: $('#svPayMethod').val(), notes: $('#svPayNotes').val() };
+        $.ajax({ url: 'api/student-payments-save.php', method: 'POST', contentType: 'application/json', data: JSON.stringify(d) })
+        .done(function(r){ if (r.success) { $('#svPayModal').modal('hide'); self._load(); Toast.success(r.message); } else Toast.error(r.message); });
+    },
+    _openOverseas: function() {
+        var self = this, s = self._data.student;
+        $.get('api/practical-companies-list.php', function(r){
+            self._companies = r.success ? r.data.items : [];
+            $('#svOvCompany').html('<option value="">-- No company --</option>' + self._companies.filter(function(c){ return c.is_active == 1 || c.id == s.company_id; }).map(function(c){
+                return '<option value="' + c.id + '">' + NL.esc(c.name) + (c.country ? ' (' + NL.esc(c.country) + ')' : '') + '</option>';
+            }).join('')).val(s.company_id || '');
+        });
+        $('#svOvStatus').val(s.overseas_status); $('#svOvCountry').val(s.destination_country);
+        $('#svOvPassport').prop('checked', s.passport_submitted == 1); $('#svOvRemarks').val(s.overseas_remarks);
+        $('#svOvModal').modal('show');
+    },
+    _saveOverseas: function() {
+        var self = this, d = { student_id: self._id, overseas_status: $('#svOvStatus').val(), destination_country: $('#svOvCountry').val(),
+            company_id: $('#svOvCompany').val(), passport_submitted: $('#svOvPassport').is(':checked') ? 1 : 0, remarks: $('#svOvRemarks').val() };
+        $.ajax({ url: 'api/practical-overseas-save.php', method: 'POST', contentType: 'application/json', data: JSON.stringify(d) })
+        .done(function(r){ if (r.success) { $('#svOvModal').modal('hide'); self._load(); Toast.success(r.message); } else Toast.error(r.message); });
+    },
+    _post: function(url, data) {
+        var self = this;
+        $.ajax({ url: url, method: 'POST', contentType: 'application/json', data: JSON.stringify(data) })
+        .done(function(r){ if (r.success) { self._load(); Toast.success(r.message); } else Toast.error(r.message); });
+    }
+};
+</script>

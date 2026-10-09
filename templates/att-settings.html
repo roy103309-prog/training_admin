@@ -1,0 +1,236 @@
+<style>
+    .att-day-chip { border:1px solid #ced4da; background:#fff; border-radius:999px; font-size:12px; padding:3px 14px; cursor:pointer; user-select:none; }
+    .att-day-chip.active { background:#0d6efd; color:#fff; border-color:#0d6efd; }
+    .att-grid td, .att-grid th { padding:5px 8px; font-size:12px; vertical-align:middle; }
+    .att-grid input[type=time] { min-width:108px; }
+    .att-grid input[type=number] { width:78px; }
+    .att-hdr-fill { font-size:10px; font-weight:400; display:flex; align-items:center; gap:3px; margin-top:2px; }
+</style>
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Attendance Settings</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+</div>
+
+<!-- Card A: single employee day-rules -->
+<div class="card mb-3"><div class="card-body">
+    <h6 class="mb-3"><i class="bx bx-user"></i>View An Employee Day Settings</h6>
+    <div class="d-flex gap-2 align-items-end mb-3 flex-wrap">
+        <div>
+            <label class="form-label small mb-1">Employee (Code or Name)</label>
+            <input class="form-control form-control-sm" id="empSearch" list="empList" placeholder="EMP00001 / name" style="min-width:240px;">
+            <datalist id="empList"></datalist>
+        </div>
+        <button class="btn btn-primary btn-sm" id="empSearchBtn"><i class="bx bx-search"></i> Search</button>
+    </div>
+    <div id="empDayWrap" style="display:none;">
+        <div class="mb-2"><strong id="empLabel"></strong></div>
+        <div class="table-responsive"><table class="table table-bordered att-grid mb-0">
+            <thead class="table-light"><tr><th>Day</th><th>In Time</th><th>Out Time</th><th>Late (min)</th><th>Absent (min)</th><th class="text-end">Action</th></tr></thead>
+            <tbody id="empDayBody"></tbody>
+        </table></div>
+    </div>
+</div></div>
+
+<!-- Card B: bulk grid -->
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h6 class="mb-0"><i class="bx bx-grid-alt"></i> Bulk Setting (Select Employees + Days)</h6>
+        <button class="btn btn-outline-primary btn-sm" id="bulkToggle"><i class="bx bx-cog"></i> Open Setting</button>
+    </div>
+
+    <div id="bulkPanel" style="display:none;" class="mt-3">
+
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+            <span class="small fw-semibold me-1">Apply to days:</span>
+            <span class="att-day-chip" data-day="0">Sun</span>
+            <span class="att-day-chip" data-day="1">Mon</span>
+            <span class="att-day-chip" data-day="2">Tue</span>
+            <span class="att-day-chip" data-day="3">Wed</span>
+            <span class="att-day-chip" data-day="4">Thu</span>
+            <span class="att-day-chip" data-day="5">Fri</span>
+            <span class="att-day-chip" data-day="6">Sat</span>
+        </div>
+
+        <div class="d-flex gap-2 mb-2 flex-wrap">
+            <input class="form-control form-control-sm" id="bulkFilter" placeholder="Filter employees..." style="max-width:260px;">
+        </div>
+
+        <div class="table-responsive"><table class="table table-bordered att-grid">
+            <thead class="table-light"><tr>
+                <th style="width:34px;"><input type="checkbox" id="chkAll"></th>
+                <th>Code</th><th>Employee</th><th>Role</th>
+                <th>In Time<label class="att-hdr-fill"><input type="checkbox" id="fillIn"> auto-fill</label></th>
+                <th>Out Time<label class="att-hdr-fill"><input type="checkbox" id="fillOut"> auto-fill</label></th>
+                <th>Late (min)</th><th>Absent (min)</th>
+            </tr></thead>
+            <tbody id="bulkBody"><tr><td colspan="8" class="text-center">Loading...</td></tr></tbody>
+        </table></div>
+
+        <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-success btn-sm" id="bulkSave"><i class="bx bx-save"></i> Save Selected</button>
+        </div>
+    </div>
+</div></div>
+
+<script>
+window.Page = {
+    _emps: [],
+    init: function () {
+        var self = this;
+        self._loadEmps();
+        self._loadBulk();
+
+        // Card A
+        $('#empSearchBtn').off('click.att').on('click.att', function () { self._searchEmp(); });
+        $('#empSearch').off('keydown.att').on('keydown.att', function (e) { if (e.key === 'Enter') self._searchEmp(); });
+        $(document).off('click.att-day-del').on('click.att-day-del', '.att-day-del', function () { self._delDay($(this).data('uid'), $(this).data('day')); });
+
+        // Card B day chips
+        $(document).off('click.att-chip').on('click.att-chip', '.att-day-chip', function () { $(this).toggleClass('active'); });
+
+        // Select all
+        $('#chkAll').off('change.att').on('change.att', function () {
+            $('#bulkBody .row-chk:visible').prop('checked', $(this).is(':checked'));
+        });
+
+        // Auto-fill: when a row in/out changes and header fill is on → copy to all checked rows
+        $(document).off('change.att-fill').on('change.att-fill', '#bulkBody .row-in', function () {
+            if ($('#fillIn').is(':checked')) {
+                var v = $(this).val();
+                $('#bulkBody .row-chk:checked').closest('tr').find('.row-in').val(v);
+            }
+        });
+        $(document).off('change.att-fillout').on('change.att-fillout', '#bulkBody .row-out', function () {
+            if ($('#fillOut').is(':checked')) {
+                var v = $(this).val();
+                $('#bulkBody .row-chk:checked').closest('tr').find('.row-out').val(v);
+            }
+        });
+
+        // Filter
+        $('#bulkFilter').off('input.att').on('input.att', function () {
+            var q = $(this).val().toLowerCase();
+            $('#bulkBody tr').each(function () {
+                var t = $(this).data('search') || '';
+                $(this).toggle(t.indexOf(q) !== -1);
+            });
+        });
+
+        $('#bulkSave').off('click.att').on('click.att', function () { self._saveBulk(); });
+
+        // Collapse toggle for bulk panel
+        $('#bulkToggle').off('click.att').on('click.att', function () {
+            var $p = $('#bulkPanel');
+            var willOpen = !$p.is(':visible');
+            $p.slideToggle(150);
+            $(this).html(willOpen
+                ? '<i class="bx bx-x"></i> Close Setting'
+                : '<i class="bx bx-cog"></i> Open Setting');
+        });
+    },
+    destroy: function () {
+        $('#empSearchBtn,#empSearch,#chkAll,#fillIn,#fillOut,#bulkFilter,#bulkSave,#bulkToggle').off('.att');
+        $(document).off('click.att-day-del click.att-chip change.att-fill change.att-fillout');
+    },
+
+    _loadEmps: function () {
+        var self = this;
+        $.get('api/attendance/employees-list.php', function (r) {
+            if (!r.success) return;
+            self._emps = r.data.items;
+            $('#empList').html(self._emps.map(function (e) {
+                return '<option value="' + (e.employee_code || '') + ' - ' + e.name + '">';
+            }).join(''));
+        });
+    },
+
+    /* ---- Card A ---- */
+    _searchEmp: function () {
+        var self = this;
+        var q = ($('#empSearch').val() || '').toLowerCase().trim();
+        if (!q) { if (window.Toast) Toast.warning('Enter employee code or name'); return; }
+        var emp = self._emps.find(function (e) {
+            return (e.employee_code || '').toLowerCase() === q.split(' - ')[0] ||
+                   ((e.employee_code || '') + ' - ' + e.name).toLowerCase() === q ||
+                   (e.name || '').toLowerCase() === q ||
+                   (e.employee_code || '').toLowerCase() === q;
+        });
+        if (!emp) { if (window.Toast) Toast.error('Employee not found'); return; }
+        $.get('api/attendance/settings-get.php', { user_id: emp.id }, function (r) {
+            if (!r.success) { if (window.Toast) Toast.error(r.message); return; }
+            $('#empLabel').text(r.data.employee.employee_code + ' — ' + r.data.employee.name + (r.data.employee.role_name ? ' (' + r.data.employee.role_name + ')' : ''));
+            if (!r.data.days.length) {
+                $('#empDayBody').html('<tr><td colspan="6" class="text-center text-muted">No work day configured. Use Bulk Setting to assign work days.</td></tr>');
+                $('#empDayWrap').show();
+                return;
+            }
+            $('#empDayBody').html(r.data.days.map(function (d) {
+                return '<tr><td>' + d.day_name + '</td><td>' + (d.in_time || '-') + '</td><td>' + (d.out_time || '-') + '</td>' +
+                       '<td>' + d.late_min + '</td><td>' + d.absent_min + '</td>' +
+                       '<td class="text-end"><button class="btn btn-sm btn-outline-danger att-day-del" data-uid="' + r.data.employee.id + '" data-day="' + d.day_of_week + '" title="Delete work day"><i class="bx bx-trash"></i></button></td></tr>';
+            }).join(''));
+            $('#empDayWrap').show();
+        });
+    },
+    _delDay: function (uid, day) {
+        var self = this;
+        if (!confirm('Clear this day rule?')) return;
+        $.ajax({ url: 'api/attendance/settings-delete.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ user_id: uid, day_of_week: day }) })
+        .done(function (r) { if (r.success) self._searchEmp(); if (window.Toast) Toast.info(r.message); });
+    },
+
+    /* ---- Card B ---- */
+    _loadBulk: function () {
+        var self = this;
+        $.get('api/attendance/employees-list.php', function (r) {
+            if (!r.success) return;
+            var emps = r.data.items;
+            if (!emps.length) { $('#bulkBody').html('<tr><td colspan="9" class="text-center">No active employees</td></tr>'); return; }
+            $('#bulkBody').html(emps.map(function (e) {
+                var search = ((e.employee_code || '') + ' ' + (e.name || '') + ' ' + (e.role_name || '')).toLowerCase();
+                return '<tr data-uid="' + e.id + '" data-search="' + search + '">' +
+                    '<td><input type="checkbox" class="row-chk"></td>' +
+                    '<td>' + (e.employee_code || '-') + '</td>' +
+                    '<td>' + e.name + '</td>' +
+                    '<td>' + (e.role_name || '-') + '</td>' +
+                    '<td><input type="time" class="form-control form-control-sm row-in"></td>' +
+                    '<td><input type="time" class="form-control form-control-sm row-out"></td>' +
+                    '<td><input type="number" min="0" class="form-control form-control-sm row-late" value="0"></td>' +
+                    '<td><input type="number" min="0" class="form-control form-control-sm row-absent" value="0"></td>' +
+                '</tr>';
+            }).join(''));
+        });
+    },
+    _saveBulk: function () {
+        var self = this;
+        var days = [];
+        $('.att-day-chip.active').each(function () { days.push(parseInt($(this).data('day'), 10)); });
+        if (!days.length) { if (window.Toast) Toast.warning('Select at least one day'); return; }
+
+        var rows = [];
+        $('#bulkBody .row-chk:checked').each(function () {
+            var $tr = $(this).closest('tr');
+            rows.push({
+                user_id:    parseInt($tr.data('uid'), 10),
+                in_time:    $tr.find('.row-in').val(),
+                out_time:   $tr.find('.row-out').val(),
+                late_min:   parseInt($tr.find('.row-late').val(), 10) || 0,
+                absent_min: parseInt($tr.find('.row-absent').val(), 10) || 0
+            });
+        });
+        if (!rows.length) { if (window.Toast) Toast.warning('Select at least one employee'); return; }
+
+        $('#bulkSave').prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i> Saving...');
+        $.ajax({ url: 'api/attendance/settings-save.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ rows: rows, days: days }) })
+        .done(function (r) {
+            $('#bulkSave').prop('disabled', false).html('<i class="bx bx-save"></i> Save Selected');
+            if (window.Toast) Toast.info(r.message); else alert(r.message);
+        }).fail(function () {
+            $('#bulkSave').prop('disabled', false).html('<i class="bx bx-save"></i> Save Selected');
+            if (window.Toast) Toast.error('Network error');
+        });
+    }
+};
+</script>

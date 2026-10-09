@@ -1,0 +1,151 @@
+<div class="content">
+    <div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+        <div class="d-flex flex-column">
+            <div class="breadcrumb-title">SMS Reports</div>
+            <nav aria-label="breadcrumb" class="mt-1">
+                <ol class="breadcrumb mb-0 p-0"></ol>
+            </nav>
+        </div>
+        <div class="ms-auto ms-md-0">
+            <button class="btn btn-primary" id="btnPrint"><i class="bx bx-printer"></i> Print</button>
+        </div>
+    </div>
+
+    <div class="card radius-10 mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">From Date</label>
+                    <input type="date" id="repFrom" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">To Date</label>
+                    <input type="date" id="repTo" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary" onclick="loadReport()">Apply Filter</button>
+                    <button class="btn btn-outline-secondary" onclick="resetReport()">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card radius-10 border-start border-0 border-3 border-primary">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <p class="mb-0 text-secondary">Total SMS</p>
+                            <h4 class="my-1 text-primary" id="repTotal">0</h4>
+                        </div>
+                        <div class="widgets-icons-2 rounded-circle bg-gradient-moonlit text-white ms-auto"><i class="bx bx-message-square-detail"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card radius-10 border-start border-0 border-3 border-success">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <p class="mb-0 text-secondary">Sent</p>
+                            <h4 class="my-1 text-success" id="repSent">0</h4>
+                        </div>
+                        <div class="widgets-icons-2 rounded-circle bg-gradient-ohhappiness text-white ms-auto"><i class="bx bxs-check-circle"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card radius-10 border-start border-0 border-3 border-danger">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <p class="mb-0 text-secondary">Failed</p>
+                            <h4 class="my-1 text-danger" id="repFailed">0</h4>
+                        </div>
+                        <div class="widgets-icons-2 rounded-circle bg-gradient-ibiza text-white ms-auto"><i class="bx bxs-x-circle"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card radius-10 border-start border-0 border-3 border-info">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <p class="mb-0 text-secondary">Total Cost</p>
+                            <h4 class="my-1 text-info" id="repCost">0</h4>
+                        </div>
+                        <div class="widgets-icons-2 rounded-circle bg-gradient-deepblue text-white ms-auto"><i class="bx bx-dollar-circle"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7 col-12">
+            <div class="card radius-10">
+                <div class="card-header"><h5 class="card-title mb-0">Daily Activity</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead><tr><th>Date</th><th class="text-end">Count</th><th class="text-end">Cost</th></tr></thead>
+                            <tbody id="repDailyBody"><tr><td colspan="3" class="text-center">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5 col-12">
+            <div class="card radius-10">
+                <div class="card-header"><h5 class="card-title mb-0">By Source</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead><tr><th>Source</th><th class="text-end">Count</th></tr></thead>
+                            <tbody id="repSourceBody"><tr><td colspan="2" class="text-center">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() { loadReport(); });
+
+function loadReport() {
+    $.ajax({
+        url: 'api/sms/reports.php',
+        method: 'GET',
+        data: { from: $('#repFrom').val(), to: $('#repTo').val() },
+        dataType: 'json',
+        success: function(resp) {
+            if (!resp.success) return;
+            var s = resp.data.summary || {};
+            $('#repTotal').text(s.total || 0);
+            $('#repSent').text(s.sent || 0);
+            $('#repFailed').text(s.failed || 0);
+            $('#repCost').text('৳' + (parseFloat(s.cost || 0)).toFixed(2));
+
+            var daily = (resp.data.daily || []).map(function(d) {
+                return '<tr><td>' + d.date + '</td><td class="text-end">' + d.count + '</td><td class="text-end">৳' + d.cost.toFixed(2) + '</td></tr>';
+            }).join('');
+            $('#repDailyBody').html(daily || '<tr><td colspan="3" class="text-center">No data</td></tr>');
+
+            var src = (resp.data.by_source || []).map(function(b) {
+                return '<tr><td>' + b.source + '</td><td class="text-end">' + b.count + '</td></tr>';
+            }).join('');
+            $('#repSourceBody').html(src || '<tr><td colspan="2" class="text-center">No data</td></tr>');
+        }
+    });
+}
+
+function resetReport() {
+    $('#repFrom').val(''); $('#repTo').val(''); loadReport();
+}
+</script>

@@ -1,0 +1,385 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Settings</div>
+        <nav aria-label="breadcrumb" class="mt-1">
+            <ol class="breadcrumb mb-0 p-0">
+                <li class="breadcrumb-item active" aria-current="page">UI Color Settings</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<form id="uiSettingsForm">
+    <div class="row g-3">
+
+        <!-- Common Primary -->
+        <div class="col-lg-6">
+            <div class="card h-100 mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center ui-section-header">
+                    <h5 class="mb-0"><i class="bx bx-palette me-1"></i> Common Primary Color</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-reset="common">Reset</button>
+                </div>
+                <div class="card-body">
+                    <div class="ui-color-item">
+                        <label>Primary Color (one color shared everywhere)</label>
+                        <input type="color" class="ui-color-input" id="uiRootPrimary" value="#8B0000">
+                    </div>
+                    <small class="text-muted d-block mt-1">Auto-applied to active menu, primary buttons, table header, form focus, report header & POS accent.</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-6">
+            <div class="card h-100 mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center ui-section-header">
+                    <h5 class="mb-0"><i class="bx bx-menu me-1"></i> Sidebar</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-reset="sidebar">Reset</button>
+                </div>
+                <div class="card-body">
+                    <div class="ui-gradient-container mb-2">
+                        <div class="ui-gradient-inputs">
+                            <div class="ui-color-mini">
+                                <label>Color 1</label>
+                                <input type="color" class="ui-color-input-sm" id="uiSidebarBg" value="#ffffff">
+                            </div>
+                            <div class="ui-gradient-arrow">→</div>
+                            <div class="ui-color-mini">
+                                <label>Color 2</label>
+                                <input type="color" class="ui-color-input-sm" id="uiSidebarBg2" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="ui-gradient-toggle-box">
+                            <label class="form-check-label" for="uiSidebarGradient">Gradient</label>
+                            <div class="form-check form-switch p-0 m-0">
+                                <input class="form-check-input ms-0" type="checkbox" id="uiSidebarGradient">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6"><div class="ui-color-item"><label>Menu Text</label><input type="color" class="ui-color-input" id="uiSidebarText" value="#404142"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Active Item BG</label><input type="color" class="ui-color-input" id="uiSidebarActive" value="#8B0000"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Active Item Text</label><input type="color" class="ui-color-input" id="uiSidebarActiveText" value="#ffffff"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Submenu BG</label><input type="color" class="ui-color-input" id="uiSidebarSubmenuBg" value="#ffffff"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="col-lg-6">
+            <div class="card h-100 mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center ui-section-header">
+                    <h5 class="mb-0"><i class="bx bx-window-alt me-1"></i> Top Header</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-reset="header">Reset</button>
+                </div>
+                <div class="card-body">
+                    <div class="ui-gradient-container mb-2">
+                        <div class="ui-gradient-inputs">
+                            <div class="ui-color-mini">
+                                <label>Color 1</label>
+                                <input type="color" class="ui-color-input-sm" id="uiHeaderBg" value="#ffffff">
+                            </div>
+                            <div class="ui-gradient-arrow">→</div>
+                            <div class="ui-color-mini">
+                                <label>Color 2</label>
+                                <input type="color" class="ui-color-input-sm" id="uiHeaderBg2" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="ui-gradient-toggle-box">
+                            <label class="form-check-label" for="uiHeaderGradient">Gradient</label>
+                            <div class="form-check form-switch p-0 m-0">
+                                <input class="form-check-input ms-0" type="checkbox" id="uiHeaderGradient">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6"><div class="ui-color-item"><label>Text / Icon</label><input type="color" class="ui-color-input" id="uiHeaderText" value="#404142"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Border / Accent</label><input type="color" class="ui-color-input" id="uiHeaderBorder" value="#e5e7eb"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Button BG</label><input type="color" class="ui-color-input" id="uiBtnHeaderBg" value="#8B0000"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Button Hover BG</label><input type="color" class="ui-color-input" id="uiBtnHeaderHoverBg" value="#720000"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Button Text</label><input type="color" class="ui-color-input" id="uiBtnHeaderText" value="#ffffff"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Button Border</label><input type="color" class="ui-color-input" id="uiBtnHeaderBorder" value="#8B0000"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="col-lg-6">
+            <div class="card h-100 mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center ui-section-header">
+                    <h5 class="mb-0"><i class="bx bx-rectangle me-1"></i> Footer</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-reset="footer">Reset</button>
+                </div>
+                <div class="card-body">
+                    <div class="ui-gradient-container mb-2">
+                        <div class="ui-gradient-inputs">
+                            <div class="ui-color-mini">
+                                <label>Color 1</label>
+                                <input type="color" class="ui-color-input-sm" id="uiFooterBg" value="#ffffff">
+                            </div>
+                            <div class="ui-gradient-arrow">→</div>
+                            <div class="ui-color-mini">
+                                <label>Color 2</label>
+                                <input type="color" class="ui-color-input-sm" id="uiFooterBg2" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="ui-gradient-toggle-box">
+                            <label class="form-check-label" for="uiFooterGradient">Gradient</label>
+                            <div class="form-check form-switch p-0 m-0">
+                                <input class="form-check-input ms-0" type="checkbox" id="uiFooterGradient">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6"><div class="ui-color-item"><label>Text</label><input type="color" class="ui-color-input" id="uiFooterText" value="#6c757d"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Border</label><input type="color" class="ui-color-input" id="uiFooterBorder" value="#e5e7eb"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Accent / Link</label><input type="color" class="ui-color-input" id="uiFooterAccent" value="#8B0000"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forms -->
+        <div class="col-lg-6">
+            <div class="card h-100 mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center ui-section-header">
+                    <h5 class="mb-0"><i class="bx bx-edit me-1"></i> Forms</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-reset="forms">Reset</button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6"><div class="ui-color-item"><label>Border</label><input type="color" class="ui-color-input" id="uiFormBorder" value="#c9ccd3"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Focus Border</label><input type="color" class="ui-color-input" id="uiFormFocusBorder" value="#8B0000"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tables -->
+        <div class="col-lg-6">
+            <div class="card h-100 mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center ui-section-header">
+                    <h5 class="mb-0"><i class="bx bx-table me-1"></i> Tables</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-reset="tables">Reset</button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6"><div class="ui-color-item"><label>Header BG</label><input type="color" class="ui-color-input" id="uiTableHeaderBg" value="#8B0000"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Header Text</label><input type="color" class="ui-color-input" id="uiTableHeaderText" value="#ffffff"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Border</label><input type="color" class="ui-color-input" id="uiTableBorder" value="#e9ecef"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Row Hover</label><input type="color" class="ui-color-input" id="uiTableRowHover" value="#e6f3ff"></div></div>
+                        <div class="col-6"><div class="ui-color-item"><label>Text</label><input type="color" class="ui-color-input" id="uiTableText" value="#212b36"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report -->
+        <!-- <div class="col-lg-12">
+            <div class="card h-100 mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center ui-section-header">
+                    <h5 class="mb-0"><i class="bx bx-file me-1"></i> Report &amp; Print</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-reset="report">Reset</button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-3 col-6"><div class="ui-color-item"><label>Header BG</label><input type="color" class="ui-color-input" id="uiReportHeader" value="#f4f4f4"></div></div>
+                        <div class="col-md-3 col-6"><div class="ui-color-item"><label>Header Text</label><input type="color" class="ui-color-input" id="uiReportHeaderText" value="#111111"></div></div>
+                        <div class="col-md-3 col-6"><div class="ui-color-item"><label>Title</label><input type="color" class="ui-color-input" id="uiReportTitle" value="#1b2850"></div></div>
+                        <div class="col-md-3 col-6"><div class="ui-color-item"><label>Summary Box BG</label><input type="color" class="ui-color-input" id="uiReportSummaryBox" value="#ffffff"></div></div>
+                        <div class="col-md-3 col-6"><div class="ui-color-item"><label>Summary Box Text</label><input type="color" class="ui-color-input" id="uiReportSummaryText" value="#212b36"></div></div>
+                        <div class="col-md-3 col-6"><div class="ui-color-item"><label>Table Head BG</label><input type="color" class="ui-color-input" id="uiReportTableHead" value="#8B0000"></div></div>
+                        <div class="col-md-3 col-6"><div class="ui-color-item"><label>Table Head Text</label><input type="color" class="ui-color-input" id="uiReportTableHeadText" value="#ffffff"></div></div>
+                        <div class="col-md-3 col-6"><div class="ui-color-item"><label>Row Alternate</label><input type="color" class="ui-color-input" id="uiReportRowAlt" value="#f9f9f9"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12 d-flex justify-content-end gap-2">
+            <button type="submit" class="btn btn-primary" id="saveUiSettingsBtn">
+                <i class="bx bx-save me-1"></i> Apply &amp; Save
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="resetAllUiBtn">
+                <i class="bx bx-refresh me-1"></i> Reset All
+            </button>
+        </div>
+    </div>
+</form>
+
+<style>
+    .ui-section-header { background:#f8f9fc; border-bottom:1px solid #e5e7eb; padding:10px 16px; }
+    .ui-color-item { display:flex; flex-direction:column; gap:4px; }
+    .ui-color-item label { font-size:12px; font-weight:600; color:#555; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ui-color-input { width:100%; height:40px; padding:3px 6px; border:1px solid #dee2e6; border-radius:6px; cursor:pointer; }
+    .ui-gradient-container { display:flex; align-items:center; justify-content:space-between; background:#f8f9fc; padding:8px 12px; border-radius:8px; border:1px solid #e5e7eb; gap:15px; }
+    .ui-gradient-inputs { display:flex; align-items:center; gap:10px; flex:1; }
+    .ui-color-mini { display:flex; flex-direction:column; gap:2px; flex:1; }
+    .ui-color-mini label { font-size:10px; font-weight:700; color:#777; margin:0; text-transform:uppercase; }
+    .ui-color-input-sm { width:100%; height:32px; padding:2px; border:1px solid #ddd; border-radius:4px; cursor:pointer; }
+    .ui-gradient-arrow { font-size:16px; color:#ccc; margin-top:14px; }
+    .ui-gradient-toggle-box { display:flex; flex-direction:column; align-items:center; gap:2px; border-left:1px solid #e5e7eb; padding-left:15px; }
+    .ui-gradient-toggle-box label { font-size:10px; font-weight:700; color:#777; margin:0; text-transform:uppercase; }
+</style>
+
+<script>
+window.Page = {
+    init: function () {
+        var FIELDS = [
+            { id: 'uiRootPrimary',         key: 'ui_root_primary',           def: '#8B0000' },
+            { id: 'uiSidebarBg',           key: 'ui_sidebar_bg',             def: '#ffffff' },
+            { id: 'uiSidebarBg2',          key: 'ui_sidebar_bg_2',           def: '#ffffff' },
+            { id: 'uiSidebarText',         key: 'ui_sidebar_text',           def: '#404142' },
+            { id: 'uiSidebarActive',       key: 'ui_sidebar_active',         def: '#8B0000' },
+            { id: 'uiSidebarActiveText',   key: 'ui_sidebar_active_text',    def: '#ffffff' },
+            { id: 'uiSidebarSubmenuBg',    key: 'ui_sidebar_submenu_bg',     def: '#ffffff' },
+            { id: 'uiHeaderBg',            key: 'ui_header_bg',              def: '#ffffff' },
+            { id: 'uiHeaderBg2',           key: 'ui_header_bg_2',            def: '#ffffff' },
+            { id: 'uiHeaderText',          key: 'ui_header_text',            def: '#404142' },
+            { id: 'uiHeaderBorder',        key: 'ui_header_border',          def: '#e5e7eb' },
+            { id: 'uiBtnHeaderBg',         key: 'ui_btn_header_bg',          def: '#8B0000' },
+            { id: 'uiBtnHeaderHoverBg',    key: 'ui_btn_header_hover_bg',    def: '#720000' },
+            { id: 'uiBtnHeaderText',       key: 'ui_btn_header_text',        def: '#ffffff' },
+            { id: 'uiBtnHeaderBorder',     key: 'ui_btn_header_border',      def: '#8B0000' },
+            { id: 'uiFooterBg',            key: 'ui_footer_bg',              def: '#ffffff' },
+            { id: 'uiFooterBg2',           key: 'ui_footer_bg_2',            def: '#ffffff' },
+            { id: 'uiFooterText',          key: 'ui_footer_text',            def: '#6c757d' },
+            { id: 'uiFooterBorder',        key: 'ui_footer_border',          def: '#e5e7eb' },
+            { id: 'uiFooterAccent',        key: 'ui_footer_accent',          def: '#8B0000' },
+            { id: 'uiFormBorder',          key: 'ui_form_border',            def: '#c9ccd3' },
+            { id: 'uiFormFocusBorder',     key: 'ui_form_focus_border',      def: '#8B0000' },
+            { id: 'uiTableHeaderBg',       key: 'ui_table_header_bg',        def: '#8B0000' },
+            { id: 'uiTableHeaderText',     key: 'ui_table_header_text',      def: '#ffffff' },
+            { id: 'uiTableBorder',         key: 'ui_table_border',           def: '#e9ecef' },
+            { id: 'uiTableRowHover',       key: 'ui_table_row_hover',        def: '#e6f3ff' },
+            { id: 'uiTableText',           key: 'ui_table_text',             def: '#212b36' },
+            { id: 'uiReportHeader',        key: 'ui_report_header',          def: '#f4f4f4' },
+            { id: 'uiReportHeaderText',    key: 'ui_report_header_text',     def: '#111111' },
+            { id: 'uiReportTitle',         key: 'ui_report_title',           def: '#1b2850' },
+            { id: 'uiReportSummaryBox',    key: 'ui_report_summary_box',     def: '#ffffff' },
+            { id: 'uiReportSummaryText',   key: 'ui_report_summary_text',    def: '#212b36' },
+            { id: 'uiReportTableHead',     key: 'ui_report_table_head',      def: '#8B0000' },
+            { id: 'uiReportTableHeadText', key: 'ui_report_table_head_text', def: '#ffffff' },
+            { id: 'uiReportRowAlt',        key: 'ui_report_row_alt',         def: '#f9f9f9' }
+        ];
+
+        var GRADIENT_TOGGLES = [
+            { key: 'ui_sidebar_gradient', id: 'uiSidebarGradient' },
+            { key: 'ui_header_gradient',  id: 'uiHeaderGradient'  },
+            { key: 'ui_footer_gradient',  id: 'uiFooterGradient'  }
+        ];
+
+        var SECTION_DEFAULTS = {
+            common:  ['uiRootPrimary'],
+            sidebar: ['uiSidebarBg','uiSidebarBg2','uiSidebarText','uiSidebarActive','uiSidebarActiveText','uiSidebarSubmenuBg'],
+            header:  ['uiHeaderBg','uiHeaderBg2','uiHeaderText','uiHeaderBorder','uiBtnHeaderBg','uiBtnHeaderHoverBg','uiBtnHeaderText','uiBtnHeaderBorder'],
+            footer:  ['uiFooterBg','uiFooterBg2','uiFooterText','uiFooterBorder','uiFooterAccent'],
+            forms:   ['uiFormBorder','uiFormFocusBorder'],
+            tables:  ['uiTableHeaderBg','uiTableHeaderText','uiTableBorder','uiTableRowHover','uiTableText'],
+            report:  ['uiReportHeader','uiReportHeaderText','uiReportTitle','uiReportSummaryBox','uiReportSummaryText','uiReportTableHead','uiReportTableHeadText','uiReportRowAlt']
+        };
+
+        var paths   = window.APP_PATHS || {};
+        var apiBase = paths.API_BASE || '/api';
+
+        function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+        function load() {
+            $.get(apiBase + '/ui-settings/read.php')
+                .done(function (r) {
+                    var d = (r && r.data) || {};
+                    FIELDS.forEach(function (f) {
+                        var v = d[f.key];
+                        if (v) { $('#' + f.id).val(v); lsSet(f.key, v); }
+                    });
+                    GRADIENT_TOGGLES.forEach(function (t) {
+                        var v = d[t.key];
+                        if (v !== undefined) {
+                            $('#' + t.id).prop('checked', v === '1');
+                            lsSet(t.key, v);
+                        }
+                    });
+                    if (typeof window.applyUISettings === 'function') window.applyUISettings();
+                });
+        }
+
+        function collectPayload() {
+            var p = {};
+            FIELDS.forEach(function (f) { p[f.key] = $('#' + f.id).val() || ''; });
+            GRADIENT_TOGGLES.forEach(function (t) {
+                p[t.key] = $('#' + t.id).is(':checked') ? '1' : '0';
+            });
+            return p;
+        }
+
+        $('#uiSettingsForm').off('submit.ui').on('submit.ui', function (e) {
+            e.preventDefault();
+            var payload = collectPayload();
+            var $btn = $('#saveUiSettingsBtn').prop('disabled', true)
+                .html('<span class="spinner-border spinner-border-sm me-1"></span>Saving...');
+            $.ajax({
+                url: apiBase + '/ui-settings/update.php',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload)
+            }).done(function (r) {
+                if (r && r.success) {
+                    Object.keys(payload).forEach(function (k) { lsSet(k, payload[k]); });
+                    if (typeof window.applyUISettings === 'function') window.applyUISettings();
+                    if (window.Toast) Toast.success('UI settings saved');
+                } else {
+                    if (window.Toast) Toast.error((r && r.message) || 'Save failed');
+                }
+            }).fail(function () {
+                if (window.Toast) Toast.error('Server error');
+            }).always(function () {
+                $btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Apply & Save');
+            });
+        });
+
+        // Live preview on change
+        FIELDS.forEach(function (f) {
+            $('#' + f.id).off('input.ui').on('input.ui', function () {
+                lsSet(f.key, $(this).val());
+                if (typeof window.applyUISettings === 'function') window.applyUISettings();
+            });
+        });
+        GRADIENT_TOGGLES.forEach(function (t) {
+            $('#' + t.id).off('change.ui').on('change.ui', function () {
+                lsSet(t.key, $(this).is(':checked') ? '1' : '0');
+                if (typeof window.applyUISettings === 'function') window.applyUISettings();
+            });
+        });
+
+        // Section reset
+        $(document).off('click.uireset').on('click.uireset', '[data-reset]', function () {
+            var section = $(this).data('reset');
+            var ids = SECTION_DEFAULTS[section] || [];
+            var byId = {}; FIELDS.forEach(function (f) { byId[f.id] = f; });
+            ids.forEach(function (id) {
+                var f = byId[id]; if (!f) return;
+                $('#' + id).val(f.def);
+                lsSet(f.key, '');
+            });
+            if (section === 'sidebar') { $('#uiSidebarGradient').prop('checked', false); lsSet('ui_sidebar_gradient', '0'); }
+            if (section === 'header')  { $('#uiHeaderGradient').prop('checked', false);  lsSet('ui_header_gradient',  '0'); }
+            if (section === 'footer')  { $('#uiFooterGradient').prop('checked', false);  lsSet('ui_footer_gradient',  '0'); }
+            if (typeof window.applyUISettings === 'function') window.applyUISettings();
+        });
+
+        // Reset all
+        $('#resetAllUiBtn').off('click.uiall').on('click.uiall', function () {
+            FIELDS.forEach(function (f) { $('#' + f.id).val(f.def); lsSet(f.key, ''); });
+            GRADIENT_TOGGLES.forEach(function (t) { $('#' + t.id).prop('checked', false); lsSet(t.key, '0'); });
+            if (typeof window.applyUISettings === 'function') window.applyUISettings();
+        });
+
+        load();
+    }
+};
+</script>

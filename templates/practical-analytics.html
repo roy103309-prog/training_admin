@@ -1,0 +1,185 @@
+<style>
+.pa-tile { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; background: #fff; height: 100%; }
+.pa-tile .t { font-size: 11px; text-transform: uppercase; color: #6c757d; letter-spacing: .3px; }
+.pa-tile .v { font-size: 22px; font-weight: 700; color: #1f2937; }
+.pa-tile .s { font-size: 12px; color: #6c757d; }
+.pa-tile.hero { background: #0f4f47; border-color: #0f4f47; }
+.pa-tile.hero .t, .pa-tile.hero .s { color: #a7f3d0; }
+.pa-tile.hero .v { color: #fff; }
+.pa-row { display: grid; grid-template-columns: minmax(110px, 180px) 1fr 150px; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+.pa-row:last-child { border-bottom: 0; }
+.pa-track { height: 10px; background: #f1f5f9; border-radius: 0 4px 4px 0; }
+.pa-bar { height: 10px; background: #0f766e; border-radius: 0 4px 4px 0; }
+.pa-num { text-align: right; font-size: 13px; color: #1f2937; white-space: nowrap; }
+.pa-num small { color: #6c757d; }
+.pa-presets .btn.active { background: #0f766e; color: #fff; border-color: #0f766e; }
+</style>
+
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Analytics &amp; Category Reports</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0"><button class="btn btn-outline-secondary" id="paPrint"><i class="bx bx-printer"></i> Print Report</button></div>
+</div>
+
+<div class="card"><div class="card-body">
+    <div class="row g-2 align-items-center">
+        <div class="col-auto btn-group btn-group-sm pa-presets" id="paPresets">
+            <button class="btn btn-outline-secondary" data-p="month">This Month</button>
+            <button class="btn btn-outline-secondary" data-p="last">Last Month</button>
+            <button class="btn btn-outline-secondary" data-p="year">This Year</button>
+            <button class="btn btn-outline-secondary active" data-p="all">All Time</button>
+        </div>
+        <div class="col-auto small ms-md-3">From:</div><div class="col-auto"><input type="date" class="form-control form-control-sm" id="paFrom"></div>
+        <div class="col-auto small">To:</div><div class="col-auto"><input type="date" class="form-control form-control-sm" id="paTo"></div>
+        <div class="col text-end small text-muted" id="paPeriod"></div>
+    </div>
+</div></div>
+
+<!-- Jobs per category -->
+<div class="row g-3 mb-3">
+    <div class="col-xl-8"><div class="card h-100 mb-0"><div class="card-body">
+        <h6 class="mb-0">Practical Welding Category Job Counts</h6>
+        <div class="small text-muted mb-3">প্রতিটি পজিশনে মোট টেস্ট জব (স্টুডেন্ট + আউট স্টুডেন্ট) ও মোট জবের কত শতাংশ</div>
+        <div id="paCats"></div>
+    </div></div></div>
+    <div class="col-xl-4">
+        <div class="row g-2">
+            <div class="col-6 col-xl-12"><div class="pa-tile hero"><div class="t">Grand Total Jobs</div><div class="v" id="paGrand">0</div><div class="s" id="paGrandSplit"></div></div></div>
+            <div class="col-6 col-xl-12"><div class="pa-tile"><div class="t">Job Fees (from deposits)</div><div class="v" id="paJobFees">৳0</div><div class="s">Student jobs in this period</div></div></div>
+            <div class="col-6 col-xl-12"><div class="pa-tile"><div class="t">Out Student Fees Collected</div><div class="v" id="paOutFees">৳0</div><div class="s">Cash from outside candidates</div></div></div>
+            <div class="col-6 col-xl-12"><div class="pa-tile"><div class="t">Return / Retrain Entries</div><div class="v" id="paReturns">0</div><div class="s" id="paReturnSplit"></div></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <!-- Overseas -->
+    <div class="col-lg-6"><div class="card h-100 mb-0"><div class="card-body">
+        <h6 class="mb-0"><i class="bx bx-award"></i> Overseas Placement Status</h6>
+        <div class="small text-muted mb-3">সব স্টুডেন্ট — নির্বাচিত বনাম ইন্টারভিউ দেওয়া (স্টুডেন্টের প্রোফাইল থেকে আপডেট হয়)</div>
+        <div id="paOverseas"></div>
+        <div class="small text-muted mt-3" id="paCountries"></div>
+    </div></div></div>
+    <!-- Finance -->
+    <div class="col-lg-6"><div class="card h-100 mb-0"><div class="card-body">
+        <h6 class="mb-0"><i class="bx bx-dollar"></i> Center Financial Summary</h6>
+        <div class="small text-muted mb-3">চুক্তি, জমা ও বকেয়া (সব স্টুডেন্ট)</div>
+        <div class="row g-2">
+            <div class="col-6"><div class="pa-tile"><div class="t">Total Contract Value</div><div class="v" id="paContract">৳0</div></div></div>
+            <div class="col-6"><div class="pa-tile"><div class="t">Total Received Deposit</div><div class="v text-success" id="paDeposit">৳0</div></div></div>
+            <div class="col-6"><div class="pa-tile" style="background:#fffbeb;border-color:#fde68a"><div class="t">Total Outstanding Course Due</div><div class="v text-danger" id="paDue">৳0</div></div></div>
+            <div class="col-6"><div class="pa-tile"><div class="t">Deposit Received in Period</div><div class="v" id="paPeriodDeposit">৳0</div></div></div>
+        </div>
+    </div></div></div>
+</div>
+
+<!-- Store -->
+<div class="card"><div class="card-body">
+    <h6 class="mb-0">Store Movement in Period</h6>
+    <div class="small text-muted mb-2">এই সময়ে কোন মালামাল কত এসেছে ও কত খরচ হয়েছে</div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Product</th><th class="text-end">Received (IN)</th><th class="text-end">Issued (OUT)</th><th class="text-end">Current Stock</th></tr></thead>
+            <tbody id="paStore"></tbody>
+        </table>
+    </div>
+</div></div>
+
+<script>
+window.Page = {
+    _data: null,
+    init: function() {
+        var self = this;
+        self._load();
+        $('#paFrom,#paTo').off('change.pa').on('change.pa', function(){ $('#paPresets .btn').removeClass('active'); self._load(); });
+        $('#paPresets').off('click.pa').on('click.pa', '.btn', function(){
+            $('#paPresets .btn').removeClass('active'); $(this).addClass('active');
+            self._preset($(this).data('p')); self._load();
+        });
+        $('#paPrint').off('click.pa').on('click.pa', function(){ self._print(); });
+    },
+    destroy: function() {
+        $('#paFrom,#paTo,#paPresets,#paPrint').off('.pa');
+    },
+    _ymd: function(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); },
+    _preset: function(p) {
+        var n = new Date(), from = '', to = '';
+        if (p === 'month') { from = this._ymd(new Date(n.getFullYear(), n.getMonth(), 1)); to = this._ymd(new Date(n.getFullYear(), n.getMonth() + 1, 0)); }
+        if (p === 'last') { from = this._ymd(new Date(n.getFullYear(), n.getMonth() - 1, 1)); to = this._ymd(new Date(n.getFullYear(), n.getMonth(), 0)); }
+        if (p === 'year') { from = n.getFullYear() + '-01-01'; to = n.getFullYear() + '-12-31'; }
+        $('#paFrom').val(from); $('#paTo').val(to);
+    },
+    _periodText: function() {
+        var f = $('#paFrom').val(), t = $('#paTo').val();
+        return (f || t) ? (f ? PracticalPrint.dmy(f) : 'Start') + ' — ' + (t ? PracticalPrint.dmy(t) : 'Today') : 'All Time';
+    },
+    _load: function() {
+        var self = this;
+        $.get('api/practical-analytics.php', { from: $('#paFrom').val(), to: $('#paTo').val() }, function(r){
+            if (!r.success) { Toast.error(r.message); return; }
+            self._data = r.data;
+            self._render(r.data);
+        });
+    },
+    _bar: function(label, value, max, numHtml, tip) {
+        var pct = max > 0 ? Math.round(value / max * 100) : 0;
+        return '<div class="pa-row" title="' + NL.esc(tip) + '"><div class="text-truncate">' + NL.esc(label) + '</div>' +
+            '<div class="pa-track"><div class="pa-bar" style="width:' + (value > 0 ? Math.max(pct, 1) : 0) + '%"></div></div><div class="pa-num">' + numHtml + '</div></div>';
+    },
+    _render: function(d) {
+        var self = this, m = function(v){ return '৳' + NL.money(v); };
+        var t = d.totals, grand = t.student_jobs + t.out_jobs;
+        $('#paPeriod').text(self._periodText());
+
+        var max = Math.max.apply(null, d.categories.map(function(c){ return Number(c.student_jobs) + Number(c.out_jobs); }).concat([0]));
+        $('#paCats').html(d.categories.map(function(c){
+            var total = Number(c.student_jobs) + Number(c.out_jobs), share = grand ? Math.round(total / grand * 100) : 0;
+            return self._bar(c.name, total, max, '<b>' + total + '</b> <small>(' + share + '%)</small>',
+                c.name + ': ' + c.student_jobs + ' student job(s), ' + c.out_jobs + ' out-student job(s)');
+        }).join('') || '<div class="text-muted small">No job categories yet.</div>');
+
+        $('#paGrand').text(grand); $('#paGrandSplit').text('Student ' + t.student_jobs + ' · Out student ' + t.out_jobs);
+        $('#paJobFees').text(m(t.student_payable)); $('#paOutFees').text(m(t.out_paid));
+        var rt = d.returns;
+        $('#paReturns').text(rt.retrain + rt.plate_returned + rt.failed);
+        $('#paReturnSplit').text('Retrain ' + rt.retrain + ' · Plate Returned ' + rt.plate_returned + ' · Failed ' + rt.failed);
+
+        var ov = d.overseas, ovTotal = Object.keys(ov).reduce(function(s, k){ return s + ov[k]; }, 0);
+        var ovText = { selected: 'Selected for Foreign Employment', interview: 'Interview Attended / Pending Selection', not_applied: 'Training In-Progress / Not Applied' };
+        $('#paOverseas').html(['selected', 'interview', 'not_applied'].map(function(k){
+            return self._bar(ovText[k], ov[k], ovTotal, '<b>' + ov[k] + '</b> <small>Students</small>', d.overseas_labels[k] + ': ' + ov[k] + ' of ' + ovTotal + ' students');
+        }).join(''));
+        $('#paCountries').html(d.countries.length ? 'Selected by country: ' + d.countries.map(function(c){ return NL.esc(c.country) + ' <b>' + c.c + '</b>'; }).join(' · ') : '');
+
+        var f = d.finance;
+        $('#paContract').text(m(f.contract)); $('#paDeposit').text(m(f.deposit)); $('#paDue').text(m(f.due)); $('#paPeriodDeposit').text(m(f.period_deposit));
+
+        $('#paStore').html(d.store.map(function(s){
+            var q = function(v){ return Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + NL.esc(s.unit); };
+            return '<tr><td>' + NL.esc(s.name) + '</td><td class="text-end">' + q(s.qty_in) + '</td><td class="text-end">' + q(s.qty_out) + '</td><td class="text-end fw-semibold">' + q(s.current_stock) + '</td></tr>';
+        }).join('') || '<tr><td colspan="4" class="text-center text-muted">No store movement in this period.</td></tr>');
+    },
+    _print: function() {
+        var d = this._data;
+        if (!d) return;
+        var t = d.totals, grand = t.student_jobs + t.out_jobs, f = d.finance, rt = d.returns, ov = d.overseas, money = PracticalPrint.money;
+        PracticalPrint.table('Practical Category Job Report', [
+            { t: 'Job Category', v: function(c){ return c.name; } },
+            { t: 'Student Jobs', v: function(c){ return c.student_jobs; }, r: true },
+            { t: 'Job Fees (Deposit)', v: function(c){ return money(c.student_payable); }, r: true },
+            { t: 'Out Student Jobs', v: function(c){ return c.out_jobs; }, r: true },
+            { t: 'Out Fees Collected', v: function(c){ return money(c.out_paid); }, r: true },
+            { t: 'Share', v: function(c){ return (grand ? Math.round((Number(c.student_jobs) + Number(c.out_jobs)) / grand * 100) : 0) + '%'; }, r: true }
+        ], d.categories, {
+            subtitle: 'Period: ' + this._periodText(),
+            footFrom: 2, foot: [t.student_jobs, money(t.student_payable), t.out_jobs, money(t.out_paid), grand ? '100%' : '0%'],
+            summary: '<span>Retrain: <b>' + rt.retrain + '</b></span><span>Plate Returned: <b>' + rt.plate_returned + '</b></span><span>Failed: <b>' + rt.failed + '</b></span><br><br>' +
+                '<span>Overseas — Selected: <b>' + ov.selected + '</b></span><span>Interview: <b>' + ov.interview + '</b></span><span>Not Applied: <b>' + ov.not_applied + '</b></span><br><br>' +
+                '<span>Contract: <b>' + money(f.contract) + '</b></span><span>Deposit: <b>' + money(f.deposit) + '</b></span><span>Course Due: <b>' + money(f.due) + '</b></span>' +
+                '<span>Deposit in period: <b>' + money(f.period_deposit) + '</b></span>'
+        });
+    }
+};
+</script>

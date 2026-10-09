@@ -1,0 +1,105 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Employee Documents</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <a href="admin/employees" data-route class="btn btn-sm btn-outline-secondary"><i class="bx bx-list-ul"></i> Employee List</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-5">
+        <div class="card"><div class="card-body">
+            <input class="form-control mb-2" id="edSearch" placeholder="Search employee...">
+            <div class="list-group" id="edEmployees" style="max-height:62vh;overflow:auto"><div class="list-group-item text-muted">Loading...</div></div>
+        </div></div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body" id="edEmpty"><p class="text-muted mb-0">Select an employee to see and upload documents (CV, NID, certificates, contracts ...).</p></div>
+            <div class="card-body d-none" id="edPanel">
+                <h5 class="mb-0" id="edName"></h5>
+                <div class="text-muted mb-3" id="edMeta"></div>
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col-md-9"><label class="form-label">Add documents (PDF / image / Word)</label>
+                        <input type="file" class="form-control" id="edFiles" multiple accept=".pdf,.doc,.docx,image/*"></div>
+                    <div class="col-md-3"><button class="btn btn-primary w-100" id="edUpload"><i class="bx bx-upload"></i> Upload</button></div>
+                </div>
+                <ul class="list-group" id="edDocs"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    _items: [], _current: null,
+    init: function() {
+        var self = this;
+        self._loadEmployees();
+        $('#edSearch').off('input.ed').on('input.ed', function(){ self._renderEmployees(); });
+        $('#edEmployees').off('click.ed').on('click.ed', '.ed-emp', function(){ self._select($(this).data('id')); });
+        $('#edUpload').off('click.ed').on('click.ed', function(){ self._upload(); });
+        $('#edDocs').off('click.ed').on('click.ed', '.ed-del', function(){ if (confirm('Delete this document?')) self._del($(this).data('id')); });
+    },
+    destroy: function() { $('#edSearch,#edEmployees,#edUpload,#edDocs').off('.ed'); },
+    _loadEmployees: function() {
+        var self = this;
+        $.get('api/hr/employees-extra-list.php', function(r){
+            if (!r.success) { $('#edEmployees').html('<div class="list-group-item text-danger">' + NL.esc(r.message) + '</div>'); return; }
+            self._items = r.data.items;
+            self._renderEmployees();
+        });
+    },
+    _renderEmployees: function() {
+        var self = this, q = ($('#edSearch').val() || '').toLowerCase();
+        $('#edEmployees').html(self._items.filter(function(e){ return !q || (e.name + ' ' + (e.employee_code || '') + ' ' + (e.mobile || '')).toLowerCase().indexOf(q) !== -1; }).map(function(e){
+            return '<button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center ed-emp' + (self._current && self._current.id == e.id ? ' active' : '') + '" data-id="' + e.id + '">' +
+                '<span>' + NL.esc(e.name) + '<br><small>' + NL.esc(e.employee_code || ('ID ' + e.id)) + (e.mobile ? ' · ' + NL.esc(e.mobile) : '') + '</small></span>' +
+                (e.doc_count > 0 ? '<span class="badge bg-primary">' + e.doc_count + '</span>' : '') + '</button>';
+        }).join('') || '<div class="list-group-item text-muted">No employees in this branch</div>');
+    },
+    _select: function(id) {
+        var self = this;
+        self._current = self._items.find(function(e){ return e.id == id; }) || null;
+        if (!self._current) return;
+        $('#edEmpty').addClass('d-none'); $('#edPanel').removeClass('d-none');
+        $('#edName').text(self._current.name);
+        $('#edMeta').text([self._current.employee_code, self._current.mobile].filter(Boolean).join(' · '));
+        $('#edEmployees .ed-emp').removeClass('active').filter('[data-id="' + id + '"]').addClass('active');
+        self._loadDocs();
+    },
+    _loadDocs: function() {
+        var self = this;
+        $.get('api/hr/employee-documents-list.php', { user_id: self._current.id }, function(r){
+            if (!r.success) return;
+            $('#edDocs').html(r.data.items.map(function(d){
+                return '<li class="list-group-item d-flex justify-content-between align-items-center">' +
+                    '<a href="' + NL.esc(NL.media(d.file_path)) + '" target="_blank"><i class="bx bx-file"></i> ' + NL.esc(d.original_name || d.file_path.split('/').pop()) + '</a>' +
+                    '<span class="text-nowrap"><small class="text-muted me-2">' + NL.esc((d.created_at || '').slice(0, 10)) + '</small>' +
+                    '<button class="btn btn-sm btn-outline-danger ed-del" data-id="' + d.id + '"><i class="bx bx-trash"></i></button></span></li>';
+            }).join('') || '<li class="list-group-item text-muted">No documents yet</li>');
+            var e = self._items.find(function(x){ return x.id == self._current.id; });
+            if (e && e.doc_count != r.data.items.length) { e.doc_count = r.data.items.length; self._renderEmployees(); }
+        });
+    },
+    _upload: function() {
+        var self = this, files = $('#edFiles')[0].files;
+        if (!self._current) return;
+        if (!files.length) { Toast.error('Please choose at least one file'); return; }
+        var fd = new FormData();
+        fd.append('user_id', self._current.id);
+        for (var i = 0; i < files.length; i++) fd.append('documents[]', files[i]);
+        var $btn = $('#edUpload').prop('disabled', true);
+        $.ajax({ url: 'api/hr/employee-documents-upload.php', method: 'POST', data: fd, processData: false, contentType: false })
+        .done(function(r){ if (r.success) { Toast.success(r.message); $('#edFiles').val(''); self._loadDocs(); } else Toast.error(r.message); })
+        .always(function(){ $btn.prop('disabled', false); });
+    },
+    _del: function(id) {
+        var self = this;
+        $.ajax({ url: 'api/hr/employee-documents-delete.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ id: id }) })
+        .done(function(r){ if (r.success) { Toast.success(r.message); self._loadDocs(); } else Toast.error(r.message); });
+    }
+};
+</script>

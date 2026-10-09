@@ -1,0 +1,340 @@
+<div class="content">
+    <style>
+        .sms-body-col {
+            width: 100%;
+            max-width: 420px;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            line-height: 1.4;
+        }
+    </style>
+    <div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+        <div class="d-flex flex-column">
+            <div class="breadcrumb-title">SMS Templates</div>
+            <nav aria-label="breadcrumb" class="mt-1">
+                <ol class="breadcrumb mb-0 p-0"></ol>
+            </nav>
+        </div>
+        <div class="ms-auto ms-md-0">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTemplateModal"><i class="bx bx-plus"></i> Add Template</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Kind</th>
+                            <th>Language</th>
+                            <th>SMS Body</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="templatesTableBody">
+                        <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Template Modal -->
+<div class="modal fade" id="addTemplateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="templateModalTitle">Add Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="templateForm">
+                <div class="modal-body">
+                    <input type="hidden" id="templateId" />
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="templateName" required />
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="templateIsStatic" />
+                        <label class="form-check-label" for="templateIsStatic">Static template (no variables)</label>
+                    </div>
+                    <div class="mb-3" id="templateTypeWrap">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="templateType">
+                            <option value="">Select SMS Type</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Language</label>
+                        <select class="form-select" id="templateLanguage">
+                            <option value="Bangla">Bangla</option>
+                            <option value="English">English</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="templateVarSuggestWrap">
+                        <label class="form-label">Variable Suggestions</label>
+                        <div id="typeVariableSuggestions" class="border rounded p-2 bg-light mb-2">
+                            <small class="text-muted">Select an SMS type to load variable suggestions.</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-control" id="templateContent" rows="6" required></textarea>
+                        <small class="text-muted" id="templateContentHelp">Use variables like <code>{CUSTOMER_NAME}</code>, <code>{BOOKING_ID}</code>, <code>{CURRENT_DATE}</code></small>
+                    </div>
+                    <div class="mb-3" id="detectedVariablesWrap">
+                        <label class="form-label">Detected Variables</label>
+                        <div id="detectedVariables" class="border rounded p-2 bg-light">None</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Template</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    window.__smsTypeCatalog = {};
+    loadTypes();
+    loadTemplates();
+    setupForm();
+});
+
+function loadTypes() {
+    $.ajax({
+        url: 'api/sms/templates.php?action=types',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (!(resp.success && resp.data && resp.data.types)) return;
+            var options = ['<option value="">Select SMS Type</option>'];
+            resp.data.types.forEach(function(t) {
+                window.__smsTypeCatalog[t.slug] = t;
+                options.push('<option value="' + escapeHtml(t.slug) + '">' + escapeHtml(t.label) + '</option>');
+            });
+            $('#templateType').html(options.join(''));
+        }
+    });
+}
+
+function loadTemplates() {
+    $.ajax({
+        url: 'api/sms/templates.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data.templates) {
+                var html = resp.data.templates.map(function(t) {
+                    var kind = parseInt(t.is_static, 10) === 1
+                        ? '<span class="badge bg-secondary">Static</span>'
+                        : '<span class="badge bg-info">Dynamic</span>';
+                    return '<tr>' +
+                        '<td>' + t.name + '</td>' +
+                        '<td>' + kind + '</td>' +
+                        '<td>' + (t.language || 'Bangla') + '</td>' +
+                        '<td class="sms-body-col">' + escapeHtml((t.content || '').toString()) + '</td>' +
+                        '<td>' +
+                        '<a href="javascript:void(0);" class="btn btn-sm btn-primary edit-template" data-id="' + t.id + '"><i class="bx bx-edit"></i></a>' +
+                        '<a href="javascript:void(0);" class="btn btn-sm btn-danger delete-template" data-id="' + t.id + '"><i class="bx bx-trash"></i></a>' +
+                        '</td>' +
+                        '</tr>';
+                }).join('');
+                $('#templatesTableBody').html(html || '<tr><td colspan="5" class="text-center">No templates found</td></tr>');
+            }
+        }
+    });
+}
+
+function setupForm() {
+    $('#templateType').off('change').on('change', function() {
+        renderTypeSuggestions($(this).val());
+    });
+
+    $('#templateIsStatic').off('change').on('change', function() {
+        applyStaticToggle($(this).is(':checked'));
+    });
+
+    $(document).off('click', '.insert-var').on('click', '.insert-var', function() {
+        insertAtCursor($('#templateContent').get(0), '{' + ($(this).data('var') || '') + '}');
+        updateDetectedVariables();
+    });
+
+    $('#templateForm').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        var id = $('#templateId').val();
+        var isStatic = $('#templateIsStatic').is(':checked') ? 1 : 0;
+        var data = {
+            id: id,
+            name: $('#templateName').val(),
+            type: isStatic ? '' : $('#templateType').val(),
+            language: $('#templateLanguage').val(),
+            content: $('#templateContent').val(),
+            is_static: isStatic
+        };
+        if (!isStatic && !data.type) { alert('Please select SMS type or mark as static'); return; }
+
+        var method = id ? 'PUT' : 'POST';
+        $.ajax({
+            url: 'api/sms/templates.php',
+            method: method,
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            success: function(resp) {
+                if (resp.success) {
+                    $('#addTemplateModal').modal('hide');
+                    $('#templateForm')[0].reset();
+                    $('#templateId').val('');
+                    loadTemplates();
+                    alert('Template saved successfully');
+                } else {
+                    alert('Error: ' + resp.message);
+                }
+            }
+        });
+    });
+
+    $(document).off('click', '.edit-template').on('click', '.edit-template', function() {
+        var id = $(this).data('id');
+        $('#templateModalTitle').text('Edit Template');
+        // Load and populate template
+        $.ajax({
+            url: 'api/sms/templates.php?id=' + id,
+            method: 'GET',
+            dataType: 'json',
+            success: function(resp) {
+                if (resp.success && resp.data.templates && resp.data.templates.length > 0) {
+                    var t = resp.data.templates[0];
+                    $('#templateId').val(t.id);
+                    $('#templateName').val(t.name);
+                    $('#templateType').val(t.type);
+                    $('#templateLanguage').val(t.language || 'Bangla');
+                    $('#templateContent').val(t.content);
+                    var isStatic = parseInt(t.is_static, 10) === 1;
+                    $('#templateIsStatic').prop('checked', isStatic);
+                    applyStaticToggle(isStatic);
+                    renderTypeSuggestions(t.type || '');
+                    updateDetectedVariables();
+                    $('#addTemplateModal').modal('show');
+                }
+            }
+        });
+    });
+
+    $(document).off('click', '.delete-template').on('click', '.delete-template', function() {
+        var id = $(this).data('id');
+        if (confirm('Are you sure you want to delete this template?')) {
+            $.ajax({
+                url: 'api/sms/templates.php',
+                method: 'DELETE',
+                contentType: 'application/json',
+                data: JSON.stringify({id: id}),
+                dataType: 'json',
+                success: function(resp) {
+                    if (resp.success) {
+                        loadTemplates();
+                        alert('Template deleted successfully');
+                    } else {
+                        alert('Error: ' + resp.message);
+                    }
+                }
+            });
+        }
+    });
+
+    $('#addTemplateModal').off('hidden.bs.modal').on('hidden.bs.modal', function() {
+        $('#templateForm')[0].reset();
+        $('#templateId').val('');
+        $('#templateModalTitle').text('Add Template');
+        $('#templateType').val('');
+        $('#templateIsStatic').prop('checked', false);
+        applyStaticToggle(false);
+        $('#typeVariableSuggestions').html('<small class="text-muted">Select an SMS type to load variable suggestions.</small>');
+        $('#detectedVariables').html('None');
+    });
+
+    $('#templateContent').off('input').on('input', updateDetectedVariables);
+}
+
+function applyStaticToggle(isStatic) {
+    if (isStatic) {
+        $('#templateTypeWrap, #templateVarSuggestWrap, #detectedVariablesWrap').hide();
+        $('#templateType').prop('required', false);
+        $('#templateContentHelp').text('Static template — no variables will be processed.');
+    } else {
+        $('#templateTypeWrap, #templateVarSuggestWrap, #detectedVariablesWrap').show();
+        $('#templateType').prop('required', true);
+        $('#templateContentHelp').html('Use variables like <code>{CUSTOMER_NAME}</code>, <code>{BOOKING_ID}</code>, <code>{CURRENT_DATE}</code>');
+    }
+}
+
+function renderTypeSuggestions(typeSlug) {
+    var type = (window.__smsTypeCatalog || {})[typeSlug];
+    if (!type) {
+        $('#typeVariableSuggestions').html('<small class="text-muted">Select an SMS type to load variable suggestions.</small>');
+        return;
+    }
+    var vars = type.variables || [];
+    if (!vars.length) {
+        $('#typeVariableSuggestions').html('<small class="text-muted">No type-bound variables.</small>');
+        return;
+    }
+    var html = '<div class="mb-2"><strong>' + escapeHtml(type.label) + '</strong> <small class="text-muted">(' + escapeHtml(type.entity_type || '-') + ')</small></div>';
+    html += vars.map(function(v) {
+        return '<button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1 insert-var" data-var="' + escapeHtml(v) + '">{' + escapeHtml(v) + '}</button>';
+    }).join('');
+    $('#typeVariableSuggestions').html(html);
+}
+
+function extractVariables(content) {
+    var matches = content.toUpperCase().match(/\{([A-Z0-9_]+)\}/g) || [];
+    var vars = {};
+    matches.forEach(function(v) {
+        vars[v.replace(/[{}]/g, '')] = true;
+    });
+    return Object.keys(vars).sort();
+}
+
+function updateDetectedVariables() {
+    var vars = extractVariables($('#templateContent').val() || '');
+    $('#detectedVariables').html(renderVars(vars));
+}
+
+function renderVars(vars) {
+    if (!vars || vars.length === 0) {
+        return 'None';
+    }
+    return vars.map(function(v) {
+        return '<span class="badge bg-secondary me-1 mb-1">{' + v + '}</span>';
+    }).join('');
+}
+
+function insertAtCursor(textarea, text) {
+    if (!textarea) return;
+    var start = textarea.selectionStart || 0;
+    var end = textarea.selectionEnd || 0;
+    var value = textarea.value || '';
+    textarea.value = value.substring(0, start) + text + value.substring(end);
+    textarea.focus();
+    var pos = start + text.length;
+    textarea.selectionStart = pos;
+    textarea.selectionEnd = pos;
+}
+
+function escapeHtml(v) {
+    return (v || '').toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+</script>

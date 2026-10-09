@@ -1,0 +1,235 @@
+<style>
+.pj-stat { border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 14px; background: #fff; min-width: 130px; }
+.pj-stat .t { font-size: 11px; text-transform: uppercase; color: #6c757d; }
+.pj-stat .v { font-size: 20px; font-weight: 700; }
+.pj-stat.main { border-color: #99dccf; background: #f0fbf8; }
+.pj-student { border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; background: #f8fafc; }
+.pj-student img { width: 48px; height: 56px; object-fit: cover; border-radius: 6px; }
+.pj-verify .btn { flex: 1; }
+</style>
+
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Daily Job Register</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <button class="btn btn-primary" id="pjNewBtn"><i class="bx bx-plus"></i> New Job Entry</button>
+    </div>
+</div>
+
+<div class="card"><div class="card-body">
+    <div class="row g-2 align-items-center">
+        <div class="col-auto"><label class="col-form-label"><i class="bx bx-calendar"></i> Select Date:</label></div>
+        <div class="col-auto"><input type="date" class="form-control" id="pjDate"></div>
+        <div class="col-auto"><select class="form-select no-select2" id="pjCategory"><option value="0">All Categories</option></select></div>
+        <div class="col text-end">
+            <button class="btn btn-success" id="pjDailyPrint"><i class="bx bx-printer"></i> Daily Print</button>
+            <button class="btn btn-outline-secondary" id="pjMonthlyPrint"><i class="bx bx-printer"></i> Monthly Print</button>
+            <button class="btn btn-outline-success" id="pjCsv"><i class="bx bx-file"></i> Export CSV</button>
+        </div>
+    </div>
+</div></div>
+
+<div class="d-flex flex-wrap gap-2 mb-3" id="pjStats"></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between mb-2">
+        <h6 class="mb-0" id="pjTitle">Job Register</h6>
+        <span class="small text-muted">Auto sequential daily number tracking</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>SL</th><th>Job Number</th><th>Trainee Name</th><th>Student ID</th><th>Job Category</th><th class="text-end">Standard Price</th><th class="text-end">Discount</th><th class="text-end">Payable</th><th>Verified</th><th class="text-end">Actions</th></tr></thead>
+            <tbody id="tableBody"><tr><td colspan="10" class="text-center">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div></div>
+
+<!-- Issue job modal -->
+<div class="modal fade" id="pjModal"><div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header"><h5 class="mb-0">Issue New Practical Job (জব ইস্যু ও টোকেন প্রিন্ট)</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <label class="form-label">Student ID (স্টুডেন্ট কোড) *</label>
+        <div class="input-group mb-2">
+            <input class="form-control" id="pjCode" placeholder="Enter Student ID (e.g. STD-260001) and press Enter" autocomplete="off">
+            <button class="btn btn-outline-primary" id="pjFind"><i class="bx bx-search"></i> Find</button>
+        </div>
+        <div class="pj-student d-none mb-3" id="pjStudent"></div>
+
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Job Category *</label><select class="form-select no-select2" id="pjCat"></select>
+                <div class="small mt-1" id="pjQuota"></div></div>
+            <div class="col-md-6"><label class="form-label">Job Testing Date *</label><input type="date" class="form-control" id="pjJobDate"></div>
+        </div>
+
+        <div class="border rounded p-3 my-3 bg-light">
+            <label class="form-label fw-semibold">ভেরিফিকেশন মেথড (Verification for Token Print) *</label>
+            <div class="d-flex gap-2 pj-verify mb-2">
+                <button type="button" class="btn btn-outline-secondary" disabled title="ফিঙ্গার স্ক্যানার এখনো যুক্ত হয়নি"><i class="bx bx-fingerprint"></i> বায়ো ফিঙ্গার (শীঘ্রই)</button>
+                <button type="button" class="btn btn-primary"><i class="bx bx-shield-quarter"></i> সুপারভাইজার ভেরিফিকেশন</button>
+            </div>
+            <select class="form-select no-select2" id="pjSupervisor"><option value="">-- Supervisor (optional) --</option></select>
+            <div class="small text-muted mt-1">টোকেনে "বায়ো ফিঙ্গার অথবা সুপারভাইজার ভেরিফিকেশন" নোট ও সুপারভাইজারের স্বাক্ষরের ঘর থাকবে।</div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Price (৳)</label><input class="form-control bg-light" id="pjPrice" readonly></div>
+            <div class="col-md-4"><label class="form-label">Discount (৳)</label><input type="number" min="0" step="0.01" class="form-control" id="pjDiscount" value="0"></div>
+            <div class="col-md-4"><label class="form-label">Payable (৳)</label><input class="form-control fw-bold text-success" id="pjPayable" readonly></div>
+            <div class="col-12"><label class="form-label">Remarks</label><input class="form-control" id="pjRemarks" maxlength="255"></div>
+        </div>
+        <div class="alert alert-danger py-2 mt-3 mb-0 d-none" id="pjWarn"></div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="pjIssue" disabled><i class="bx bx-printer"></i> Issue Job &amp; Print 80mm Token</button>
+    </div>
+</div></div></div>
+
+<script>
+window.Page = {
+    _cats: [], _items: [], _summary: null, _student: null, _taken: {},
+    init: function() {
+        var self = this;
+        $('#pjDate').val(NL.today());
+        $.get('api/practical-categories-list.php', function(r){
+            if (!r.success) return;
+            self._cats = r.data.items;
+            $('#pjCategory').html('<option value="0">All Categories (' + self._cats.length + ')</option>' + self._cats.map(function(c){ return '<option value="' + c.id + '">' + NL.esc(c.name) + '</option>'; }).join(''));
+            // Opened from a student's page (?student=ID) or a dashboard shortcut (?new=1); needs the categories first
+            var sid = parseInt(NL.query('student'), 10);
+            if (sid) { self._open(); self._find({ id: sid }); }
+            else if (NL.query('new')) self._open();
+        });
+        $.get('api/hr/employees-extra-list.php', function(r){
+            if (!r.success) return;
+            $('#pjSupervisor').append(r.data.items.filter(function(e){ return e.isactive == 1; }).map(function(e){ return '<option value="' + e.id + '">' + NL.esc(e.name) + '</option>'; }).join(''));
+        });
+        self._load();
+
+        $('#pjDate,#pjCategory').off('change.pj').on('change.pj', function(){ self._load(); });
+        $('#pjNewBtn').off('click.pj').on('click.pj', function(){ self._open(); });
+        $('#pjFind').off('click.pj').on('click.pj', function(){ self._find({ code: $('#pjCode').val().trim() }); });
+        $('#pjCode').off('keydown.pj').on('keydown.pj', function(e){ if (e.key === 'Enter') { e.preventDefault(); self._find({ code: $(this).val().trim() }); } });
+        $('#pjCat,#pjDiscount').off('change.pj input.pj').on('change.pj input.pj', function(){ self._calc(); });
+        $('#pjIssue').off('click.pj').on('click.pj', function(){ self._issue(); });
+        $('#pjDailyPrint').off('click.pj').on('click.pj', function(){ PracticalPrint.register('Daily Job Register — ' + self._dmy($('#pjDate').val()), self._items, self._summary); });
+        $('#pjMonthlyPrint').off('click.pj').on('click.pj', function(){ self._monthly(); });
+        $('#pjCsv').off('click.pj').on('click.pj', function(){ PracticalPrint.csv('job-register-' + $('#pjDate').val() + '.csv', self._items); });
+        $(document).off('click.pj-tok').on('click.pj-tok', '.pj-tok', function(){
+            var win = PracticalPrint.prepare();
+            $.get('api/practical-jobs-get.php', { id: $(this).data('id') }, function(r){
+                if (r.success) PracticalPrint.token(r.data.job, win); else { if (win) win.close(); Toast.error(r.message); }
+            });
+        });
+        $(document).off('click.pj-del').on('click.pj-del', '.pj-del', function(){
+            if (!confirm('Delete job ' + $(this).data('no') + '? Its payable goes back to the student\'s job balance.')) return;
+            $.ajax({ url: 'api/practical-jobs-delete.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ id: $(this).data('id') }) })
+            .done(function(r){ if (r.success) { Toast.success(r.message); self._load(); } else Toast.error(r.message); });
+        });
+    },
+    destroy: function() {
+        $('#pjDate,#pjCategory,#pjNewBtn,#pjFind,#pjCode,#pjCat,#pjDiscount,#pjIssue,#pjDailyPrint,#pjMonthlyPrint,#pjCsv').off('.pj');
+        $(document).off('click.pj-tok click.pj-del');
+    },
+    _dmy: function(d) { var p = String(d || '').split('-'); return p.length === 3 ? p[2] + '-' + p[1] + '-' + p[0] : d; },
+    _load: function() {
+        var self = this, date = $('#pjDate').val();
+        $.get('api/practical-jobs-list.php', { date: date, category_id: $('#pjCategory').val() }, function(r){
+            if (!r.success) { Toast.error(r.message); return; }
+            self._items = r.data.items; self._summary = r.data.summary;
+            $('#pjTitle').text('Job Register for ' + self._dmy(date) + ' (' + r.data.summary.count + ')');
+            self._render();
+        });
+    },
+    _render: function() {
+        var s = this._summary, counts = {};
+        s.by_category.forEach(function(c){ counts[c.name] = c.count; });
+        var stats = '<div class="pj-stat"><div class="t">Total Date Jobs</div><div class="v">' + s.count + '</div></div>' +
+            '<div class="pj-stat main"><div class="t">Total Payable</div><div class="v">৳' + NL.money(s.payable) + '</div></div>';
+        stats += this._cats.filter(function(c){ return c.is_active == 1 || counts[c.name]; }).map(function(c){
+            return '<div class="pj-stat"><div class="t">' + NL.esc(c.name) + '</div><div class="v">' + (counts[c.name] || 0) + '</div></div>';
+        }).join('');
+        $('#pjStats').html(stats);
+        $('#tableBody').html(this._items.map(function(j, i){
+            var verify = j.verify_method === 'biometric' ? '<span class="badge bg-info">Finger</span>' : '<span class="badge bg-light text-dark">' + NL.esc(j.verified_by_name || 'Supervisor') + '</span>';
+            return '<tr><td>' + (i + 1) + '</td><td class="font-monospace">' + NL.esc(j.job_no) + '</td>' +
+                '<td><a href="admin/students/view?id=' + j.student_id + '" class="nl-link">' + NL.esc(j.student_name || '(deleted)') + '</a></td>' +
+                '<td>' + NL.esc(j.student_code) + '</td><td><span class="badge bg-light text-dark border">' + NL.esc(j.category_name) + '</span></td>' +
+                '<td class="text-end">৳' + NL.money(j.price) + '</td><td class="text-end">' + (Number(j.discount) > 0 ? '৳' + NL.money(j.discount) : '-') + '</td>' +
+                '<td class="text-end fw-semibold">৳' + NL.money(j.payable) + '</td><td>' + verify + '</td>' +
+                '<td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-primary pj-tok" data-id="' + j.id + '"><i class="bx bx-printer"></i> Token</button> ' +
+                '<button class="btn btn-sm btn-outline-danger pj-del" data-id="' + j.id + '" data-no="' + NL.esc(j.job_no) + '"><i class="bx bx-trash"></i></button></td></tr>';
+        }).join('') || '<tr><td colspan="10" class="text-center text-muted py-4">No jobs recorded on this date.</td></tr>');
+    },
+    _monthly: function() {
+        var month = ($('#pjDate').val() || NL.today()).substring(0, 7), win = PracticalPrint.prepare();
+        $.get('api/practical-jobs-list.php', { month: month, category_id: $('#pjCategory').val() }, function(r){
+            if (r.success) PracticalPrint.register('Monthly Job Register — ' + month.split('-').reverse().join('-'), r.data.items, r.data.summary, win);
+            else { if (win) win.close(); Toast.error(r.message); }
+        });
+    },
+
+    // ---- Issue job ----
+    _open: function() {
+        this._student = null; this._taken = {};
+        $('#pjCode').val(''); $('#pjStudent').addClass('d-none').empty();
+        $('#pjJobDate').val($('#pjDate').val() || NL.today());
+        $('#pjCat').html(this._cats.filter(function(c){ return c.is_active == 1; }).map(function(c){ return '<option value="' + c.id + '">' + NL.esc(c.name) + '</option>'; }).join(''));
+        $('#pjDiscount').val(0); $('#pjRemarks').val(''); $('#pjSupervisor').val('');
+        this._calc();
+        $('#pjModal').modal('show');
+        setTimeout(function(){ $('#pjCode').trigger('focus'); }, 400);
+    },
+    _find: function(q) {
+        var self = this;
+        if (!q.code && !q.id) return;
+        $.get('api/practical-student-lookup.php', q, function(r){
+            if (!r.success) { self._student = null; $('#pjStudent').removeClass('d-none').html('<span class="text-danger">' + NL.esc(r.message) + '</span>'); self._calc(); return; }
+            var s = r.data.student;
+            self._student = s; self._taken = r.data.taken || {};
+            $('#pjCode').val(s.student_id);
+            var photo = s.photo ? NL.media(s.photo) : 'assets/images/avatars/avatar-2.png';
+            $('#pjStudent').removeClass('d-none').html(
+                '<div class="d-flex gap-3 align-items-center"><img src="' + NL.esc(photo) + '" onerror="this.src=\'assets/images/avatars/avatar-2.png\'">' +
+                '<div class="flex-fill"><div class="fw-bold">' + NL.esc(s.name) + ' <span class="badge bg-secondary">' + NL.esc(s.status) + '</span></div>' +
+                '<div class="small text-muted">' + NL.esc(s.student_id) + (s.course_name ? ' · ' + NL.esc(s.course_name) : '') + '</div></div>' +
+                '<div class="text-end small"><div>Deposit: ৳' + NL.money(s.paid_amount) + '</div><div>Jobs (' + s.job_count + '): ৳' + NL.money(s.job_used) + '</div>' +
+                '<div class="fw-bold ' + (s.job_balance > 0 ? 'text-success' : 'text-danger') + '">Job Balance: ৳' + NL.money(s.job_balance) + '</div></div></div>');
+            self._calc();
+        });
+    },
+    _calc: function() {
+        var self = this, cat = self._cats.find(function(c){ return c.id == $('#pjCat').val(); });
+        var price = cat ? Number(cat.fee) : 0, discount = Math.max(0, Number($('#pjDiscount').val()) || 0);
+        var payable = Math.max(0, price - discount), warn = '';
+        $('#pjPrice').val('৳' + NL.money(price)); $('#pjPayable').val('৳' + NL.money(payable));
+        if (cat && self._student) {
+            var taken = Number(self._taken[cat.id] || 0), max = Number(cat.max_jobs);
+            $('#pjQuota').html(max > 0 ? 'এই ক্যাটাগরিতে নেওয়া জব: <b>' + taken + ' / ' + max + '</b>' : 'নেওয়া জব: <b>' + taken + '</b> (সীমা নেই)');
+            if (max > 0 && taken >= max) warn = 'কোটা শেষ: এই ক্যাটাগরিতে ' + max + 'টি জবের সবগুলো নেওয়া হয়ে গেছে।';
+            else if (payable > Number(self._student.job_balance)) warn = 'জব ব্যালেন্স যথেষ্ট নয় (৳' + NL.money(self._student.job_balance) + ')। আগে জমা নিন।';
+            else if (['inactive', 'dropped'].indexOf(self._student.status) !== -1) warn = 'স্টুডেন্ট ' + self._student.status + ', জব ইস্যু করা যাবে না।';
+        } else $('#pjQuota').empty();
+        if (discount > price) warn = 'ডিসকাউন্ট দামের বেশি হতে পারবে না।';
+        $('#pjWarn').toggleClass('d-none', !warn).text(warn);
+        $('#pjIssue').prop('disabled', !self._student || !cat || !!warn);
+    },
+    _issue: function() {
+        var self = this, $btn = $('#pjIssue').prop('disabled', true), win = PracticalPrint.prepare();
+        var d = { student_id: self._student.id, category_id: $('#pjCat').val(), job_date: $('#pjJobDate').val(), discount: $('#pjDiscount').val() || 0,
+                  verify_method: 'supervisor', verified_by: $('#pjSupervisor').val(), remarks: $('#pjRemarks').val() };
+        $.ajax({ url: 'api/practical-jobs-create.php', method: 'POST', contentType: 'application/json', data: JSON.stringify(d) })
+        .done(function(r){
+            if (!r.success) { if (win) win.close(); Toast.error(r.message); $btn.prop('disabled', false); return; }
+            Toast.success(r.message);
+            PracticalPrint.token(r.data.job, win);
+            $('#pjModal').modal('hide');
+            if (r.data.job.job_date !== $('#pjDate').val()) $('#pjDate').val(r.data.job.job_date);
+            self._load();
+        })
+        .fail(function(){ if (win) win.close(); $btn.prop('disabled', false); });
+    }
+};
+</script>

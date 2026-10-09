@@ -1,0 +1,132 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">New Admission</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <a href="admin/students/list" data-route class="btn btn-sm btn-outline-secondary"><i class="bx bx-list-ul"></i> Student List</a>
+    </div>
+</div>
+
+<form id="admForm" onsubmit="return false" novalidate>
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bx bx-user"></i> Student Information</h6></div><div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4"><label class="form-label">Student ID</label><input class="form-control" name="student_id" placeholder="Auto"></div>
+                <div class="col-md-4"><label class="form-label">Admission Date *</label><input type="date" class="form-control" name="admission_date" id="admDate"></div>
+                <div class="col-md-4"><label class="form-label">Blood Group</label>
+                    <select class="form-select no-select2" name="blood_group"><option value="">--</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+                <div class="col-md-8"><label class="form-label">Full Name *</label><input class="form-control" name="name" required></div>
+                <div class="col-md-4"><label class="form-label">Date of Birth</label><input type="date" class="form-control" name="dob"></div>
+                <div class="col-md-4"><label class="form-label">Mobile Number</label><input class="form-control" name="phone_number"></div>
+                <div class="col-md-4"><label class="form-label">NID Number</label><input class="form-control" name="nid"></div>
+                <div class="col-md-4"><label class="form-label">Passport Number</label><input class="form-control" name="passport_number"></div>
+                <div class="col-md-6"><label class="form-label">Present Address</label><textarea class="form-control" rows="2" name="present_address"></textarea></div>
+                <div class="col-md-6"><label class="form-label">Permanent Address</label><textarea class="form-control" rows="2" name="permanent_address"></textarea></div>
+            </div>
+        </div></div>
+
+        <div class="card"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bx bx-group"></i> Guardian &amp; Reference</h6></div><div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Father's Name</label><input class="form-control" name="father_name"></div>
+                <div class="col-md-6"><label class="form-label">Mother's Name</label><input class="form-control" name="mother_name"></div>
+                <div class="col-md-4"><label class="form-label">Guardian Relation</label><input class="form-control" name="guardian_relation" placeholder="e.g. Father"></div>
+                <div class="col-md-4"><label class="form-label">Guardian Mobile</label><input class="form-control" name="guardian_phone"></div>
+                <div class="col-md-4"><label class="form-label">Reference (Employee)</label><select class="form-select" name="reference_name" id="admReference"><option value="">None</option></select></div>
+                <div class="col-12"><label class="form-label">Reference Remarks</label><input class="form-control" name="reference_remarks"></div>
+            </div>
+        </div></div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bx bx-book"></i> Course &amp; Payment</h6></div><div class="card-body">
+            <div class="mb-3"><label class="form-label">Course *</label><select class="form-select" name="course_id" id="admCourse"><option value="">-- Select course --</option></select></div>
+            <div class="row">
+                <div class="col-6 mb-3"><label class="form-label">Course Fee</label><input type="number" min="0" step="0.01" class="form-control" name="course_fee" id="admFee"></div>
+                <div class="col-6 mb-3"><label class="form-label">Duration</label><input class="form-control" name="duration" id="admDuration"></div>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3"><label class="form-label">Paid Now</label><input type="number" min="0" step="0.01" class="form-control" name="paid_amount" id="admPaid" value="0"></div>
+                <div class="col-6 mb-3"><label class="form-label">Method</label><select class="form-select no-select2" name="payment_method_id" id="admMethod"></select></div>
+            </div>
+            <div class="d-flex justify-content-between border-top pt-2"><span>Due after admission</span><strong id="admDue">0</strong></div>
+        </div></div>
+
+        <div class="card"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bx bx-image"></i> Photo &amp; Documents</h6></div><div class="card-body">
+            <div class="text-center mb-2"><img id="admPhotoPreview" src="assets/images/avatars/avatar-2.png" class="rounded" style="width:110px;height:130px;object-fit:cover;border:1px solid #ddd"></div>
+            <input type="file" class="form-control mb-3" name="photo" id="admPhoto" accept="image/*">
+            <label class="form-label">Documents (PDF / image / Word)</label>
+            <input type="file" class="form-control" name="documents[]" multiple accept=".pdf,.doc,.docx,image/*">
+        </div></div>
+
+        <button type="submit" class="btn btn-primary w-100" id="admSubmit"><i class="bx bx-check"></i> Save Admission</button>
+        <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="admReset">Reset</button>
+    </div>
+</div>
+</form>
+
+<script>
+window.Page = {
+    _courses: [],
+    init: function() {
+        var self = this;
+        self._reset();
+        $.get('api/student-courses-list.php', { active: 1 }, function(r){
+            if (!r.success) return;
+            self._courses = r.data.items;
+            $('#admCourse').html('<option value="">-- Select course --</option>' + r.data.items.map(function(c){
+                return '<option value="' + c.id + '">' + NL.esc(c.name) + ' (' + NL.esc(c.category) + ')</option>';
+            }).join(''));
+        });
+        $.get('api/payment/methods-list.php', { limit: 100 }, function(r){
+            if (!r.success) return;
+            $('#admMethod').html(r.data.items.filter(function(m){ return m.isactive == 1; }).reverse().map(function(m){
+                return '<option value="' + m.id + '">' + NL.esc(m.name) + '</option>';
+            }).join(''));
+        });
+        $.get('api/hr/employees-list.php', { limit: 200, status: 'active' }, function(r){
+            if (!r.success) return;
+            $('#admReference').html('<option value="">None</option>' + r.data.items.map(function(e){
+                return '<option value="' + NL.esc(e.name) + '">' + NL.esc(e.name) + (e.designation ? ' — ' + NL.esc(e.designation) : '') + '</option>';
+            }).join(''));
+        });
+        $('#admCourse').off('change.adm').on('change.adm', function(){
+            var c = self._courses.find(function(x){ return x.id == $('#admCourse').val(); });
+            $('#admFee').val(c ? c.fee : ''); $('#admDuration').val(c ? c.duration : ''); self._due();
+        });
+        $('#admFee,#admPaid').off('input.adm').on('input.adm', function(){ self._due(); });
+        $('#admPhoto').off('change.adm').on('change.adm', function(){
+            if (this.files[0]) $('#admPhotoPreview').attr('src', URL.createObjectURL(this.files[0]));
+        });
+        $('#admSubmit').off('click.adm').on('click.adm', function(){ self._save(); });
+        $('#admReset').off('click.adm').on('click.adm', function(){ self._reset(); });
+    },
+    destroy: function() { $('#admCourse,#admFee,#admPaid,#admPhoto,#admSubmit,#admReset').off('.adm'); },
+    _reset: function() {
+        $('#admForm')[0].reset();
+        $('#admDate').val(NL.today());
+        $('#admPhotoPreview').attr('src', 'assets/images/avatars/avatar-2.png');
+        $('#admCourse').val('').trigger('change.select2');
+        this._due();
+    },
+    _due: function() {
+        var due = Math.max(0, (parseFloat($('#admFee').val()) || 0) - (parseFloat($('#admPaid').val()) || 0));
+        $('#admDue').text(due.toLocaleString());
+    },
+    _save: function() {
+        var self = this, form = $('#admForm')[0];
+        if (!form.name.value.trim()) { Toast.error('Student name is required'); return; }
+        if (!$('#admCourse').val()) { Toast.error('Please select a course'); return; }
+        var $btn = $('#admSubmit').prop('disabled', true);
+        $.ajax({ url: 'api/student-create.php', method: 'POST', data: new FormData(form), processData: false, contentType: false })
+        .done(function(r){
+            if (r.success) {
+                Toast.success(r.message);
+                window.NL.navigate('students/view?id=' + r.data.id);
+            } else Toast.error(r.message);
+        })
+        .always(function(){ $btn.prop('disabled', false); });
+    }
+};
+</script>

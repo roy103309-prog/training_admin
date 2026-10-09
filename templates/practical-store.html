@@ -1,0 +1,252 @@
+<style>
+.ps-stat { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 16px; background: #fff; }
+.ps-stat .t { font-size: 12px; text-transform: uppercase; color: #6c757d; }
+.ps-stat .v { font-size: 22px; font-weight: 700; }
+.ps-stat.in { background: #f0fbf8; border-color: #99dccf; }
+.ps-stat.out { background: #fffbeb; border-color: #fde68a; }
+.ps-stat.now { background: #eef2ff; border-color: #c7d2fe; }
+.ps-code { font-family: monospace; color: #0f766e; }
+.ps-stock { background: #dcfce7; color: #166534; border-radius: 20px; padding: 2px 10px; font-weight: 600; white-space: nowrap; }
+.ps-stock.zero { background: #fee2e2; color: #991b1b; }
+.ps-mv-in { background: #dcfce7; color: #166534; }
+.ps-mv-out { background: #fef3c7; color: #92400e; }
+</style>
+
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Store &amp; Inventory Management</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+</div>
+
+<div class="card"><div class="card-body">
+    <div class="row g-2 align-items-center">
+        <div class="col-md"><input class="form-control" id="psSearch" placeholder="Search products by name or item code..."></div>
+        <div class="col-auto d-flex gap-2">
+            <button class="btn btn-outline-secondary" id="psPrint"><i class="bx bx-printer"></i> Print Stock</button>
+            <button class="btn btn-success" id="psInBtn"><i class="bx bx-plus"></i> Product IN</button>
+            <button class="btn btn-warning" id="psOutBtn"><i class="bx bx-minus"></i> Product OUT</button>
+        </div>
+    </div>
+</div></div>
+
+<div class="row g-2 mb-3">
+    <div class="col-6 col-lg-3"><div class="ps-stat"><div class="t">Total Raw Items</div><div class="v" id="psItems">0</div></div></div>
+    <div class="col-6 col-lg-3"><div class="ps-stat in"><div class="t">Total Received (IN)</div><div class="v" id="psQtyIn">0</div></div></div>
+    <div class="col-6 col-lg-3"><div class="ps-stat out"><div class="t">Total Dispatched (OUT)</div><div class="v" id="psQtyOut">0</div></div></div>
+    <div class="col-6 col-lg-3"><div class="ps-stat now"><div class="t">Current Store Units</div><div class="v" id="psStock">0</div></div></div>
+</div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between mb-2"><h6 class="mb-0">Current Store Inventory</h6><span class="small text-muted" id="psCount"></span></div>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Product Code</th><th>Product Name</th><th>Unit</th><th class="text-end">Current Available Stock</th><th class="text-end">Actions</th></tr></thead>
+            <tbody id="psProducts"><tr><td colspan="5" class="text-center">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="row g-2 align-items-center mb-2">
+        <div class="col"><h6 class="mb-0">Stock Transaction Ledger (IN / OUT)</h6></div>
+        <div class="col-auto"><select class="form-select form-select-sm no-select2" id="psMovement"><option value="">IN &amp; OUT</option><option value="in">IN only</option><option value="out">OUT only</option></select></div>
+        <div class="col-auto small">From:</div><div class="col-auto"><input type="date" class="form-control form-control-sm" id="psFrom"></div>
+        <div class="col-auto small">To:</div><div class="col-auto"><input type="date" class="form-control form-control-sm" id="psTo"></div>
+        <div class="col-auto"><button class="btn btn-sm btn-outline-secondary" id="psLedgerPrint"><i class="bx bx-printer"></i></button>
+            <button class="btn btn-sm btn-outline-success" id="psLedgerCsv"><i class="bx bx-file"></i></button></div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Date</th><th>Code</th><th>Product Name</th><th>Movement</th><th class="text-end">Quantity</th><th>Challan / Ref</th><th>Remarks</th><th>By</th><th></th></tr></thead>
+            <tbody id="psLedger"><tr><td colspan="9" class="text-center">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div></div>
+
+<!-- Product IN / OUT -->
+<div class="modal fade" id="psModal"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="mb-0" id="psModalTitle">Product IN</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <label class="form-label">Quick Select Existing Item</label>
+        <select class="form-select no-select2 mb-3" id="psPick"></select>
+        <div class="row g-3">
+            <div class="col-6"><label class="form-label">Product Code</label><input class="form-control font-monospace ps-typed" id="psCode" maxlength="40" placeholder="e.g. E7018-3.2"></div>
+            <div class="col-6"><label class="form-label">Unit Type</label><input class="form-control ps-typed" id="psUnit" maxlength="20" value="pcs" list="psUnits">
+                <datalist id="psUnits"><option value="pcs"><option value="kg"><option value="cyl"><option value="box"><option value="pkt"><option value="ltr"><option value="mtr"></datalist></div>
+            <div class="col-12"><label class="form-label">Product Description *</label><input class="form-control ps-typed" id="psName" maxlength="190" placeholder="e.g. Welding Electrode E7018 3.2mm"></div>
+            <div class="col-6"><label class="form-label">Quantity *</label><input type="number" min="0.01" step="0.01" class="form-control" id="psQty" value="1"></div>
+            <div class="col-6"><label class="form-label">Date *</label><input type="date" class="form-control" id="psDate"></div>
+            <div class="col-12"><label class="form-label">Reference / Challan No</label><input class="form-control" id="psRef" maxlength="100" placeholder="e.g. Supplier Challan #1049"></div>
+            <div class="col-12"><label class="form-label">Remarks</label><textarea class="form-control" id="psRemarks" rows="2" maxlength="500" placeholder="Issued for booth practical training or received from vendor"></textarea></div>
+        </div>
+        <div class="alert py-2 mt-3 mb-0" id="psNote"></div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn" id="psSave">Save</button>
+    </div>
+</div></div></div>
+
+<!-- Edit product -->
+<div class="modal fade" id="psEditModal"><div class="modal-dialog modal-sm"><div class="modal-content">
+    <div class="modal-header"><h5 class="mb-0">Edit Product</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" id="psEditId">
+        <div class="mb-2"><label class="form-label">Product Code</label><input class="form-control font-monospace" id="psEditCode" maxlength="40"></div>
+        <div class="mb-2"><label class="form-label">Product Description *</label><input class="form-control" id="psEditName" maxlength="190"></div>
+        <div><label class="form-label">Unit Type</label><input class="form-control" id="psEditUnit" maxlength="20" list="psUnits"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" id="psEditSave">Save</button></div>
+</div></div></div>
+
+<script>
+window.Page = {
+    _products: [], _ledger: [], _summary: null, _move: 'in', _timer: null,
+    init: function() {
+        var self = this;
+        self._loadProducts();
+        self._loadLedger();
+        $('#psSearch').off('input.ps').on('input.ps', function(){ clearTimeout(self._timer); self._timer = setTimeout(function(){ self._loadProducts(); }, 300); });
+        $('#psFrom,#psTo,#psMovement').off('change.ps').on('change.ps', function(){ self._loadLedger(); });
+        $('#psInBtn').off('click.ps').on('click.ps', function(){ self._open('in'); });
+        $('#psOutBtn').off('click.ps').on('click.ps', function(){ self._open('out'); });
+        $('#psPick').off('change.ps').on('change.ps', function(){ self._pick(); });
+        $('#psQty').off('input.ps').on('input.ps', function(){ self._note(); });
+        $('#psSave').off('click.ps').on('click.ps', function(){ self._save(); });
+        $('#psEditSave').off('click.ps').on('click.ps', function(){ self._saveEdit(); });
+        $('#psPrint').off('click.ps').on('click.ps', function(){ self._printStock(); });
+        $('#psLedgerPrint').off('click.ps').on('click.ps', function(){ self._printLedger(); });
+        $('#psLedgerCsv').off('click.ps').on('click.ps', function(){ PracticalPrint.csvTable('store-ledger.csv', self._ledgerColumns(), self._ledger); });
+        $(document).off('click.ps-row').on('click.ps-row', '.ps-in,.ps-out', function(){ self._open($(this).hasClass('ps-in') ? 'in' : 'out', $(this).data('id')); });
+        $(document).off('click.ps-edit').on('click.ps-edit', '.ps-edit', function(){
+            var p = self._find($(this).data('id'));
+            $('#psEditId').val(p.id); $('#psEditCode').val(p.code || ''); $('#psEditName').val(p.name); $('#psEditUnit').val(p.unit);
+            $('#psEditModal').modal('show');
+        });
+        $(document).off('click.ps-pdel').on('click.ps-pdel', '.ps-pdel', function(){
+            if (confirm('Delete this product?')) self._post('api/practical-store-product-delete.php', { id: $(this).data('id') });
+        });
+        $(document).off('click.ps-ldel').on('click.ps-ldel', '.ps-ldel', function(){
+            if (confirm('Delete this ledger entry? The stock is corrected back.')) self._post('api/practical-store-ledger-delete.php', { id: $(this).data('id') });
+        });
+    },
+    destroy: function() {
+        clearTimeout(this._timer);
+        $('#psSearch,#psFrom,#psTo,#psMovement,#psInBtn,#psOutBtn,#psPick,#psQty,#psSave,#psEditSave,#psPrint,#psLedgerPrint,#psLedgerCsv').off('.ps');
+        $(document).off('click.ps-row click.ps-edit click.ps-pdel click.ps-ldel');
+    },
+    _qty: function(v) { return Number(v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }); },
+    _find: function(id) { return this._products.find(function(p){ return p.id == id; }); },
+    _post: function(url, data, done) {
+        var self = this;
+        $.ajax({ url: url, method: 'POST', contentType: 'application/json', data: JSON.stringify(data) })
+        .done(function(r){ if (r.success) { Toast.success(r.message); self._loadProducts(); self._loadLedger(); if (done) done(); } else Toast.error(r.message); });
+    },
+    _loadProducts: function() {
+        var self = this;
+        $.get('api/practical-store-products.php', { search: $('#psSearch').val() }, function(r){
+            if (!r.success) { Toast.error(r.message); return; }
+            var s = r.data.summary;
+            self._products = r.data.items; self._summary = s;
+            $('#psItems').text(s.products); $('#psQtyIn').text(self._qty(s.qty_in) + ' Units'); $('#psQtyOut').text(self._qty(s.qty_out) + ' Units'); $('#psStock').text(self._qty(s.stock) + ' Units');
+            $('#psCount').text(self._products.length + ' items');
+            $('#psProducts').html(self._products.map(function(p){
+                return '<tr><td class="ps-code">' + NL.esc(p.code || '—') + '</td><td class="fw-semibold">' + NL.esc(p.name) + '</td><td class="text-uppercase">' + NL.esc(p.unit) + '</td>' +
+                    '<td class="text-end"><span class="ps-stock' + (Number(p.current_stock) <= 0 ? ' zero' : '') + '">' + self._qty(p.current_stock) + ' ' + NL.esc(p.unit) + '</span></td>' +
+                    '<td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-success ps-in" data-id="' + p.id + '" title="Product IN"><i class="bx bx-plus"></i></button> ' +
+                    '<button class="btn btn-sm btn-outline-warning ps-out" data-id="' + p.id + '" title="Product OUT"><i class="bx bx-minus"></i></button> ' +
+                    '<button class="btn btn-sm btn-outline-primary ps-edit" data-id="' + p.id + '" title="Edit"><i class="bx bx-edit"></i></button> ' +
+                    (Number(p.txn_count) === 0 ? '<button class="btn btn-sm btn-outline-danger ps-pdel" data-id="' + p.id + '" title="Delete"><i class="bx bx-trash"></i></button>' : '') + '</td></tr>';
+            }).join('') || '<tr><td colspan="5" class="text-center text-muted py-4">No products yet. Use "Product IN" to receive the first item.</td></tr>');
+        });
+    },
+    _loadLedger: function() {
+        var self = this;
+        $.get('api/practical-store-ledger.php', { from: $('#psFrom').val(), to: $('#psTo').val(), movement: $('#psMovement').val() }, function(r){
+            if (!r.success) { Toast.error(r.message); return; }
+            self._ledger = r.data.items;
+            $('#psLedger').html(self._ledger.map(function(l){
+                return '<tr><td>' + PracticalPrint.dmy(l.txn_date) + '</td><td class="ps-code">' + NL.esc(l.code || '—') + '</td><td>' + NL.esc(l.product_name) + '</td>' +
+                    '<td><span class="badge ps-mv-' + l.movement + '">' + (l.movement === 'in' ? '↘ IN' : '↗ OUT') + '</span></td>' +
+                    '<td class="text-end fw-semibold">' + self._qty(l.quantity) + ' ' + NL.esc(l.unit) + '</td><td class="font-monospace small">' + NL.esc(l.reference || '-') + '</td>' +
+                    '<td class="small text-muted">' + NL.esc(l.remarks) + '</td><td class="small">' + NL.esc(l.created_by_name || '') + '</td>' +
+                    '<td class="text-end"><button class="btn btn-sm btn-outline-danger ps-ldel" data-id="' + l.id + '"><i class="bx bx-trash"></i></button></td></tr>';
+            }).join('') || '<tr><td colspan="9" class="text-center text-muted py-4">No transactions in this period.</td></tr>');
+        });
+    },
+
+    // ---- IN / OUT modal ----
+    _open: function(move, productId) {
+        var self = this;
+        self._move = move;
+        var isIn = move === 'in';
+        $('#psModalTitle').text(isIn ? 'Product IN (Receive into Store)' : 'Product OUT (Issue / Dispatch)');
+        $('#psSave').attr('class', 'btn ' + (isIn ? 'btn-success' : 'btn-warning')).text(isIn ? 'Save Product IN' : 'Save Product OUT');
+        $('#psPick').html('<option value="">' + (isIn ? '-- Choose existing product or type a new one below --' : '-- Choose product --') + '</option>' +
+            self._products.filter(function(p){ return isIn || Number(p.current_stock) > 0; }).map(function(p){
+                return '<option value="' + p.id + '">' + NL.esc((p.code ? p.code + ' — ' : '') + p.name) + ' (' + self._qty(p.current_stock) + ' ' + NL.esc(p.unit) + ')</option>';
+            }).join(''));
+        $('#psCode,#psName,#psRef,#psRemarks').val(''); $('#psUnit').val('pcs'); $('#psQty').val(1); $('#psDate').val(NL.today());
+        $('#psPick').val(productId || '');
+        self._pick();
+        $('#psModal').modal('show');
+    },
+    _pick: function() {
+        var p = this._find($('#psPick').val());
+        if (p) { $('#psCode').val(p.code || ''); $('#psName').val(p.name); $('#psUnit').val(p.unit); }
+        else if (this._move === 'out') { $('#psCode,#psName').val(''); }
+        // OUT works only on a chosen product; IN may type a new one
+        $('.ps-typed').prop('readonly', !!p || this._move === 'out');
+        this._note();
+    },
+    _note: function() {
+        var p = this._find($('#psPick').val()), qty = Number($('#psQty').val()) || 0, isIn = this._move === 'in', msg, bad = false;
+        if (isIn) msg = p ? 'এই পরিমাণ বর্তমান স্টক (' + this._qty(p.current_stock) + ' ' + p.unit + ') এর সাথে যোগ হবে।' : 'নতুন পণ্য হিসেবে স্টোরে যোগ হবে (একই কোডের পণ্য থাকলে সেটাতেই যোগ হবে)।';
+        else if (!p) { msg = 'যে পণ্য বের করবেন সেটি বেছে নিন।'; bad = true; }
+        else if (qty > Number(p.current_stock)) { msg = 'স্টকে আছে মাত্র ' + this._qty(p.current_stock) + ' ' + p.unit + '। এর বেশি বের করা যাবে না।'; bad = true; }
+        else msg = 'এই পরিমাণ স্টক থেকে বাদ যাবে এবং লেজারে লেখা হবে। বাকি থাকবে ' + this._qty(Number(p.current_stock) - qty) + ' ' + p.unit + '।';
+        $('#psNote').attr('class', 'alert py-2 mt-3 mb-0 ' + (bad ? 'alert-danger' : isIn ? 'alert-success' : 'alert-warning')).text(msg);
+        $('#psSave').prop('disabled', bad || qty <= 0);
+    },
+    _save: function() {
+        var self = this, $btn = $('#psSave').prop('disabled', true);
+        var d = { movement: self._move, product_id: $('#psPick').val(), code: $('#psCode').val(), name: $('#psName').val(), unit: $('#psUnit').val(),
+                  quantity: $('#psQty').val(), txn_date: $('#psDate').val(), reference: $('#psRef').val(), remarks: $('#psRemarks').val() };
+        self._post('api/practical-store-move.php', d, function(){ $('#psModal').modal('hide'); });
+        setTimeout(function(){ $btn.prop('disabled', false); }, 800);
+    },
+    _saveEdit: function() {
+        this._post('api/practical-store-product-save.php', { id: $('#psEditId').val(), code: $('#psEditCode').val(), name: $('#psEditName').val(), unit: $('#psEditUnit').val() },
+            function(){ $('#psEditModal').modal('hide'); });
+    },
+
+    // ---- Print ----
+    _printStock: function() {
+        var self = this;
+        PracticalPrint.table('Current Store Inventory', [
+            { t: 'Product Code', v: function(p){ return p.code || ''; } },
+            { t: 'Product Name', v: function(p){ return p.name; } },
+            { t: 'Unit', v: function(p){ return p.unit; } },
+            { t: 'Available Stock', v: function(p){ return self._qty(p.current_stock) + ' ' + p.unit; }, r: true }
+        ], self._products, { subtitle: 'Printed ' + PracticalPrint.dmy(NL.today()) });
+    },
+    _ledgerColumns: function() {
+        var self = this;
+        return [
+            { t: 'Date', v: function(l){ return PracticalPrint.dmy(l.txn_date); } },
+            { t: 'Code', v: function(l){ return l.code || ''; } },
+            { t: 'Product Name', v: function(l){ return l.product_name; } },
+            { t: 'Movement', v: function(l){ return l.movement.toUpperCase(); } },
+            { t: 'Quantity', v: function(l){ return self._qty(l.quantity) + ' ' + l.unit; }, r: true },
+            { t: 'Challan / Ref', v: function(l){ return l.reference; } },
+            { t: 'Remarks', v: function(l){ return l.remarks; } }
+        ];
+    },
+    _printLedger: function() {
+        var from = $('#psFrom').val(), to = $('#psTo').val();
+        PracticalPrint.table('Stock Transaction Ledger', this._ledgerColumns(), this._ledger,
+            { subtitle: (from || to) ? 'From ' + (from ? PracticalPrint.dmy(from) : 'start') + ' to ' + (to ? PracticalPrint.dmy(to) : 'today') : '' });
+    }
+};
+</script>

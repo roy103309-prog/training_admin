@@ -1,0 +1,205 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Role Permissions</div>
+        <nav aria-label="breadcrumb" class="mt-1">
+            <ol class="breadcrumb mb-0 p-0"></ol>
+    </nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <a href="admin/roles" data-route class="btn btn-sm btn-outline-secondary"><i class="bx bx-arrow-back"></i> Back to Roles</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="mb-3">
+            <label class="form-label">Select Role</label>
+            <select class="form-select" id="roleSelect" style="max-width: 300px;">
+                <option value="">-- Select Role --</option>
+            </select>
+        </div>
+
+        <div id="permissionsContainer" style="display:none;">
+            <div class="card border mb-3">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center mb-2 gap-2 flex-wrap">
+                        <strong class="me-2">Allowed Branches</strong>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnLocAll">Select All</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnLocNone">Clear</button>
+                        <small class="text-muted ms-2">Role can operate in checked branches only.</small>
+                    </div>
+                    <div id="locationCheckboxes" class="d-flex flex-wrap gap-3"></div>
+                </div>
+            </div>
+            <button class="btn btn-success mb-3" id="btnPermSave"><i class="bx bx-save"></i> Save Permissions</button>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Menu</th>
+                            <th><input type="checkbox" id="checkAllView"> View</th>
+                            <th><input type="checkbox" id="checkAllAdd"> Add</th>
+                            <th><input type="checkbox" id="checkAllEdit"> Edit</th>
+                            <th><input type="checkbox" id="checkAllDelete"> Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody id="permissionsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    _menus: [], _perms: {}, _locations: [], _roleLocations: [],
+
+    init: function () {
+        var self = this;
+
+        // Pick up ?role_id=... from the URL (preserved by SPA navigate)
+        var qs = new URLSearchParams(window.location.search);
+        var autoRoleId = qs.get('role_id');
+
+        self._loadRoles(autoRoleId);
+
+        $('#roleSelect').off('change.perm').on('change.perm', function () {
+            var id = $(this).val();
+            if (id) self._loadPerms(id);
+            else    $('#permissionsContainer').hide();
+        });
+
+        $('#btnPermSave').off('click.perm').on('click.perm', function () { self._save(); });
+
+        $('#checkAllView,#checkAllAdd,#checkAllEdit,#checkAllDelete').off('change.perm').on('change.perm', function () {
+            var col = $(this).attr('id').replace('checkAll', '').toLowerCase();
+            $('input[data-perm="' + col + '"]').prop('checked', $(this).is(':checked'));
+        });
+
+        $('#btnLocAll').off('click.perm').on('click.perm', function () {
+            $('#locationCheckboxes input[type=checkbox]').prop('checked', true);
+        });
+        $('#btnLocNone').off('click.perm').on('click.perm', function () {
+            $('#locationCheckboxes input[type=checkbox]').prop('checked', false);
+        });
+
+        $(document).off('change.perm-parent').on('change.perm-parent', '.parent-check', function () {
+            var parentId = $(this).data('parent-id');
+            var perm     = $(this).data('perm');
+            var checked  = $(this).is(':checked');
+            if (parentId) {
+                $('input.child-check[data-parent-menu="' + parentId + '"][data-perm="' + perm + '"]').prop('checked', checked);
+            }
+        });
+    },
+    destroy: function () {
+        $('#roleSelect,#btnPermSave,#btnLocAll,#btnLocNone,#checkAllView,#checkAllAdd,#checkAllEdit,#checkAllDelete').off('.perm');
+        $(document).off('change.perm-parent');
+    },
+
+    _loadRoles: function (autoRoleId) {
+        var self = this;
+        $.ajax({
+            url: 'api/user/roles-list.php',
+            success: function (r) {
+                if (!r.success) return;
+                var opts = '<option value="">-- Select Role --</option>' +
+                    r.data.items.map(function (i) { return '<option value="' + i.id + '">' + i.name + '</option>'; }).join('');
+                $('#roleSelect').html(opts);
+                if (autoRoleId) {
+                    $('#roleSelect').val(autoRoleId);
+                    self._loadPerms(autoRoleId);
+                }
+            }
+        });
+    },
+
+    _loadPerms: function (roleId) {
+        var self = this;
+        $.ajax({
+            url: 'api/user/permissions-get.php?role_id=' + roleId,
+            success: function (r) {
+                if (!r.success) return;
+                self._menus = r.data.menus;
+                self._perms = r.data.permissions;
+                self._locations     = r.data.locations || [];
+                self._roleLocations = r.data.role_locations || [];
+                self._renderLocations();
+                self._render();
+                $('#permissionsContainer').show();
+            }
+        });
+    },
+
+    _renderLocations: function () {
+        var self = this;
+        var sel = {};
+        self._roleLocations.forEach(function (id) { sel[id] = true; });
+        if (!self._locations.length) {
+            $('#locationCheckboxes').html('<span class="text-muted">No branches defined.</span>');
+            return;
+        }
+        var html = self._locations.map(function (loc) {
+            var checked = sel[loc.id] ? 'checked' : '';
+            var safe = String(loc.name).replace(/[&<>"]/g, function (c) {
+                return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c];
+            });
+            return '<label class="form-check form-check-inline mb-0">' +
+                       '<input type="checkbox" class="form-check-input rp-loc" value="' + loc.id + '" ' + checked + '>' +
+                       '<span class="form-check-label">' + safe + '</span>' +
+                   '</label>';
+        }).join('');
+        $('#locationCheckboxes').html(html);
+    },
+
+    _render: function () {
+        var self = this;
+        var html = self._menus.map(function (m) {
+            var p = self._perms[m.id] || { can_view: 0, can_add: 0, can_edit: 0, can_delete: 0 };
+            var isParent    = !m.parent_id;
+            var isDashboard = m.name === 'Dashboard';
+            var indent = m.parent_id ? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : '';
+            var rowCls = isParent ? 'table-primary fw-bold' : '';
+            var cbCls  = isParent ? 'parent-check' : 'child-check';
+            var menuAttr = isParent ? ('data-parent-id="' + m.id + '"') : ('data-parent-menu="' + m.parent_id + '"');
+
+            function cb(perm, val) {
+                return '<input type="checkbox" class="' + cbCls + '" data-menu="' + m.id + '" data-perm="' + perm + '" ' + menuAttr + (val ? ' checked' : '') + '>';
+            }
+            return '<tr class="' + rowCls + '">' +
+                '<td>' + indent + m.name + '</td>' +
+                '<td>' + cb('view',   p.can_view)   + '</td>' +
+                '<td>' + (isDashboard ? '-' : cb('add',    p.can_add))    + '</td>' +
+                '<td>' + (isDashboard ? '-' : cb('edit',   p.can_edit))   + '</td>' +
+                '<td>' + (isDashboard ? '-' : cb('delete', p.can_delete)) + '</td>' +
+                '</tr>';
+        }).join('');
+        $('#permissionsBody').html(html);
+    },
+
+    _save: function () {
+        var roleId = $('#roleSelect').val();
+        if (!roleId) { if (window.Toast) Toast.info('Select a role'); else alert('Select a role'); return; }
+        var perms = {};
+        this._menus.forEach(function (m) {
+            perms[m.id] = {
+                can_view:   $('input[data-menu="' + m.id + '"][data-perm="view"]').is(':checked')   ? 1 : 0,
+                can_add:    $('input[data-menu="' + m.id + '"][data-perm="add"]').is(':checked')    ? 1 : 0,
+                can_edit:   $('input[data-menu="' + m.id + '"][data-perm="edit"]').is(':checked')   ? 1 : 0,
+                can_delete: $('input[data-menu="' + m.id + '"][data-perm="delete"]').is(':checked') ? 1 : 0
+            };
+        });
+        var locationIds = [];
+        $('#locationCheckboxes input.rp-loc:checked').each(function () {
+            locationIds.push(parseInt($(this).val(), 10));
+        });
+        $.ajax({
+            url: 'api/user/permissions-update.php', method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ role_id: parseInt(roleId, 10), permissions: perms, location_ids: locationIds }),
+            success: function (r) { if (window.Toast) Toast.info(r.message); else alert(r.message); },
+            error:   function ()  { if (window.Toast) Toast.info('Failed');    else alert('Failed'); }
+        });
+    }
+};
+</script>

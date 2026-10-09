@@ -1,0 +1,482 @@
+<div class="content">
+    <div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+        <div class="d-flex flex-column">
+            <div class="breadcrumb-title">SMS Send</div>
+            <nav aria-label="breadcrumb" class="mt-1">
+                <ol class="breadcrumb mb-0 p-0"></ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="smsSendForm">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Send Mode</label>
+                        <select class="form-select" id="sendMode">
+                            <option value="single">Single</option>
+                            <option value="bulk" selected>Bulk</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Recipient Type</label>
+                        <select class="form-select" id="recipientTypeFilter">
+                            <option value="all">All</option>
+                            <option value="contact">Contact</option>
+                            <option value="customer">Customer</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Template Kind</label>
+                        <select class="form-select" id="templateKindFilter">
+                            <option value="all">All</option>
+                            <option value="dynamic">Dynamic</option>
+                            <option value="static">Static</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Template</label>
+                        <select class="form-select" id="templateSelect">
+                            <option value="">Manual Message</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Message Body</label>
+                        <textarea class="form-control" id="smsMessage" rows="5" required></textarea>
+                        <small class="text-muted">
+                            Characters: <span id="charCount">0</span> /
+                            <span id="charLimit">160</span> ·
+                            Encoding: <span id="smsEncoding">GSM-7</span> ·
+                            Parts: <span id="smsParts">0</span>
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Search Recipients</label>
+                        <input type="text" class="form-control" id="recipientSearch" placeholder="Search by name/phone/email">
+                        <div class="alert alert-info mt-3 mb-0 py-2">
+                            <div><strong>Balance:</strong> ৳<span id="balanceDisplay">0.00</span></div>
+                            <div class="small mt-1">
+                                SMS / recipient: <strong><span id="smsUnitsPerRecipient">0</span></strong> ·
+                                Recipients: <strong><span id="recipientCountDisplay">0</span></strong>
+                            </div>
+                            <div class="small">
+                                Total SMS to send: <strong><span id="totalSmsToSend">0</span></strong> ·
+                                Est. cost: <strong>৳<span id="estTotalCost">0.00</span></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <label class="form-label mb-0">Select Contact/Customer/Staff</label>
+                        <small class="text-muted">Selected: <span id="selectedCount">0</span></small>
+                    </div>
+                    <div class="table-responsive border rounded">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:40px"><input type="checkbox" id="selectAllRecipients"></th>
+                                    <th>Type</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recipientTableBody">
+                                <tr><td colspan="5" class="text-center text-muted py-3">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">SMS Preview For Selected Recipients</label>
+                    <div class="table-responsive border rounded">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Final SMS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewTableBody">
+                                <tr><td colspan="3" class="text-center text-muted py-3">Select recipients to preview SMS.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" id="previewBtn">Refresh Preview</button>
+                    <button type="submit" class="btn btn-primary">Send SMS</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(function () {
+    var templates = [];
+    var recipients = [];
+    var pricePerSms = 0;       // BDT per SMS (Non-Masking default)
+    var currentBalance = 0;    // BDT
+
+    // GSM-7 default alphabet (basic + extension)
+    var GSM7_BASIC = "@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\n\u00d8\u00f8\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\u00c6\u00e6\u00df\u00c9 !\"#\u00a4%&'()*+,-./0123456789:;<=>?\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0";
+    var GSM7_EXT   = "\f^{}\\[~]|\u20ac";
+
+    function smsUnits(msg) {
+        msg = msg || '';
+        var isGsm = true;
+        var len = 0;
+        for (var i = 0; i < msg.length; i++) {
+            var c = msg.charAt(i);
+            if (GSM7_BASIC.indexOf(c) !== -1) {
+                len += 1;
+            } else if (GSM7_EXT.indexOf(c) !== -1) {
+                len += 2;
+            } else {
+                isGsm = false;
+                break;
+            }
+        }
+        if (!isGsm) {
+            // Unicode: 70 chars / segment (67 multipart)
+            len = msg.length;
+            var single = 70, multi = 67;
+            var parts = (len === 0) ? 0 : (len <= single ? 1 : Math.ceil(len / multi));
+            return { encoding: 'Unicode', length: len, limit: parts <= 1 ? single : multi, parts: parts };
+        }
+        // GSM-7: 160 / segment (153 multipart)
+        var sGsm = 160, mGsm = 153;
+        var parts2 = (len === 0) ? 0 : (len <= sGsm ? 1 : Math.ceil(len / mGsm));
+        return { encoding: 'GSM-7', length: len, limit: parts2 <= 1 ? sGsm : mGsm, parts: parts2 };
+    }
+
+    function updateCounters() {
+        var msg = $('#smsMessage').val() || '';
+        var info = smsUnits(msg);
+        $('#charCount').text(info.length);
+        $('#charLimit').text(info.limit);
+        $('#smsEncoding').text(info.encoding);
+        $('#smsParts').text(info.parts);
+        $('#smsUnitsPerRecipient').text(info.parts);
+
+        var recCount = recipients.filter(function (r) { return r.selected; }).length;
+        $('#recipientCountDisplay').text(recCount);
+        var total = info.parts * recCount;
+        $('#totalSmsToSend').text(total);
+        $('#estTotalCost').text((total * pricePerSms).toFixed(2));
+    }
+
+    loadTemplates();
+    loadRecipients();
+    loadBalance();
+
+    $('#smsMessage').on('input', function () {
+        updateCounters();
+        renderPreview();
+    });
+
+    $('#templateSelect').on('change', function () {
+        var t = getTemplateById($(this).val());
+        $('#smsMessage').val(t ? (t.content || '') : '').trigger('input');
+    });
+
+    $('#recipientTypeFilter, #recipientSearch').on('change keyup', function () {
+        renderRecipientTable();
+    });
+
+    $('#sendMode').on('change', function () {
+        enforceSendMode();
+        renderRecipientTable();
+        renderPreview();
+    });
+
+    $('#selectAllRecipients').on('change', function () {
+        var checked = $(this).is(':checked');
+        var visible = getFilteredRecipients();
+
+        if ($('#sendMode').val() === 'single') {
+            recipients.forEach(function (r) { r.selected = false; });
+            if (checked && visible.length > 0) visible[0].selected = true;
+        } else {
+            visible.forEach(function (r) { r.selected = checked; });
+        }
+
+        renderRecipientTable();
+        renderPreview();
+    });
+
+    $(document).on('change', '.recipient-check', function () {
+        var key = String($(this).data('key'));
+        var row = recipients.find(function (x) { return x.key === key; });
+        if (!row) return;
+
+        if ($('#sendMode').val() === 'single') {
+            recipients.forEach(function (r) { r.selected = false; });
+        }
+        row.selected = $(this).is(':checked');
+        renderRecipientTable();
+        renderPreview();
+    });
+
+    $('#previewBtn').on('click', renderPreview);
+
+    $('#smsSendForm').on('submit', function (e) {
+        e.preventDefault();
+        sendSms();
+    });
+
+    function loadTemplates() {
+        $.ajax({
+            url: 'api/sms/templates.php',
+            method: 'GET',
+            dataType: 'json',
+            success: function (resp) {
+                templates = (resp && resp.success && resp.data && resp.data.templates) ? resp.data.templates : [];
+                renderTemplateOptions();
+            }
+        });
+    }
+
+    function renderTemplateOptions() {
+        var kind = ($('#templateKindFilter').val() || 'all').toLowerCase();
+        var html = ['<option value="">Manual Message</option>'];
+        templates.forEach(function (t) {
+            var isStatic = parseInt(t.is_static, 10) === 1;
+            if (kind === 'static' && !isStatic) return;
+            if (kind === 'dynamic' && isStatic) return;
+            var label = escapeHtml(t.name) + (isStatic ? ' [Static]' : '');
+            html.push('<option value="' + t.id + '">' + label + '</option>');
+        });
+        $('#templateSelect').html(html.join(''));
+    }
+
+    $('#templateKindFilter').on('change', function () {
+        renderTemplateOptions();
+        $('#templateSelect').val('').trigger('change');
+    });
+
+    function loadRecipients() {
+        $.when(
+            $.ajax({ url: 'api/sms/contacts.php', method: 'GET', dataType: 'json' }),
+            $.ajax({ url: 'api/user/users-list.php?limit=500&page=1', method: 'GET', dataType: 'json' })
+        ).done(function (contactResp, staffResp) {
+            var contacts = (contactResp[0] && contactResp[0].success && contactResp[0].data) ? (contactResp[0].data.contacts || []) : [];
+            var staffs = (staffResp[0] && staffResp[0].success && staffResp[0].data) ? (staffResp[0].data.items || staffResp[0].data.users || []) : [];
+
+            recipients = [];
+
+            contacts.forEach(function (c) {
+                recipients.push({
+                    key: 'contact-' + c.id,
+                    type: 'contact',
+                    id: c.id,
+                    ref: c.id,
+                    name: c.name || 'N/A',
+                    phone: c.phone || '',
+                    email: c.email || '',
+                    selected: false
+                });
+            });
+
+            staffs.forEach(function (u) {
+                recipients.push({
+                    key: 'staff-' + (u.id || u.uid || ''),
+                    type: 'staff',
+                    id: u.id || u.uid || '',
+                    ref: u.id || u.uid || '',
+                    name: u.name || 'N/A',
+                    phone: u.mobile || u.phone || '',
+                    email: u.email || '',
+                    selected: false
+                });
+            });
+
+            renderRecipientTable();
+        }).fail(function () {
+            $('#recipientTableBody').html('<tr><td colspan="6" class="text-center text-danger py-3">Failed to load recipients.</td></tr>');
+        });
+    }
+
+    function loadBalance() {
+        $.ajax({
+            url: 'api/sms/balance.php',
+            method: 'GET',
+            dataType: 'json',
+            success: function (resp) {
+                if (resp.success && resp.data) {
+                    var d = resp.data;
+                    currentBalance = parseFloat(d.non_masking || 0);
+                    pricePerSms = parseFloat(d.non_masking_price || 0);
+                    $('#balanceDisplay').text(currentBalance.toFixed(2));
+                    updateCounters();
+                }
+            }
+        });
+    }
+
+    function getTemplateById(id) {
+        if (!id) return null;
+        return templates.find(function (t) { return String(t.id) === String(id); }) || null;
+    }
+
+    function getFilteredRecipients() {
+        var type = ($('#recipientTypeFilter').val() || 'all').toLowerCase();
+        var s = ($('#recipientSearch').val() || '').toLowerCase().trim();
+
+        return recipients.filter(function (r) {
+            if (type !== 'all' && r.type !== type) return false;
+            if (!s) return true;
+            var hay = [r.name, r.phone, r.email, r.type, String(r.ref)].join(' ').toLowerCase();
+            return hay.indexOf(s) !== -1;
+        });
+    }
+
+    function enforceSendMode() {
+        if ($('#sendMode').val() !== 'single') return;
+        var sel = recipients.filter(function (r) { return r.selected; });
+        if (sel.length <= 1) return;
+        var keep = sel[0].key;
+        recipients.forEach(function (r) { r.selected = (r.key === keep); });
+    }
+
+    function renderRecipientTable() {
+        var rows = getFilteredRecipients();
+        if (rows.length === 0) {
+            $('#recipientTableBody').html('<tr><td colspan="5" class="text-center text-muted py-3">No recipients found.</td></tr>');
+            $('#selectedCount').text(recipients.filter(function (r) { return r.selected; }).length);
+            $('#selectAllRecipients').prop('checked', false);
+            return;
+        }
+
+        var html = rows.map(function (r) {
+            return '<tr>' +
+                '<td><input type="checkbox" class="recipient-check" data-key="' + escapeHtml(r.key) + '" ' + (r.selected ? 'checked' : '') + '></td>' +
+                '<td><span class="badge ' + (r.type === 'contact' ? 'bg-primary' : (r.type === 'customer' ? 'bg-success' : 'bg-dark')) + '">' + escapeHtml(r.type) + '</span></td>' +
+                '<td>' + escapeHtml(r.name) + '</td>' +
+                '<td>' + escapeHtml(r.phone || '-') + '</td>' +
+                '<td>' + escapeHtml(r.email || '-') + '</td>' +
+            '</tr>';
+        }).join('');
+
+        $('#recipientTableBody').html(html);
+
+        var selectedCount = recipients.filter(function (r) { return r.selected; }).length;
+        $('#selectedCount').text(selectedCount);
+
+        var allChecked = rows.length > 0 && rows.every(function (r) { return r.selected; });
+        $('#selectAllRecipients').prop('checked', allChecked);
+    }
+
+    function renderPreview() {
+        updateCounters();
+        var msg = ($('#smsMessage').val() || '').trim();
+        var selected = recipients.filter(function (r) { return r.selected; });
+
+        if (!msg || selected.length === 0) {
+            $('#previewTableBody').html('<tr><td colspan="3" class="text-center text-muted py-3">Select recipients to preview SMS.</td></tr>');
+            return;
+        }
+
+        var html = selected.map(function (r) {
+            var finalSms = applyVars(msg, r);
+            return '<tr>' +
+                '<td>' + escapeHtml(r.name || '-') + '</td>' +
+                '<td>' + escapeHtml(r.phone || '-') + '</td>' +
+                '<td>' + escapeHtml(finalSms || '-') + '</td>' +
+            '</tr>';
+        }).join('');
+
+        $('#previewTableBody').html(html);
+    }
+
+    function applyVars(msg, r) {
+        var now = new Date();
+        var vars = {
+            CUSTOMER_NAME: r.name || '',
+            CUSTOMER_PHONE: r.phone || '',
+            CUSTOMER_EMAIL: r.email || '',
+            USER_NAME: r.name || '',
+            USER_PHONE: r.phone || '',
+            CURRENT_DATE: now.toISOString().slice(0, 10),
+            CURRENT_TIME: now.toTimeString().slice(0, 8),
+            CURRENT_YEAR: String(now.getFullYear())
+        };
+
+        var out = msg;
+        Object.keys(vars).forEach(function (k) {
+            out = out.split('{' + k + '}').join(vars[k]);
+        });
+        return out;
+    }
+
+    function sendSms() {
+        var msg = ($('#smsMessage').val() || '').trim();
+        var sendMode = ($('#sendMode').val() || 'bulk').trim();
+        var templateId = ($('#templateSelect').val() || '').trim();
+        var tpl = getTemplateById(templateId);
+        var selected = recipients.filter(function (r) { return r.selected; });
+
+        if (!msg) { alert('Please write message'); return; }
+        if (selected.length === 0) { alert('Please select at least one recipient'); return; }
+        if (sendMode === 'single' && selected.length !== 1) { alert('Single mode requires exactly one recipient'); return; }
+
+        var payloadRecipients = selected.map(function (r) {
+            return {
+                name: r.name,
+                phone: r.phone,
+                entity_ref: String(r.ref || ''),
+                recipient_type: r.type
+            };
+        });
+
+        $.ajax({
+            url: 'api/sms/send.php',
+            method: 'POST',
+            contentType: 'application/json',
+            dataType: 'json',
+            data: JSON.stringify({
+                message: msg,
+                recipients: payloadRecipients,
+                send_mode: sendMode,
+                source: 'SMS Send Page',
+                template_id: templateId,
+                template_type: tpl ? (tpl.type || '') : '',
+                template_vars: {},
+                entity_refs: payloadRecipients.map(function (x) { return x.entity_ref; })
+            }),
+            success: function (resp) {
+                if (!resp.success) { alert('Error: ' + (resp.message || 'Failed')); return; }
+                var sent = (resp.data && resp.data.sent_count) || 0;
+                var failed = (resp.data && resp.data.failed_count) || 0;
+                alert('SMS sent. Sent: ' + sent + ', Failed: ' + failed);
+                loadBalance();
+            },
+            error: function (xhr) {
+                var m = 'Failed to send SMS';
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message) m = xhr.responseJSON.message;
+                alert(m);
+            }
+        });
+    }
+
+    function escapeHtml(v) {
+        return (v || '').toString()
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+});
+</script>

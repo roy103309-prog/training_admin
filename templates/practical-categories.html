@@ -1,0 +1,98 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Job Price &amp; Limits</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <button class="btn btn-primary" id="pcAddBtn"><i class="bx bx-plus"></i> নতুন জব যোগ করুন (Add Job)</button>
+    </div>
+</div>
+
+<div class="card border-primary d-none" id="pcAddCard"><div class="card-body">
+    <h6 class="mb-3"><i class="bx bx-plus"></i> নতুন জব ক্যাটাগরি রেজিস্ট্রেশন</h6>
+    <div class="row g-2 align-items-end">
+        <div class="col-md-5"><label class="form-label">জব / পজিশন ক্যাটাগরির নাম *</label><input class="form-control" id="pcNewName" placeholder="যেমন: 4G Pipe TIG / SMAW 6GR"></div>
+        <div class="col-md-3"><label class="form-label">স্ট্যান্ডার্ড জব ফি (৳) *</label><input type="number" min="0" step="0.01" class="form-control" id="pcNewFee" value="800"></div>
+        <div class="col-md-2"><label class="form-label">ছাত্র প্রতি অনুমোদিত কোটা</label><input type="number" min="0" class="form-control" id="pcNewMax" value="5"></div>
+        <div class="col-md-2 d-flex gap-1">
+            <button class="btn btn-light" id="pcNewCancel">বাতিল</button>
+            <button class="btn btn-primary flex-fill" id="pcNewSave"><i class="bx bx-plus"></i> যোগ করুন</button>
+        </div>
+    </div>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th style="width:60px">ক্র.নং</th><th>Welding / Test Position Category</th><th style="width:170px">Max Allowed Jobs / Student</th>
+                <th style="width:170px">Standard Job Fee (৳)</th><th class="text-center">Jobs Issued</th><th class="text-center">Active</th><th class="text-end">পদক্ষেপ</th></tr></thead>
+            <tbody id="tableBody"><tr><td colspan="7" class="text-center">Loading...</td></tr></tbody>
+        </table>
+    </div>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 border-top pt-3">
+        <div class="small text-muted"><i class="bx bx-info-circle"></i> রেট ও কোটা পরিবর্তন শুধু নতুন জব এন্ট্রিতে কার্যকর হবে। কোটা 0 = সীমা নেই।</div>
+        <button class="btn btn-success" id="pcSaveAll"><i class="bx bx-save"></i> Save Pricing &amp; Limits</button>
+    </div>
+</div></div>
+
+<script>
+window.Page = {
+    _items: [],
+    init: function() {
+        var self = this;
+        self._load();
+        $('#pcAddBtn').off('click.pc').on('click.pc', function(){ $('#pcAddCard').removeClass('d-none'); $('#pcNewName').val('').focus(); });
+        $('#pcNewCancel').off('click.pc').on('click.pc', function(){ $('#pcAddCard').addClass('d-none'); });
+        $('#pcNewSave').off('click.pc').on('click.pc', function(){ self._add(); });
+        $('#pcSaveAll').off('click.pc').on('click.pc', function(){ self._saveAll(); });
+        $(document).off('click.pc-del').on('click.pc-del', '.pc-del', function(){ if (confirm('Delete this job category?')) self._del($(this).data('id')); });
+    },
+    destroy: function() {
+        $('#pcAddBtn,#pcNewCancel,#pcNewSave,#pcSaveAll').off('.pc');
+        $(document).off('click.pc-del');
+    },
+    _load: function() {
+        var self = this;
+        $.get('api/practical-categories-list.php', function(r){ if (r.success) { self._items = r.data.items; self._render(); } });
+    },
+    _render: function() {
+        $('#tableBody').html(this._items.map(function(c, i){
+            return '<tr data-id="' + c.id + '">' +
+                '<td class="text-muted">' + String(i + 1).padStart(2, '0') + '</td>' +
+                '<td><input class="form-control form-control-sm fw-semibold pc-name" value="' + NL.esc(c.name) + '"></td>' +
+                '<td><div class="input-group input-group-sm"><input type="number" min="0" class="form-control text-center pc-max" value="' + Number(c.max_jobs) + '"><span class="input-group-text">Jobs</span></div></td>' +
+                '<td><div class="input-group input-group-sm"><span class="input-group-text">৳</span><input type="number" min="0" step="0.01" class="form-control text-end pc-fee" value="' + Number(c.fee) + '"></div></td>' +
+                '<td class="text-center">' + (c.job_count || 0) + '</td>' +
+                '<td class="text-center"><div class="form-check form-switch d-inline-block"><input type="checkbox" class="form-check-input pc-active"' + (c.is_active == 1 ? ' checked' : '') + '></div></td>' +
+                '<td class="text-end"><button class="btn btn-sm btn-outline-danger pc-del" data-id="' + c.id + '"><i class="bx bx-trash"></i> Delete</button></td></tr>';
+        }).join('') || '<tr><td colspan="7" class="text-center text-muted">No job categories yet. Click "Add Job".</td></tr>');
+    },
+    _post: function(url, data, done) {
+        $.ajax({ url: url, method: 'POST', contentType: 'application/json', data: JSON.stringify(data) })
+        .done(function(r){ if (r.success) { Toast.success(r.message); if (done) done(r); } else Toast.error(r.message); });
+    },
+    _add: function() {
+        var self = this, name = $('#pcNewName').val().trim();
+        if (!name) { Toast.error('Category name is required'); return; }
+        self._post('api/practical-categories-save.php',
+            { name: name, fee: $('#pcNewFee').val(), max_jobs: $('#pcNewMax').val(), is_active: 1, sort_order: self._items.length + 1 },
+            function(){ $('#pcAddCard').addClass('d-none'); self._load(); });
+    },
+    _saveAll: function() {
+        var self = this, items = [];
+        $('#tableBody tr[data-id]').each(function(i){
+            var $r = $(this);
+            items.push({ id: $r.data('id'), name: $r.find('.pc-name').val().trim(), max_jobs: $r.find('.pc-max').val(),
+                         fee: $r.find('.pc-fee').val(), is_active: $r.find('.pc-active').is(':checked') ? 1 : 0, sort_order: i + 1 });
+        });
+        if (!items.length) return;
+        var $btn = $('#pcSaveAll').prop('disabled', true);
+        self._post('api/practical-categories-save.php', { items: items }, function(){ self._load(); });
+        setTimeout(function(){ $btn.prop('disabled', false); }, 800);
+    },
+    _del: function(id) {
+        var self = this;
+        self._post('api/practical-categories-delete.php', { id: id }, function(){ self._load(); });
+    }
+};
+</script>

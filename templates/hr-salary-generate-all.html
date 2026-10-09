@@ -1,0 +1,175 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Generate All Salaries</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <a href="admin/hr/salaries" data-route class="btn btn-sm btn-outline-secondary"><i class="bx bx-history"></i> Salary History</a>
+    </div>
+</div>
+
+<form id="bgForm" novalidate>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-calendar"></i> Period</h5>
+                <div class="row g-3">
+                    <div class="col-md-3"><label class="form-label">Period Type *</label>
+                        <select class="form-select" id="bgPeriodType">
+                            <option value="monthly">Monthly</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="daily">Daily</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3"><label class="form-label">Period Label *</label><input class="form-control" id="bgPeriodLabel" placeholder="e.g. 2026-05"></div>
+                    <div class="col-md-3"><label class="form-label">Start</label><input type="date" class="form-control" id="bgStart"></div>
+                    <div class="col-md-3"><label class="form-label">End</label><input type="date" class="form-control" id="bgEnd"></div>
+                </div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-filter"></i> Filter</h5>
+                <label class="form-label small mb-2">Salary Types (uncheck to include)</label>
+                <div class="d-flex gap-3 flex-wrap">
+                    <label class="form-check"><input type="checkbox" class="form-check-input bg-stype" value="monthly" checked><span class="form-check-label">Monthly</span></label>
+                    <label class="form-check"><input type="checkbox" class="form-check-input bg-stype" value="weekly" checked><span class="form-check-label">Weekly</span></label>
+                    <label class="form-check"><input type="checkbox" class="form-check-input bg-stype" value="daily" checked><span class="form-check-label">Daily</span></label>
+                </div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-plus-circle text-success"></i> Allowances (apply to all)</h5>
+                <div id="bgAllowList" class="row g-2"></div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-minus-circle text-danger"></i> Deductions (apply to all)</h5>
+                <div id="bgDeductList" class="row g-2"></div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Status</label>
+                        <select class="form-select" id="bgStatus">
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 90px;"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-group"></i> Active Employees</h5>
+                <div class="d-flex justify-content-between mb-2"><span>Eligible</span><strong id="bgCount">0</strong></div>
+                <div class="d-flex justify-content-between mb-2"><span>Total Basic</span><strong id="bgTotal">৳0.00</strong></div>
+                <hr>
+                <button type="submit" class="btn btn-primary w-100" id="bgSubmit"><i class="bx bx-check-double"></i> Generate for All</button>
+                <small class="text-muted d-block mt-2">Existing salaries for the same period are skipped (idempotent).</small>
+            </div></div>
+        </div>
+    </div>
+</form>
+
+<script>
+window.Page = {
+    _employees: [], _allowances: [],
+    init: function() {
+        var self = this;
+        self._defaultPeriod();
+        self._loadEmployees();
+        self._loadAllowances();
+        $('.bg-stype').off('change.bg').on('change.bg', function(){ self._renderCount(); });
+        $('#bgForm').off('submit.bg').on('submit.bg', function(e){ e.preventDefault(); self._submit(); });
+    },
+    destroy: function() {
+        $('.bg-stype,#bgForm').off('.bg');
+    },
+    _defaultPeriod: function() {
+        var d = new Date();
+        $('#bgPeriodLabel').val(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'));
+        $('#bgStart').val(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01');
+        var last = new Date(d.getFullYear(), d.getMonth()+1, 0);
+        $('#bgEnd').val(last.toISOString().slice(0,10));
+    },
+    _loadEmployees: function() {
+        var self = this;
+        $.get('api/hr/employees-list.php', { limit: 500 }, function(r){
+            if (!r.success) return;
+            self._employees = (r.data.items || []).filter(function(e){
+                return parseInt(e.isactive,10) === 1 && parseInt(e.salary_status,10) === 1 && parseFloat(e.basic_salary) > 0;
+            });
+            self._renderCount();
+        });
+    },
+    _renderCount: function() {
+        var picked = [];
+        $('.bg-stype:checked').each(function(){ picked.push($(this).val()); });
+        var emp = this._employees.filter(function(e){ return picked.indexOf(e.salary_type) >= 0; });
+        var total = emp.reduce(function(s,e){ return s + parseFloat(e.basic_salary || 0); }, 0);
+        $('#bgCount').text(emp.length);
+        $('#bgTotal').text('৳' + total.toFixed(2));
+    },
+    _loadAllowances: function() {
+        var self = this;
+        $.get('api/hr/allowances-list.php', function(r){
+            if (!r.success) return;
+            self._allowances = (r.data.items || []).filter(function(a){ return parseInt(a.isactive,10) === 1; });
+            self._renderPicker('allowance', '#bgAllowList');
+            self._renderPicker('deduction', '#bgDeductList');
+        });
+    },
+    _renderPicker: function(kind, target) {
+        var rows = this._allowances.filter(function(a){ return a.type === kind; });
+        if (!rows.length) { $(target).html('<div class="col-12 text-muted small">No ' + kind + ' entries.</div>'); return; }
+        $(target).html(rows.map(function(a){
+            var label = a.name + ' — ' + (a.value_type === 'percentage'
+                ? (parseFloat(a.amount).toFixed(2) + '%')
+                : ('৳' + parseFloat(a.amount).toFixed(2)));
+            return '<div class="col-md-6"><label class="form-check">' +
+                       '<input type="checkbox" class="form-check-input bg-pick" data-kind="' + kind + '" value="' + a.id + '">' +
+                       '<span class="form-check-label">' + label + '</span>' +
+                   '</label></div>';
+        }).join(''));
+    },
+    _collectPicks: function(kind) {
+        var ids = [];
+        $('.bg-pick[data-kind="' + kind + '"]:checked').each(function(){ ids.push(parseInt($(this).val(),10)); });
+        return ids;
+    },
+    _submit: function() {
+        var stypes = [];
+        $('.bg-stype:checked').each(function(){ stypes.push($(this).val()); });
+        var payload = {
+            period_type:    $('#bgPeriodType').val(),
+            period_label:   $('#bgPeriodLabel').val().trim(),
+            period_start:   $('#bgStart').val(),
+            period_end:     $('#bgEnd').val(),
+            status:         $('#bgStatus').val(),
+            salary_types:   stypes,
+            allowance_ids:  this._collectPicks('allowance'),
+            deduction_ids:  this._collectPicks('deduction')
+        };
+        if (!payload.period_label) {
+            if (window.Toast) Toast.warning('Period label required'); else alert('Period label required');
+            return;
+        }
+        if (!confirm('Generate salaries for ' + $('#bgCount').text() + ' employees?')) return;
+        $('#bgSubmit').prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i> Generating...');
+        $.ajax({ url:'api/hr/salary-generate-bulk.php', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
+        .done(function(r){
+            $('#bgSubmit').prop('disabled', false).html('<i class="bx bx-check-double"></i> Generate for All');
+            if (r.success) {
+                if (window.Toast) Toast.success(r.message); else alert(r.message);
+                if (window.HotelApp && window.HotelApp.navigate) setTimeout(function(){ window.HotelApp.navigate('admin/hr/salaries'); }, 800);
+            } else {
+                if (window.Toast) Toast.error(r.message); else alert(r.message);
+            }
+        }).fail(function(){
+            $('#bgSubmit').prop('disabled', false).html('<i class="bx bx-check-double"></i> Generate for All');
+            if (window.Toast) Toast.error('Network error'); else alert('Failed');
+        });
+    }
+};
+</script>

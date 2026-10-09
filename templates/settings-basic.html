@@ -1,0 +1,150 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Basic Settings</div>
+        <nav aria-label="breadcrumb" class="mt-1">
+            <ol class="breadcrumb mb-0 p-0"></ol>
+        </nav>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form id="settingsForm">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label>Hotel Name</label>
+                    <input type="text" class="form-control" id="websiteName">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Phone</label>
+                    <input type="text" class="form-control" id="phone">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Email</label>
+                    <input type="email" class="form-control" id="email">
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label>Address</label>
+                    <input type="text" class="form-control" id="address">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Facebook URL</label>
+                    <input type="url" class="form-control" id="facebookUrl" placeholder="https://facebook.com/yourpage">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Twitter URL</label>
+                    <input type="url" class="form-control" id="twitterUrl" placeholder="https://twitter.com/yourhandle">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Instagram URL</label>
+                    <input type="url" class="form-control" id="instagramUrl" placeholder="https://instagram.com/yourhandle">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>YouTube URL</label>
+                    <input type="url" class="form-control" id="youtubeUrl" placeholder="https://youtube.com/yourchannel">
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label>Website URL</label>
+                    <input type="url" class="form-control" id="websiteUrl" placeholder="https://yourdomain.com">
+                    <small class="text-muted">This URL will be used for the sidebar Website button</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Admin Logo</label>
+                    <input type="file" class="form-control" id="logo" accept="image/*">
+                    <div class="mt-2"><img id="logoPreview" src="" alt="" style="max-height:48px;display:none;border:1px solid #eee;padding:2px;background:#fff;"></div>
+                    <small class="text-muted">Used in admin sidebar & login. <span id="currentLogo">None</span></small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Website Logo</label>
+                    <input type="file" class="form-control" id="websiteLogo" accept="image/*">
+                    <div class="mt-2"><img id="websiteLogoPreview" src="" alt="" style="max-height:48px;display:none;border:1px solid #eee;padding:2px;background:#fff;"></div>
+                    <small class="text-muted">Shown on the public booking website. <span id="currentWebsiteLogo">None</span></small>
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary" id="btnSave">
+                <i class="bx bx-save"></i> Save Settings
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    init: function() {
+        this._loadData();
+        $('#btnSave').off('click.basic').on('click.basic', this._saveData.bind(this));
+    },
+
+    destroy: function() {
+        $('#btnSave').off('click.basic');
+    },
+
+    _loadData: function() {
+        $.ajax({
+            url: 'api/settings/basic-get.php',
+            success: function(r) {
+                if (r.success) {
+                    var d = r.data;
+                    $('#websiteName').val(d.website_name || '');
+                    $('#phone').val(d.phone || '');
+                    $('#email').val(d.email || '');
+                    $('#address').val(d.address || '');
+                    $('#facebookUrl').val(d.facebook_url || '');
+                    $('#twitterUrl').val(d.twitter_url || '');
+                    $('#instagramUrl').val(d.instagram_url || '');
+                    $('#youtubeUrl').val(d.youtube_url || '');
+                    $('#websiteUrl').val(d.website_url || '');
+                    function preview(spanId, imgId, path) {
+                        if (path) {
+                            $('#' + spanId).text(path.split('/').pop());
+                            $('#' + imgId).attr('src', path + '?t=' + Date.now()).show();
+                        } else {
+                            $('#' + spanId).text('None');
+                            $('#' + imgId).hide();
+                        }
+                    }
+                    preview('currentLogo',        'logoPreview',        d.logo);
+                    preview('currentWebsiteLogo', 'websiteLogoPreview', d.website_logo);
+                }
+            },
+            error: function() {
+                if (window.Toast) Toast.info('Failed to load settings'); else alert('Failed to load settings');
+            }
+        });
+    },
+
+    _saveData: function() {
+        var self = this;
+        var fd = new FormData();
+        fd.append('website_name', $('#websiteName').val());
+        fd.append('phone', $('#phone').val());
+        fd.append('email', $('#email').val());
+        fd.append('address', $('#address').val());
+        fd.append('facebook_url', $('#facebookUrl').val());
+        fd.append('twitter_url', $('#twitterUrl').val());
+        fd.append('instagram_url', $('#instagramUrl').val());
+        fd.append('youtube_url', $('#youtubeUrl').val());
+        fd.append('website_url', $('#websiteUrl').val());
+        var logoFile        = $('#logo')[0].files[0];
+        var websiteLogoFile = $('#websiteLogo')[0].files[0];
+        if (logoFile)        fd.append('logo',         logoFile);
+        if (websiteLogoFile) fd.append('website_logo', websiteLogoFile);
+        $.ajax({
+            url: 'api/settings/basic-update.php',
+            method: 'POST', data: fd, processData: false, contentType: false,
+            success: function(r) {
+                if (r.success) {
+                    if (window.Toast) Toast.info(r.message); else alert(r.message);
+                    self._loadData();
+                    if (window.HotelApp && window.HotelApp.refreshWebsiteLink) window.HotelApp.refreshWebsiteLink();
+                } else {
+                    if (window.Toast) Toast.info(r.message); else alert(r.message);
+                }
+            },
+            error: function() {
+                if (window.Toast) Toast.info('Failed to save'); else alert('Failed to save');
+            }
+        });
+    }
+};
+</script>

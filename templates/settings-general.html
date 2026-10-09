@@ -1,0 +1,165 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">General Settings</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <button class="btn btn-primary" id="gsSave"><i class="bx bx-save"></i> Save Settings</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p class="text-muted small">Rules of the Training and Website modules for the whole institute (all branches).</p>
+        <ul class="nav nav-tabs" id="gsTabs" role="tablist"></ul>
+        <div class="tab-content pt-3" id="gsPanes">
+            <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Website tab content (moved into the tab after the rule tabs are drawn) -->
+<div class="d-none" id="gsWebsiteSource">
+<form id="wsForm" onsubmit="return false">
+<div class="row">
+    <div class="col-lg-8">
+        <h6 class="mb-3">Site Identity &amp; SEO</h6>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><label class="form-label">Site Name</label><input class="form-control" name="site_name"></div>
+            <div class="col-md-4"><label class="form-label">Tagline (English)</label><input class="form-control" name="site_tagline"></div>
+            <div class="col-md-4"><label class="form-label">Tagline (Bangla)</label><input class="form-control" name="site_tagline_bn"></div>
+            <div class="col-12"><label class="form-label">Page Title</label><input class="form-control" name="site_title"></div>
+            <div class="col-12"><label class="form-label">Meta Description</label><textarea class="form-control" rows="2" name="site_description"></textarea></div>
+            <div class="col-12"><label class="form-label">Meta Keywords</label><input class="form-control" name="site_keywords"></div>
+        </div>
+
+        <h6 class="mb-3">Contact</h6>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><label class="form-label">Primary Phone</label><input class="form-control" name="phone_primary"></div>
+            <div class="col-md-4"><label class="form-label">Secondary Phone</label><input class="form-control" name="phone_secondary"></div>
+            <div class="col-md-4"><label class="form-label">Call Button Number</label><input class="form-control" name="call_number"></div>
+            <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" name="email"></div>
+            <div class="col-md-6"><label class="form-label">Google Map URL</label><input class="form-control" name="map_url"></div>
+            <div class="col-md-6"><label class="form-label">Address (English)</label><textarea class="form-control" rows="2" name="address_en"></textarea></div>
+            <div class="col-md-6"><label class="form-label">Address (Bangla)</label><textarea class="form-control" rows="2" name="address_bn"></textarea></div>
+            <div class="col-md-4"><label class="form-label">WhatsApp Number</label><input class="form-control" name="whatsapp_number"></div>
+            <div class="col-md-8"><label class="form-label">WhatsApp Message</label><input class="form-control" name="whatsapp_message"></div>
+            <div class="col-md-4"><label class="form-label">Facebook URL</label><input class="form-control" name="facebook_url"></div>
+            <div class="col-md-4"><label class="form-label">YouTube URL</label><input class="form-control" name="youtube_url"></div>
+            <div class="col-md-4"><label class="form-label">Website URL</label><input class="form-control" name="website_url"></div>
+        </div>
+
+        <h6 class="mb-3">Sections</h6>
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Chairman Name (English)</label><input class="form-control" name="chairman_name_en"></div>
+            <div class="col-md-6"><label class="form-label">Chairman Name (Bangla)</label><input class="form-control" name="chairman_name_bn"></div>
+            <div class="col-md-6"><label class="form-label">Facility Title</label><input class="form-control" name="facility_title"></div>
+            <div class="col-md-6"><label class="form-label">Facility Subtitle</label><input class="form-control" name="facility_subtitle"></div>
+            <div class="col-md-6"><label class="form-label">Developer Name</label><input class="form-control" name="developer_name"></div>
+            <div class="col-md-6"><label class="form-label">Developer URL</label><input class="form-control" name="developer_url"></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <h6 class="mb-3">Images</h6>
+        <div id="wsImages"></div>
+    </div>
+</div>
+</form>
+</div>
+
+<script>
+window.Page = {
+    _images: [['logo', 'Logo'], ['favicon', 'Favicon'], ['chairman_image', 'Chairman Photo'], ['about_image', 'About Section Image']],
+    init: function() {
+        var self = this;
+        $('#wsImages').html(self._images.map(function(i){
+            return '<div class="mb-3"><label class="form-label">' + i[1] + '</label><div class="mb-1"><img id="wsPrev_' + i[0] + '" src="" style="max-height:80px;max-width:100%;display:none;border:1px solid #eee;padding:2px;background:#fff"></div>' +
+                '<input type="file" class="form-control ws-img" name="' + i[0] + '" data-key="' + i[0] + '" accept="image/*"></div>';
+        }).join(''));
+        self._load();
+        $('#gsSave').off('click.gs').on('click.gs', function(){ self._save(); });
+        $(document).off('change.gs-img').on('change.gs-img', '#wsForm .ws-img', function(){
+            if (this.files[0]) $('#wsPrev_' + $(this).data('key')).attr('src', URL.createObjectURL(this.files[0])).show();
+        });
+    },
+    destroy: function() {
+        $('#gsSave').off('.gs');
+        $(document).off('change.gs-img');
+    },
+    _load: function() {
+        var self = this;
+        $.get('api/settings/general-get.php', function(r){
+            if (!r.success) { $('#gsPanes').html('<div class="alert alert-danger">' + NL.esc(r.message) + '</div>'); return; }
+            self._render(r.data.groups, r.data.values);
+            self._loadWebsite();
+        });
+    },
+    _field: function(key, f, value) {
+        var id = 'gs_' + key;
+        var help = f.help ? '<div class="form-text">' + NL.esc(f.help) + '</div>' : '';
+        if (f.type === 'switch') {
+            return '<div class="col-md-6 mb-3"><div class="form-check form-switch">' +
+                '<input class="form-check-input" type="checkbox" id="' + id + '" data-key="' + key + '" data-type="switch"' + (value === '1' ? ' checked' : '') + '>' +
+                '<label class="form-check-label" for="' + id + '">' + NL.esc(f.label) + '</label></div>' + help + '</div>';
+        }
+        var input;
+        if (f.type === 'select') {
+            input = '<select class="form-select no-select2" id="' + id + '" data-key="' + key + '">' +
+                Object.keys(f.options).map(function(k){
+                    return '<option value="' + NL.esc(k) + '"' + (k === value ? ' selected' : '') + '>' + NL.esc(f.options[k]) + '</option>';
+                }).join('') + '</select>';
+        } else {
+            var type = f.type === 'number' ? 'number' : 'text';
+            var extra = (f.min !== undefined ? ' min="' + f.min + '"' : '') + (f.max !== undefined ? (type === 'number' ? ' max="' : ' maxlength="') + f.max + '"' : '');
+            input = '<input type="' + type + '" class="form-control" id="' + id + '" data-key="' + key + '" value="' + NL.esc(value) + '"' + extra + '>';
+        }
+        return '<div class="col-md-6 mb-3"><label class="form-label" for="' + id + '">' + NL.esc(f.label) + '</label>' + input + help + '</div>';
+    },
+    _render: function(groups, values) {
+        var self = this, tabs = '', panes = '', first = true;
+        Object.keys(groups).forEach(function(g){
+            var grp = groups[g];
+            tabs += '<li class="nav-item" role="presentation"><button class="nav-link' + (first ? ' active' : '') + '" data-bs-toggle="tab" data-bs-target="#gs-pane-' + g + '" type="button" role="tab">' +
+                '<i class="bx ' + NL.esc(grp.icon || 'bx-cog') + ' me-1"></i>' + NL.esc(grp.title) + '</button></li>';
+            var fields = Object.keys(grp.fields).map(function(k){ return self._field(k, grp.fields[k], String(values[k] === undefined || values[k] === null ? '' : values[k])); }).join('');
+            panes += '<div class="tab-pane fade' + (first ? ' show active' : '') + '" id="gs-pane-' + g + '" role="tabpanel"><div class="row">' + fields + '</div></div>';
+            first = false;
+        });
+        tabs += '<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#gs-pane-website" type="button" role="tab">' +
+            '<i class="bx bx-globe me-1"></i>Website</button></li>';
+        panes += '<div class="tab-pane fade" id="gs-pane-website" role="tabpanel"></div>';
+        $('#gsTabs').html(tabs);
+        $('#gsPanes').html(panes);
+        $('#gs-pane-website').append($('#wsForm'));
+    },
+    _loadWebsite: function() {
+        var self = this;
+        $.get('api/web-settings-get.php', function(r){
+            if (!r.success) return;
+            var s = r.data.settings, f = $('#wsForm')[0];
+            Object.keys(s).forEach(function(k){ if (f[k] && f[k].type !== 'file') f[k].value = s[k] || ''; });
+            self._images.forEach(function(i){
+                if (s[i[0]]) $('#wsPrev_' + i[0]).attr('src', NL.media(s[i[0]]) + '?t=' + Date.now()).show();
+            });
+            $('#wsForm .ws-img').val('');
+        });
+    },
+    _save: function() {
+        var self = this, payload = {};
+        $('#gsPanes [data-key]').not('.ws-img').each(function(){
+            var $el = $(this);
+            payload[$el.data('key')] = $el.data('type') === 'switch' ? ($el.is(':checked') ? '1' : '0') : $el.val();
+        });
+        var $btn = $('#gsSave').prop('disabled', true);
+        $.ajax({ url: 'api/settings/general-update.php', method: 'POST', contentType: 'application/json', data: JSON.stringify(payload) })
+        .then(function(r){
+            if (!r.success) { Toast.error(r.message); return $.Deferred().reject(); }
+            return $.ajax({ url: 'api/web-settings-save.php', method: 'POST', data: new FormData($('#wsForm')[0]), processData: false, contentType: false });
+        })
+        .then(function(r){
+            if (r.success) { Toast.success('Settings saved'); self._loadWebsite(); } else Toast.error(r.message);
+        })
+        .always(function(){ $btn.prop('disabled', false); });
+    }
+};
+</script>

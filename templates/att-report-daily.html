@@ -1,0 +1,176 @@
+<style>
+    .report-table.ar-compact tbody td { padding: 4px 8px; font-size: 12px; }
+    .report-table.ar-compact tbody tr { background: #fff; }
+    .ar-sum { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .ar-sum .chip { border:1px solid #e3e6ef; border-radius:8px; padding:6px 12px; font-size:12px; background:#fff; }
+    .ar-sum .chip strong { font-size:15px; display:block; }
+</style>
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Attendance Report</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+</div>
+
+<div class="report-page">
+    <div class="card filter-bar mb-3"><div class="card-body py-2">
+        <div class="d-flex flex-wrap gap-2 align-items-end">
+            <div><label class="form-label small mb-1">Date</label>
+                <input type="date" class="form-control form-control-sm" id="arDate" style="width:170px;"></div>
+            <div><label class="form-label small mb-1">Status</label>
+                <select class="form-select form-select-sm" id="arStatus" style="width:160px;">
+                    <option value="">All</option>
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                    <option value="leave">Leave</option>
+                    <option value="movement">Movement</option>
+                    <option value="off">Weekly Off</option>
+                    <option value="holiday">Holiday</option>
+                    <option value="not_marked">Not Marked</option>
+                </select></div>
+            <div class="ms-auto d-flex gap-1 align-items-end">
+                <button class="btn btn-primary btn-sm"           id="arGen"><i class="bx bx-search"></i> Generate</button>
+                <button class="btn btn-outline-secondary btn-sm" id="arPrint"><i class="bx bx-printer"></i> Print</button>
+                <button class="btn btn-outline-secondary btn-sm" id="arReset"><i class="bx bx-refresh"></i> Reset</button>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3 flex-wrap mt-2 pt-2 border-top">
+            <span class="small fw-semibold">Show Columns:</span>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="employee_code" checked><span class="form-check-label small">Code</span></label>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="name" checked><span class="form-check-label small">Employee</span></label>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="role_name" checked><span class="form-check-label small">Role</span></label>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="shift_in" checked><span class="form-check-label small">Shift In</span></label>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="actual_in" checked><span class="form-check-label small">Actual In</span></label>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="shift_out" checked><span class="form-check-label small">Shift Out</span></label>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="actual_out" checked><span class="form-check-label small">Actual Out</span></label>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="late_min" checked><span class="form-check-label small">Late</span></label>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="early_min" checked><span class="form-check-label small">Early-Out</span></label>
+            <label class="form-check form-check-inline mb-0"><input type="checkbox" class="form-check-input ar-col" value="status" checked><span class="form-check-label small">Status</span></label>
+        </div>
+    </div></div>
+
+    <div id="reportPreview" class="report-preview" style="display:none;">
+        <div class="p-3 pb-0"><div id="reportHeader"></div></div>
+        <div class="px-3" id="arSummary"></div>
+        <div class="px-3 pb-3" id="arBody"></div>
+        <div class="px-3 pb-3 text-center">
+            <small class="text-muted">Generated <span id="footerDate"></span> | Hotel365ERP | Bogura Tech Hub</small>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    _rows: [],
+    _cols: [
+        { key: 'employee_code', label: 'Code',       align: 'left'   },
+        { key: 'name',          label: 'Employee',   align: 'left'   },
+        { key: 'role_name',     label: 'Role',       align: 'left'   },
+        { key: 'shift_in',      label: 'Shift In',   align: 'center' },
+        { key: 'actual_in',     label: 'Actual In',  align: 'center' },
+        { key: 'shift_out',     label: 'Shift Out',  align: 'center' },
+        { key: 'actual_out',    label: 'Actual Out', align: 'center' },
+        { key: 'late_min',      label: 'Late',       align: 'center' },
+        { key: 'early_min',     label: 'Early-Out',  align: 'center' },
+        { key: 'status',        label: 'Status',     align: 'center' }
+    ],
+    init: function () {
+        var self = this;
+        $('#arDate').val(new Date().toISOString().slice(0,10));
+        $('#arGen').off('click.ar').on('click.ar', function () { self._generate(); });
+        $('#arReset').off('click.ar').on('click.ar', function () {
+            $('#arDate').val(new Date().toISOString().slice(0,10));
+            $('#arStatus').val('');
+            $('.ar-col').prop('checked', true);
+            $('#reportPreview').hide();
+        });
+        $('#arPrint').off('click.ar').on('click.ar', function () {
+            if (typeof window.printReport === 'function') window.printReport();
+        });
+        // Re-render on column or status filter change
+        $(document).off('change.ar-col').on('change.ar-col', '.ar-col', function () { self._render(); });
+        $('#arStatus').off('change.ar').on('change.ar', function () { self._render(); });
+        setTimeout(function () { self._generate(); }, 60);
+    },
+    destroy: function () { $('#arGen,#arReset,#arPrint,#arStatus').off('.ar'); $(document).off('change.ar-col'); },
+
+    _min: function (m) {
+        m = parseInt(m, 10) || 0;
+        if (!m) return '-';
+        var h = Math.floor(m / 60), mm = m % 60;
+        return h > 0 ? (h + 'h ' + mm + 'm') : (mm + 'm');
+    },
+
+    // Map status string → filter key
+    _statusKey: function (status) {
+        var s = (status || '').toLowerCase();
+        if (s.indexOf('leave') === 0)      return 'leave';
+        if (s.indexOf('movement') === 0)   return 'movement';
+        if (s.indexOf('present') === 0)    return 'present';
+        if (s === 'absent')                return 'absent';
+        if (s.indexOf('weekly off') === 0) return 'off';
+        if (s === 'holiday')               return 'holiday';
+        if (s.indexOf('not marked') === 0) return 'not_marked';
+        return '';
+    },
+
+    _activeCols: function () {
+        var checked = {};
+        $('.ar-col:checked').each(function () { checked[$(this).val()] = true; });
+        return this._cols.filter(function (c) { return checked[c.key]; });
+    },
+
+    _cellValue: function (e, key) {
+        if (key === 'late_min' || key === 'early_min') return this._min(e[key]);
+        if (key === 'status') return '<span class="badge bg-' + e.status_cls + (e.status_cls === 'light' ? ' text-dark' : '') + '">' + e.status + '</span>';
+        return (e[key] === '' || e[key] === null || e[key] === undefined) ? '-' : e[key];
+    },
+
+    _render: function () {
+        var self = this;
+        var cols = self._activeCols();
+        if (!cols.length) { $('#arBody').html('<div class="alert alert-warning">Select at least one column.</div>'); return; }
+
+        var statusFilter = $('#arStatus').val();
+        var rows = self._rows.filter(function (e) {
+            return !statusFilter || self._statusKey(e.status) === statusFilter;
+        });
+        if (!rows.length) { $('#arBody').html('<div class="alert alert-info">No records match the filter.</div>'); return; }
+
+        var thead = '<thead><tr>' + cols.map(function (c) {
+            return '<th class="text-' + c.align + '">' + c.label + '</th>';
+        }).join('') + '</tr></thead>';
+
+        var tbody = '<tbody>' + rows.map(function (e) {
+            return '<tr>' + cols.map(function (c) {
+                return '<td class="text-' + c.align + '">' + self._cellValue(e, c.key) + '</td>';
+            }).join('') + '</tr>';
+        }).join('') + '</tbody>';
+
+        $('#arBody').html('<div class="table-responsive"><table class="report-table ar-compact">' + thead + tbody + '</table></div>');
+    },
+
+    _generate: function () {
+        var self = this;
+        var date = $('#arDate').val();
+        if (!date) { if (window.Toast) Toast.warning('Pick a date'); return; }
+        $('#arBody').html('<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Loading...</div>');
+        $('#arSummary').html('');
+        $('#reportPreview').show();
+        if (typeof window.loadReportHeader === 'function') {
+            window.loadReportHeader('Attendance Report', date, date);
+        }
+
+        $.get('api/attendance/report-daily.php', { date: date }, function (r) {
+            if (!r.success) { $('#arBody').html('<div class="alert alert-danger">' + (r.message || 'Failed') + '</div>'); return; }
+            self._rows = r.data.rows || [];
+            var holidayNote = r.data.holiday ? '<div class="alert alert-secondary py-2 mb-2"><i class="bx bx-calendar-x"></i> Holiday: <strong>' + r.data.holiday + '</strong></div>' : '';
+            $('#arSummary').html(holidayNote);
+            if (!self._rows.length) { $('#arBody').html('<div class="alert alert-info">No active employees.</div>'); return; }
+            self._render();
+        }).fail(function () {
+            $('#arBody').html('<div class="alert alert-danger">Network error</div>');
+        });
+    }
+};
+</script>

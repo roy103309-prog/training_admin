@@ -1,0 +1,77 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Payroll Report</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+</div>
+<div class="report-page" id="reportShell"></div>
+<script>
+window.Page = {
+    init: function () {
+        ReportPage.init({
+            apiUrl:     'api/reports/payroll.php',
+            reportName: 'Payroll Report',
+            fileName:   'payroll',
+            defaultPreset: 'this-month',
+            columns: [
+                { key: 'created_at',      label: 'Generated',     default: true,  align: 'left',  format: 'datetime' },
+                { key: 'employee_code',   label: 'Code',          default: true,  align: 'left' },
+                { key: 'employee_name',   label: 'Employee',      default: true,  align: 'left' },
+                { key: 'role_name',       label: 'Role',          default: false, align: 'left' },
+                { key: 'grade_name',      label: 'Grade',         default: false, align: 'left' },
+                { key: 'period_type',     label: 'Type',          default: true,  align: 'center' },
+                { key: 'period_label',    label: 'Period',        default: true,  align: 'left' },
+                { key: 'basic_salary',    label: 'Basic',         default: true,  align: 'right', format: 'currency' },
+                { key: 'allowance_detail',label: 'Allowance Details', default: true, align: 'left' },
+                { key: 'total_allowance', label: 'Allowance',     default: true,  align: 'right', format: 'currency' },
+                { key: 'deduction_detail',label: 'Deduction Details', default: true, align: 'left' },
+                { key: 'total_deduction', label: 'Deduction',     default: true,  align: 'right', format: 'currency' },
+                { key: 'net_amount',      label: 'Net',           default: true,  align: 'right', format: 'currency' },
+                { key: 'status',          label: 'Status',        default: true,  align: 'center' }
+            ],
+            extraFilters: function ($c) {
+                $c.html(
+                    '<div><label class="form-label small mb-1">Period Type</label>' +
+                        '<select class="form-select form-select-sm" id="fPT">' +
+                            '<option value="">All</option>' +
+                            '<option value="monthly">Monthly</option>' +
+                            '<option value="weekly">Weekly</option>' +
+                            '<option value="daily">Daily</option>' +
+                        '</select></div>' +
+                    '<div><label class="form-label small mb-1">Status</label>' +
+                        '<select class="form-select form-select-sm" id="fST">' +
+                            '<option value="">All</option>' +
+                            '<option value="pending">Pending</option>' +
+                            '<option value="paid">Paid</option>' +
+                        '</select></div>' +
+                    '<div><label class="form-label small mb-1">Employee</label>' +
+                        '<select class="form-select form-select-sm" id="fEMP"><option value="">All</option></select></div>'
+                );
+                $.get('api/hr/employees-list.php', { limit: 500 }, function (r) {
+                    if (!r.success) return;
+                    var opts = '<option value="">All</option>' + (r.data.items || []).map(function (e) {
+                        return '<option value="' + e.id + '">' + e.name + ' (' + (e.employee_code || '-') + ')</option>';
+                    }).join('');
+                    $('#fEMP').html(opts);
+                });
+            },
+            collectFilters: function (p) {
+                if ($('#fPT').val())  p.set('period_type', $('#fPT').val());
+                if ($('#fST').val())  p.set('status',      $('#fST').val());
+                if ($('#fEMP').val()) p.set('user_id',     $('#fEMP').val());
+            },
+            summaryCards: function (s) {
+                return [
+                    { label: 'Records',     value: ReportEngine.number(s.total_count || 0) },
+                    { label: 'Basic',       value: ReportEngine.currency(s.total_basic || 0) },
+                    { label: 'Allowance',   value: ReportEngine.currency(s.total_allowance || 0) },
+                    { label: 'Deduction',   value: ReportEngine.currency(s.total_deduction || 0) },
+                    { label: 'Net Pay',     value: ReportEngine.currency(s.total_net || 0) },
+                    { label: 'Paid',        value: ReportEngine.number(s.paid_count || 0) },
+                    { label: 'Pending',     value: ReportEngine.number(s.pending_count || 0) }
+                ];
+            }
+        });
+    }
+};
+</script>

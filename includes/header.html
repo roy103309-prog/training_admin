@@ -1,0 +1,59 @@
+<header>
+	<div class="topbar d-flex align-items-center">
+		<nav class="navbar navbar-expand gap-3">
+			<div class="mobile-toggle-menu"><i class='bx bx-menu'></i></div>
+			<div class="dropdown header-location">
+				<button class="btn btn-sm dropdown-toggle header-location-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+					<i class='bx bx-map me-1'></i><span id="currentLocationName">Loading...</span>
+				</button>
+				<ul class="dropdown-menu" id="locationMenu"></ul>
+			</div>
+			<div class="top-menu ms-auto">
+				<ul class="navbar-nav align-items-center gap-1">
+					<li class="nav-item d-none d-sm-flex">
+						<a class="btn btn-sm px-2 py-1 rounded-pill header-sms-btn" href="admin/sms-packages" data-route data-menu="sms-packages" id="smsPurchaseBtn" title="SMS Purchase"><i class='bx bx-message-square-dots me-1'></i>SMS Purchase</a>
+					</li>
+					<li class="nav-item dark-mode d-none d-sm-flex">
+						<a class="nav-link dark-mode-icon" href="javascript:;"><i class='bx bx-moon'></i></a>
+					</li>
+					<li class="nav-item dropdown dropdown-large">
+						<a class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+							<span class="alert-count">0</span>
+							<i class='bx bx-bell'></i>
+						</a>
+						<div class="dropdown-menu dropdown-menu-end">
+							<div class="msg-header">
+								<p class="msg-header-title">Notifications</p>
+							</div>
+							<div class="header-notifications-list">
+								<a class="dropdown-item" href="javascript:;">
+									<div class="d-flex align-items-center">
+										<div class="notify text-info"><i class="bx bx-info-circle"></i></div>
+										<div class="flex-grow-1">
+											<h6 class="msg-name">No new notifications</h6>
+											<p class="msg-info">You are all caught up.</p>
+										</div>
+									</div>
+								</a>
+							</div>
+						</div>
+					</li>
+				</ul>
+			</div>
+			<div class="user-box dropdown">
+				<a class="d-flex align-items-center nav-link dropdown-toggle dropdown-toggle-nocaret" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+					<img src="assets/images/avatars/avatar-2.png" class="user-img" alt="user avatar">
+					<div class="user-info ps-3">
+						<p class="user-name mb-0" id="userName">Admin</p>
+						<p class="designattion mb-0" id="userRole">Hotel Owner</p>
+					</div>
+				</a>
+				<ul class="dropdown-menu dropdown-menu-end">
+					<li><a class="dropdown-item" href="admin/profile" data-route data-menu="profile"><i class='bx bx-user'></i><span>My Profile</span></a></li>
+					<li><hr class="dropdown-divider"></li>
+					<li><a class="dropdown-item" href="javascript:;" id="logoutBtn"><i class='bx bx-log-out-circle'></i><span>Logout</span></a></li>
+				</ul>
+			</div>
+		</nav>
+	</div>
+</header>

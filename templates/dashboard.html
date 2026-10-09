@@ -1,0 +1,177 @@
+<style>
+    .dashboard-info-card .card-body {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+    }
+    .dashboard-info-media {
+        width: 58px;
+        height: 58px;
+        border-radius: 14px;
+        object-fit: cover;
+        border: 1px solid #e9ecef;
+        background: #f8f9fa;
+        flex-shrink: 0;
+    }
+    .dashboard-info-lines {
+        flex: 1;
+        min-width: 0;
+    }
+    .dashboard-info-title {
+        margin-bottom: 6px;
+        font-weight: 600;
+    }
+    .dashboard-info-meta {
+        margin: 0;
+        color: #6c757d;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+
+<!-- Institution & Owner Info Row -->
+<div class="row">
+    <div class="col-12 col-lg-6">
+        <div class="card radius-10 border-start border-0 border-3 border-primary dashboard-info-card">
+            <div class="card-body">
+                <img id="instituteLogo" class="dashboard-info-media" src="assets/images/logo-icon.png" alt="Institute Logo" onerror="this.src='assets/images/logo-icon.png'">
+                <div class="dashboard-info-lines">
+                    <h6 class="dashboard-info-title text-primary mb-1" id="instituteName">Institute Name</h6>
+                    <p class="dashboard-info-meta">ID: <span id="instituteId">N/A</span></p>
+                    <p class="dashboard-info-meta">Year: <span id="instituteYear">N/A</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="card radius-10 border-start border-0 border-3 border-success dashboard-info-card">
+            <div class="card-body">
+                <img id="ownerImage" class="dashboard-info-media" src="assets/images/avatars/avatar-2.png" alt="Owner Image" onerror="this.src='assets/images/avatars/avatar-2.png'">
+                <div class="dashboard-info-lines">
+                    <h6 class="dashboard-info-title text-success mb-1" id="ownerName">Owner Name</h6>
+                    <p class="dashboard-info-meta">Role: <span id="ownerRole">Owner</span></p>
+                    <p class="dashboard-info-meta">Mobile: <span id="ownerMobile">N/A</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overview Statistics -->
+<div class="row">
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="card radius-10 border-start border-0 border-3 border-primary">
+            <div class="card-body"><div class="d-flex align-items-center"><div><p class="mb-0 text-secondary">Total Users</p><h4 class="my-1 text-primary" id="totalUsers">0</h4></div><div class="widgets-icons-2 rounded-circle bg-gradient-moonlit text-white ms-auto"><i class="bx bxs-user"></i></div></div></div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="card radius-10 border-start border-0 border-3 border-success">
+            <div class="card-body"><div class="d-flex align-items-center"><div><p class="mb-0 text-secondary">Total Employees</p><h4 class="my-1 text-success" id="totalEmployees">0</h4></div><div class="widgets-icons-2 rounded-circle bg-gradient-ohhappiness text-white ms-auto"><i class="bx bxs-user-detail"></i></div></div></div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="card radius-10 border-start border-0 border-3 border-info">
+            <div class="card-body"><div class="d-flex align-items-center"><div><p class="mb-0 text-secondary">Branches</p><h4 class="my-1 text-info" id="totalBranches">0</h4></div><div class="widgets-icons-2 rounded-circle bg-gradient-scooter text-white ms-auto"><i class="bx bxs-buildings"></i></div></div></div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="card radius-10 border-start border-0 border-3 border-danger">
+            <div class="card-body"><div class="d-flex align-items-center"><div><p class="mb-0 text-secondary">SMS Balance</p><h4 class="my-1 text-danger" id="smsBalance">0</h4></div><div class="widgets-icons-2 rounded-circle bg-gradient-bloody text-white ms-auto"><i class="bx bx-message-dots"></i></div></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Snapshot (Today) -->
+<div class="row">
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="card radius-10 border-start border-0 border-3 border-success">
+            <div class="card-body"><div class="d-flex align-items-center"><div><p class="mb-0 text-secondary">Present Today</p><h4 class="my-1 text-success" id="presentToday">0</h4></div><div class="widgets-icons-2 rounded-circle bg-gradient-ohhappiness text-white ms-auto"><i class="bx bxs-check-circle"></i></div></div></div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="card radius-10 border-start border-0 border-3 border-warning">
+            <div class="card-body"><div class="d-flex align-items-center"><div><p class="mb-0 text-secondary">On Leave Today</p><h4 class="my-1 text-warning" id="onLeaveToday">0</h4></div><div class="widgets-icons-2 rounded-circle bg-gradient-blooker text-white ms-auto"><i class="bx bxs-time"></i></div></div></div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="card radius-10 border-start border-0 border-3 border-secondary">
+            <div class="card-body"><div class="d-flex align-items-center"><div><p class="mb-0 text-secondary">Absent Today</p><h4 class="my-1 text-secondary" id="absentToday">0</h4></div><div class="widgets-icons-2 rounded-circle bg-gradient-kyoto text-white ms-auto"><i class="bx bxs-x-circle"></i></div></div></div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="card radius-10 border-start border-0 border-3 border-primary">
+            <div class="card-body"><div class="d-flex align-items-center"><div><p class="mb-0 text-secondary">Active Roles</p><h4 class="my-1 text-primary" id="totalRoles">0</h4></div><div class="widgets-icons-2 rounded-circle bg-gradient-moonlit text-white ms-auto"><i class="bx bxs-shield"></i></div></div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    init: function() {
+        var self = this;
+        self._loadData();
+        $('#refreshDashboard').off('click.dash').on('click.dash', function() { self._loadData(); });
+    },
+
+    destroy: function() {
+        $('#refreshDashboard').off('click.dash');
+    },
+
+    _loadData: function() {
+        var self = this;
+        $.ajax({
+            url: 'api/dashboard/get-dashboard-stats.php',
+            method: 'GET',
+            success: function(response) {
+                if (response.success && response.data) {
+                    self._update(response.data);
+                } else {
+                    Toast.error(response.message || 'Failed to load dashboard data');
+                }
+            },
+            error: function(xhr) {
+                console.error('Failed to load dashboard:', xhr);
+                Toast.error('Failed to load dashboard data');
+            }
+        });
+    },
+
+    _update: function(data) {
+        var institution = data.institution || {};
+        var owner = data.owner || {};
+        var currentYear = (new Date()).getFullYear();
+        var instituteYear = institution.year || currentYear;
+        var instituteLogo = institution.logo || 'assets/images/logo-icon.png';
+        var ownerImage = owner.image || 'assets/images/avatars/avatar-2.png';
+        var headerName = ($('#hotelNameDisplay').text() || '').trim();
+        var dynamicName = institution.name || headerName || 'Business Admin';
+        var loggedInRole = (window.HotelApp && typeof window.HotelApp.getCurrentUser === 'function' && window.HotelApp.getCurrentUser())
+            ? (window.HotelApp.getCurrentUser().role_name || '')
+            : '';
+        var ownerRole = owner.role || loggedInRole || 'Owner';
+
+        $('#instituteName').text(dynamicName);
+        $('#instituteId').text(institution.id || 'N/A');
+        $('#instituteMobile').text(institution.mobile || 'N/A');
+        $('#ownerName').text(owner.name || 'N/A');
+        $('#ownerRole').text(ownerRole);
+        $('#ownerEmail').text(owner.email || 'N/A');
+        $('#ownerMobile').text(owner.mobile || 'N/A');
+        $('#instituteYear').text(instituteYear || 'N/A');
+        $('#instituteYearBadge').text(instituteYear || 'N/A');
+        $('#instituteLogo').attr('src', instituteLogo);
+        $('#ownerImage').attr('src', ownerImage);
+        $('#smsBalance').text(data.sms_balance || 0);
+        $('#totalUsers').text(data.total_users || 0);
+        $('#totalEmployees').text(data.total_employees || 0);
+        $('#totalBranches').text(data.total_branches || 0);
+        $('#totalRoles').text(data.total_roles || 0);
+        $('#presentToday').text(data.present_today || 0);
+        $('#onLeaveToday').text(data.on_leave_today || 0);
+        $('#absentToday').text(data.absent_today || 0);
+    }
+};
+</script>

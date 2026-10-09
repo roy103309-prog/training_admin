@@ -1,0 +1,435 @@
+<div class="content">
+    <style>
+        .sms-msg-cell { max-width: 360px; white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+        .sms-stat-card { border-left: 4px solid transparent; }
+        .sms-stat-card.total { border-left-color: #0d6efd; }
+        .sms-stat-card.sent { border-left-color: #198754; }
+        .sms-stat-card.failed { border-left-color: #dc3545; }
+        .sms-stat-card.pending { border-left-color: #ffc107; }
+        .sms-stat-card.units { border-left-color: #6f42c1; }
+        .sms-stat-card.cost { border-left-color: #fd7e14; }
+    </style>
+
+    <div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+        <div class="d-flex flex-column">
+            <div class="breadcrumb-title">SMS Logs</div>
+            <nav aria-label="breadcrumb" class="mt-1">
+                <ol class="breadcrumb mb-0 p-0"></ol>
+            </nav>
+        </div>
+        <div class="ms-auto ms-md-0">
+            <button type="button" class="btn btn-outline-secondary me-2" id="refreshLogsBtn"><i class="bx bx-refresh"></i> Refresh</button>
+            <!-- <button type="button" class="btn btn-success" id="exportCsvBtn"><i class="bx bx-export"></i> Export CSV</button> -->
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3" id="smsStatsRow">
+        <div class="col-md-2 col-6"><div class="card sms-stat-card total"><div class="card-body p-3"><div class="text-muted small">Total</div><div class="h4 mb-0" id="statTotal">0</div></div></div></div>
+        <div class="col-md-2 col-6"><div class="card sms-stat-card sent"><div class="card-body p-3"><div class="text-muted small">Sent</div><div class="h4 mb-0 text-success" id="statSent">0</div></div></div></div>
+        <div class="col-md-2 col-6"><div class="card sms-stat-card failed"><div class="card-body p-3"><div class="text-muted small">Failed</div><div class="h4 mb-0 text-danger" id="statFailed">0</div></div></div></div>
+        <div class="col-md-2 col-6"><div class="card sms-stat-card pending"><div class="card-body p-3"><div class="text-muted small">Pending</div><div class="h4 mb-0 text-warning" id="statPending">0</div></div></div></div>
+        <div class="col-md-2 col-6"><div class="card sms-stat-card units"><div class="card-body p-3"><div class="text-muted small">Units</div><div class="h4 mb-0" id="statUnits">0</div></div></div></div>
+        <div class="col-md-2 col-6"><div class="card sms-stat-card cost"><div class="card-body p-3"><div class="text-muted small">Cost</div><div class="h4 mb-0" id="statCost">0.00</div></div></div></div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="logFilterForm" class="row g-2 mb-3">
+                <div class="col-md-2">
+                    <label class="form-label">From</label>
+                    <input type="date" class="form-control" id="filterDateFrom" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">To</label>
+                    <input type="date" class="form-control" id="filterDateTo" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="filterStatus">
+                        <option value="">All</option>
+                        <option value="Sent">Sent</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Failed">Failed</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Source</label>
+                    <select class="form-select" id="filterSource">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="filterPhone" placeholder="Phone" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" id="filterSearch" placeholder="Name / message" />
+                </div>
+                <div class="col-12 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-light" id="resetFiltersBtn">Reset</button>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div>
+                    <label class="me-2 small text-muted">Per page</label>
+                    <select class="form-select form-select-sm d-inline-block w-auto" id="pageSize">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <small class="text-muted" id="rangeInfo">-</small>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Phone</th>
+                            <th>Recipient</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th class="text-end">Units</th>
+                            <th class="text-end">Cost</th>
+                            <th>Message</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody">
+                        <tr><td colspan="10" class="text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0" id="logsPagination"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- View Log Modal -->
+<div class="modal fade" id="viewLogModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">SMS Log Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewLogBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(function () {
+    var state = {
+        page: 1,
+        limit: 25,
+        filters: {},
+        logs: [],
+        pagination: { page: 1, limit: 25, total: 0, total_pages: 0 }
+    };
+
+    init();
+
+    function init() {
+        bindEvents();
+        loadSourceList();
+        loadAll();
+    }
+
+    function bindEvents() {
+        $('#logFilterForm').on('submit', function (e) {
+            e.preventDefault();
+            state.page = 1;
+            captureFilters();
+            loadAll();
+        });
+
+        $('#resetFiltersBtn').on('click', function () {
+            $('#logFilterForm')[0].reset();
+            state.page = 1;
+            state.filters = {};
+            loadAll();
+        });
+
+        $('#refreshLogsBtn').on('click', loadAll);
+
+        $('#pageSize').on('change', function () {
+            state.limit = parseInt($(this).val(), 10) || 25;
+            state.page = 1;
+            loadAll();
+        });
+
+        $('#exportCsvBtn').on('click', exportCsv);
+
+        $(document).on('click', '.view-log-btn', function () {
+            var id = $(this).data('id');
+            var log = state.logs.find(function (x) { return String(x.id) === String(id); });
+            if (log) showLogModal(log);
+        });
+
+        $(document).on('click', '.page-link[data-page]', function (e) {
+            e.preventDefault();
+            var p = parseInt($(this).data('page'), 10);
+            if (!p || p === state.page) return;
+            if (p < 1 || (state.pagination.total_pages && p > state.pagination.total_pages)) return;
+            state.page = p;
+            loadList();
+        });
+    }
+
+    function captureFilters() {
+        state.filters = {
+            date_from: $('#filterDateFrom').val(),
+            date_to: $('#filterDateTo').val(),
+            status: $('#filterStatus').val(),
+            source: $('#filterSource').val(),
+            phone: $('#filterPhone').val(),
+            search: $('#filterSearch').val()
+        };
+    }
+
+    function buildQuery(extra) {
+        var q = $.extend({}, state.filters, extra || {});
+        Object.keys(q).forEach(function (k) {
+            if (q[k] === '' || q[k] == null) delete q[k];
+        });
+        return q;
+    }
+
+    function loadAll() {
+        captureFilters();
+        loadList();
+        loadStats();
+    }
+
+    function loadList() {
+        $('#logsTableBody').html('<tr><td colspan="10" class="text-center">Loading...</td></tr>');
+        $.ajax({
+            url: 'api/sms/logs.php',
+            method: 'GET',
+            data: buildQuery({ page: state.page, limit: state.limit }),
+            dataType: 'json'
+        }).done(function (resp) {
+            if (!(resp && resp.success && resp.data)) {
+                $('#logsTableBody').html('<tr><td colspan="10" class="text-center text-danger">Failed to load logs.</td></tr>');
+                return;
+            }
+            state.logs = resp.data.logs || [];
+            state.pagination = resp.data.pagination || { page: 1, limit: state.limit, total: 0, total_pages: 0 };
+            renderTable();
+            renderPagination();
+            renderRangeInfo();
+        }).fail(function () {
+            $('#logsTableBody').html('<tr><td colspan="10" class="text-center text-danger">Failed to load logs.</td></tr>');
+        });
+    }
+
+    function loadStats() {
+        $.ajax({
+            url: 'api/sms/logs.php',
+            method: 'GET',
+            data: buildQuery({ action: 'stats' }),
+            dataType: 'json'
+        }).done(function (resp) {
+            if (!(resp && resp.success && resp.data)) return;
+            var d = resp.data;
+            $('#statTotal').text(formatNum(d.total));
+            $('#statSent').text(formatNum(d.sent));
+            $('#statFailed').text(formatNum(d.failed));
+            $('#statPending').text(formatNum(d.pending));
+            $('#statUnits').text(formatNum(d.units));
+            $('#statCost').text(parseFloat(d.cost || 0).toFixed(2));
+        });
+    }
+
+    function loadSourceList() {
+        $.ajax({
+            url: 'api/sms/logs.php',
+            method: 'GET',
+            data: { action: 'stats' },
+            dataType: 'json'
+        }).done(function (resp) {
+            if (!(resp && resp.success && resp.data && resp.data.sources)) return;
+            var html = ['<option value="">All</option>'];
+            resp.data.sources.forEach(function (s) {
+                if (!s.source || s.source === '-') return;
+                html.push('<option value="' + escapeHtml(s.source) + '">' + escapeHtml(s.source) + ' (' + s.count + ')</option>');
+            });
+            $('#filterSource').html(html.join(''));
+        });
+    }
+
+    function renderTable() {
+        if (!state.logs.length) {
+            $('#logsTableBody').html('<tr><td colspan="10" class="text-center text-muted py-3">No logs found.</td></tr>');
+            return;
+        }
+        var startIdx = (state.pagination.page - 1) * state.pagination.limit;
+        var html = state.logs.map(function (log, i) {
+            return '<tr>' +
+                '<td>' + (startIdx + i + 1) + '</td>' +
+                '<td><small>' + escapeHtml(log.sent_at || log.created_at || '-') + '</small></td>' +
+                '<td>' + escapeHtml(log.phone || '-') + '</td>' +
+                '<td>' + escapeHtml(log.target_name || '-') + '</td>' +
+                '<td><span class="badge bg-light text-dark">' + escapeHtml(log.source || '-') + '</span></td>' +
+                '<td>' + statusBadge(log.status) + '</td>' +
+                '<td class="text-end">' + (log.units || 1) + '</td>' +
+                '<td class="text-end">' + parseFloat(log.cost || 0).toFixed(2) + '</td>' +
+                '<td class="sms-msg-cell"><small>' + escapeHtml(truncate(log.message || '', 80)) + '</small></td>' +
+                '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-primary view-log-btn" data-id="' + escapeHtml(String(log.id)) + '"><i class="bx bx-show"></i></button></td>' +
+                '</tr>';
+        }).join('');
+        $('#logsTableBody').html(html);
+    }
+
+    function renderPagination() {
+        var p = state.pagination;
+        var ul = $('#logsPagination').empty();
+        if (!p.total_pages || p.total_pages < 2) return;
+
+        var current = p.page;
+        var totalPages = p.total_pages;
+
+        ul.append(pageItem(current - 1, '&laquo;', current === 1));
+
+        var pagesToShow = [];
+        var range = 2;
+        for (var i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= current - range && i <= current + range)) {
+                pagesToShow.push(i);
+            }
+        }
+
+        var prev = 0;
+        pagesToShow.forEach(function (i) {
+            if (prev && i - prev > 1) {
+                ul.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+            }
+            ul.append(pageItem(i, String(i), false, i === current));
+            prev = i;
+        });
+
+        ul.append(pageItem(current + 1, '&raquo;', current === totalPages));
+    }
+
+    function pageItem(page, label, disabled, active) {
+        var cls = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+        return '<li class="' + cls + '"><a href="#" class="page-link" data-page="' + page + '">' + label + '</a></li>';
+    }
+
+    function renderRangeInfo() {
+        var p = state.pagination;
+        if (!p.total) { $('#rangeInfo').text('No records'); return; }
+        var start = (p.page - 1) * p.limit + 1;
+        var end = Math.min(p.page * p.limit, p.total);
+        $('#rangeInfo').text('Showing ' + start + '-' + end + ' of ' + p.total);
+    }
+
+    function showLogModal(log) {
+        var rows = [
+            ['Recipient', log.target_name || '-'],
+            ['Phone', log.phone || '-'],
+            ['Status', log.status || '-'],
+            ['Source', log.source || '-'],
+            ['Gateway', log.gateway || '-'],
+            ['Template UID', log.template_uid || '-'],
+            ['Campaign UID', log.campaign_uid || '-'],
+            ['Units', log.units || 1],
+            ['Segments', log.segments || 1],
+            ['Cost', parseFloat(log.cost || 0).toFixed(2)],
+            ['Sent At', log.sent_at || '-'],
+            ['Created At', log.created_at || '-']
+        ];
+        var html = '<div class="table-responsive"><table class="table table-sm table-borderless mb-3">';
+        rows.forEach(function (r) {
+            html += '<tr><th class="text-muted" style="width:160px">' + escapeHtml(r[0]) + '</th><td>' + escapeHtml(String(r[1])) + '</td></tr>';
+        });
+        html += '</table></div>';
+        html += '<div><label class="form-label fw-bold">Message</label><div class="border rounded p-2 bg-light">' + escapeHtml(log.message || '-') + '</div></div>';
+        $('#viewLogBody').html(html);
+        $('#viewLogModal').modal('show');
+    }
+
+    function exportCsv() {
+        $.ajax({
+            url: 'api/sms/logs.php',
+            method: 'GET',
+            data: buildQuery({ page: 1, limit: 200 }),
+            dataType: 'json'
+        }).done(function (resp) {
+            if (!(resp && resp.success && resp.data && resp.data.logs)) {
+                alert('Nothing to export');
+                return;
+            }
+            var rows = [['Date', 'Phone', 'Recipient', 'Source', 'Status', 'Units', 'Cost', 'Message']];
+            resp.data.logs.forEach(function (l) {
+                rows.push([
+                    l.sent_at || l.created_at || '',
+                    l.phone || '',
+                    l.target_name || '',
+                    l.source || '',
+                    l.status || '',
+                    l.units || 1,
+                    l.cost || '0.00',
+                    (l.message || '').replace(/\r?\n/g, ' ')
+                ]);
+            });
+            var csv = rows.map(function (r) {
+                return r.map(function (c) {
+                    var s = String(c == null ? '' : c).replace(/"/g, '""');
+                    return '"' + s + '"';
+                }).join(',');
+            }).join('\n');
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'sms-logs-' + new Date().toISOString().slice(0, 10) + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    function statusBadge(status) {
+        var s = (status || '').toLowerCase();
+        var cls = 'bg-secondary';
+        if (s === 'sent') cls = 'bg-success';
+        else if (s === 'failed') cls = 'bg-danger';
+        else if (s === 'pending') cls = 'bg-warning text-dark';
+        return '<span class="badge ' + cls + '">' + escapeHtml(status || '-') + '</span>';
+    }
+
+    function truncate(str, n) {
+        if (!str) return '';
+        return str.length > n ? str.slice(0, n) + '...' : str;
+    }
+
+    function formatNum(v) {
+        var n = parseInt(v || 0, 10);
+        return n.toLocaleString();
+    }
+
+    function escapeHtml(v) {
+        return (v == null ? '' : String(v))
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+});
+</script>

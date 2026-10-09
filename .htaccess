@@ -1,0 +1,42 @@
+# Enable URL Rewriting
+RewriteEngine On
+RewriteBase /TrainingAdmin/
+Options -MultiViews
+# Centralized deploy base path:
+# - Keep `/TrainingAdmin` for subfolder deploy
+# - Set empty value (`E=APP_BASE:`) for domain root deploy
+RewriteRule ^ - [E=APP_BASE:/TrainingAdmin]
+
+# Canonical: direct file URLs -> clean URLs
+RewriteCond %{THE_REQUEST} \s+/[^\s]*index\.html[\s?] [NC]
+RewriteRule ^index\.html$ %{ENV:APP_BASE}/login [R=301,L]
+RewriteCond %{THE_REQUEST} \s+/[^\s]*app\.html[\s?] [NC]
+RewriteRule ^app\.html$ %{ENV:APP_BASE}/admin [R=301,L]
+
+# Legacy clean URLs -> new canonical URLs
+RewriteRule ^index/?$ %{ENV:APP_BASE}/login [R=301,L]
+RewriteRule ^app/?$ %{ENV:APP_BASE}/admin [R=301,L]
+RewriteRule ^app/(.+)$ %{ENV:APP_BASE}/admin/$1 [R=301,L]
+
+# Canonical entry
+RewriteRule ^$ %{ENV:APP_BASE}/login [R=302,L]
+
+# Clean login URL -> login page
+RewriteRule ^login/?$ index.html [L]
+
+# Clean admin URL(s) -> SPA shell
+RewriteRule ^admin/?$ app.html [L]
+RewriteRule ^admin/.+$ app.html [L]
+
+# Skip rewrites for real files/folders
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Add .html extension internally if file exists
+RewriteCond %{REQUEST_FILENAME}\.html -f
+RewriteRule ^(.*)$ $1.html [L]
+
+# Custom error pages
+ErrorDocument 404 /TrainingAdmin/errors-404-error.html
+ErrorDocument 500 /TrainingAdmin/errors-500-error.html

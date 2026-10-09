@@ -1,0 +1,21 @@
+<?php
+/**
+ * Family Portal SMS integration — LIVE credentials.
+ *
+ * Portal (FamilyPortal) runs at https://partner.techxpert.bd/
+ * SMS API uses project_id + tenant_id auth. No API key.
+ *
+ * DEPLOY: rename this file to `portal.php` on the HotelAdmin server
+ * (keep the local portal.php pointing at localhost for local dev).
+ * Confirm project_id matches this app's row in FamilyPortal `projects`.
+ */
+return [
+    'enabled'     => true,
+    'project_id'  => 3, // FamilyPortal projects.id for HotelAdmin (verify on live)
+    'send_url'    => 'https://partner.techxpert.bd/api/sms/send.php',
+    'balance_url' => 'https://partner.techxpert.bd/api/sms/balance.php',
+    'topup_url'   => 'https://partner.techxpert.bd/api/sms/topup.php',
+    'timeout'     => 6, // seconds for HTTP call
+    // If true, never raise exceptions — log + swallow. Recommended: true.
+    'fail_quiet'  => true,
+];

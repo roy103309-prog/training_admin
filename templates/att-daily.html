@@ -1,0 +1,231 @@
+<style>
+    .att-grid td, .att-grid th { padding:5px 8px; font-size:12px; vertical-align:middle; }
+    .att-grid input[type=time] { min-width:110px; }
+    tr.att-leave td { background:#fff3cd; }
+    tr.att-move td  { background:#e7f1ff; }
+</style>
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Daily Attendance</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+</div>
+
+<div class="card mb-3"><div class="card-body py-3">
+    <div class="d-flex gap-2 align-items-end flex-wrap">
+        <div><label class="form-label small mb-1">Date</label>
+            <input type="date" class="form-control form-control-sm" id="adDate" style="width:170px;"></div>
+        <button class="btn btn-primary btn-sm" id="adProcess"><i class="bx bx-cog"></i> Process</button>
+        <span class="ms-2 small">
+            <span class="badge" style="background:#fff3cd;color:#856404;">Leave</span>
+            <span class="badge" style="background:#e7f1ff;color:#084298;">Movement</span>
+        </span>
+    </div>
+</div></div>
+
+<div class="card" id="adResultCard" style="display:none;"><div class="card-body">
+    <div class="mb-2">
+        <h6 class="mb-0"><i class="bx bx-list-check"></i> Mark Attendance — <span id="adDateLabel"></span></h6>
+    </div>
+    <div class="table-responsive"><table class="table table-bordered att-grid">
+        <thead class="table-light"><tr>
+            <th>Code</th><th>Employee</th><th>Role</th><th>In Time</th><th>Out Time</th>
+            <th class="text-center">Absent</th>
+        </tr></thead>
+        <tbody id="adBody"></tbody>
+    </table></div>
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <button class="btn btn-outline-primary" id="adSms"><i class="bx bx-message-square-dots"></i> Send SMS</button>
+        <button class="btn btn-success" id="adSave"><i class="bx bx-save"></i> Save Attendance</button>
+    </div>
+</div></div>
+
+<!-- Send SMS modal -->
+<div class="modal fade" id="smsModal"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5>Send Attendance SMS</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <div class="mb-2">
+            <label class="form-label small mb-1">Send To</label>
+            <select class="form-select form-select-sm" id="smsScope">
+                <option value="all">All Employees</option>
+                <option value="present">Present (with In-Time)</option>
+                <option value="absent">Absent</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <label class="form-label small mb-1">Message <small class="text-muted">— {name}, {date}, {status}, {in}, {out} supported</small></label>
+            <textarea class="form-control form-control-sm" id="smsMsg" rows="3">Dear {name}, your attendance on {date}: {status}. In: {in}, Out: {out}.</textarea>
+        </div>
+        <div class="small text-muted"><span id="smsCount">0</span> recipient(s) with mobile.</div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="smsSend"><i class="bx bx-send"></i> Send</button>
+    </div>
+</div></div></div>
+
+<script>
+window.Page = {
+    _rows: [],
+    init: function () {
+        var self = this;
+        $('#adDate').val(new Date().toISOString().slice(0,10));
+        $('#adProcess').off('click.ad').on('click.ad', function () { self._process(); });
+        $('#adSave').off('click.ad').on('click.ad', function () { self._save(); });
+        $('#adSms').off('click.ad').on('click.ad', function () { self._openSms(); });
+        $('#smsScope').off('change.ad').on('change.ad', function () { self._updSmsCount(); });
+        $('#smsSend').off('click.ad').on('click.ad', function () { self._sendSms(); });
+        // Absent toggle disables time fields
+        $(document).off('change.ad-abs').on('change.ad-abs', '#adBody .row-abs', function () {
+            var $tr = $(this).closest('tr');
+            var dis = $(this).is(':checked');
+            $tr.find('.row-in,.row-out').prop('disabled', dis).toggleClass('bg-light', dis);
+        });
+    },
+    destroy: function () { $('#adProcess,#adSave,#adSms,#smsScope,#smsSend').off('.ad'); $(document).off('change.ad-abs'); },
+
+    _process: function () {
+        var self = this;
+        var date = $('#adDate').val();
+        if (!date) { if (window.Toast) Toast.warning('Pick a date'); return; }
+        $('#adBody').html('<tr><td colspan="6" class="text-center">Loading...</td></tr>');
+        $('#adResultCard').show();
+        $('#adDateLabel').text(date);
+
+        $.get('api/attendance/records-get.php', { date: date }, function (r) {
+            if (!r.success) { if (window.Toast) Toast.error(r.message); return; }
+            self._rows = r.data.rows || [];
+            if (!r.data.rows.length) { $('#adBody').html('<tr><td colspan="6" class="text-center">No active employees</td></tr>'); return; }
+            $('#adBody').html(r.data.rows.map(function (e) {
+                var cls = e.tag === 'leave' ? 'att-leave' : (e.tag === 'movement' ? 'att-move' : '');
+                var tagBadge = e.tag === 'leave' ? ' <span class="badge bg-warning text-dark">Leave</span>'
+                             : (e.tag === 'movement' ? ' <span class="badge bg-info">Movement</span>' : '');
+                var absChk = parseInt(e.is_absent, 10) ? 'checked' : '';
+                var dis = parseInt(e.is_absent, 10) ? 'disabled' : '';
+                return '<tr class="' + cls + '" data-uid="' + e.user_id + '">' +
+                    '<td>' + (e.employee_code || '-') + '</td>' +
+                    '<td>' + e.name + tagBadge + '</td>' +
+                    '<td>' + (e.role_name || '-') + '</td>' +
+                    '<td><input type="time" class="form-control form-control-sm row-in" value="' + (e.in_time || '') + '" ' + dis + '></td>' +
+                    '<td><input type="time" class="form-control form-control-sm row-out" value="' + (e.out_time || '') + '" ' + dis + '></td>' +
+                    '<td class="text-center"><input type="checkbox" class="row-abs" ' + absChk + '></td>' +
+                '</tr>';
+            }).join(''));
+        });
+    },
+
+    _save: function () {
+        var self = this;
+        var date = $('#adDate').val();
+        var rows = [];
+        $('#adBody tr[data-uid]').each(function () {
+            var $tr = $(this);
+            rows.push({
+                user_id:   parseInt($tr.data('uid'), 10),
+                in_time:   $tr.find('.row-in').val(),
+                out_time:  $tr.find('.row-out').val(),
+                is_absent: $tr.find('.row-abs').is(':checked') ? 1 : 0
+            });
+        });
+        if (!rows.length) { if (window.Toast) Toast.warning('Process a date first'); return; }
+        $('#adSave').prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i> Saving...');
+        $.ajax({ url: 'api/attendance/records-save.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ date: date, rows: rows }) })
+        .done(function (r) {
+            $('#adSave').prop('disabled', false).html('<i class="bx bx-save"></i> Save');
+            if (window.Toast) Toast.info(r.message); else alert(r.message);
+        }).fail(function () {
+            $('#adSave').prop('disabled', false).html('<i class="bx bx-save"></i> Save');
+            if (window.Toast) Toast.error('Network error');
+        });
+    },
+
+    // Collect current grid state (so unsaved edits are reflected in SMS vars)
+    _gridState: function () {
+        var map = {};
+        $('#adBody tr[data-uid]').each(function () {
+            var $tr = $(this);
+            map[parseInt($tr.data('uid'), 10)] = {
+                in:  $tr.find('.row-in').val()  || '-',
+                out: $tr.find('.row-out').val() || '-',
+                absent: $tr.find('.row-abs').is(':checked')
+            };
+        });
+        return map;
+    },
+
+    _scopeRecipients: function () {
+        var scope = $('#smsScope').val();
+        var grid = this._gridState();
+        return this._rows.filter(function (e) {
+            if (!e.mobile) return false;
+            var g = grid[e.user_id] || {};
+            if (scope === 'present') return !g.absent && g.in && g.in !== '-';
+            if (scope === 'absent')  return g.absent;
+            return true; // all
+        });
+    },
+
+    _updSmsCount: function () {
+        $('#smsCount').text(this._scopeRecipients().length);
+    },
+
+    _openSms: function () {
+        if (!this._rows.length) { if (window.Toast) Toast.warning('Process a date first'); return; }
+        this._updSmsCount();
+        $('#smsModal').modal('show');
+    },
+
+    _sendSms: function () {
+        var self = this;
+        var date = $('#adDate').val();
+        var tmpl = $('#smsMsg').val().trim();
+        if (!tmpl) { if (window.Toast) Toast.warning('Message required'); return; }
+        var grid = self._gridState();
+        var recips = self._scopeRecipients().map(function (e) {
+            var g = grid[e.user_id] || {};
+            var status = g.absent ? 'Absent' : ((g.in && g.in !== '-') ? 'Present' : 'Not Marked');
+            var msg = tmpl
+                .replace(/\{name\}/g, e.name)
+                .replace(/\{date\}/g, date)
+                .replace(/\{status\}/g, status)
+                .replace(/\{in\}/g, g.in || '-')
+                .replace(/\{out\}/g, g.out || '-');
+            return { phone: e.mobile, name: e.name, message: msg };
+        });
+        if (!recips.length) { if (window.Toast) Toast.warning('No recipients with mobile'); return; }
+
+        // SMS API uses one global message per call. Each recipient has a distinct
+        // resolved message ({name}/{date}/{in}/{out}), so send one call per recipient.
+        $('#smsSend').prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i> Sending...');
+
+        var calls = recips.map(function (r) {
+            return $.ajax({
+                url: 'api/sms/send.php', method: 'POST', contentType: 'application/json',
+                data: JSON.stringify({
+                    message: r.message,
+                    recipients: [{ phone: r.phone, name: r.name }],
+                    source: 'Attendance ' + date,
+                    send_mode: 'single'
+                })
+            });
+        });
+
+        $.when.apply($, calls).always(function () {
+            var ok = 0, fail = 0;
+            // Normalize: when single call, args is the response; when many, arguments is array of [resp,status,xhr]
+            var results = calls.length === 1 ? [arguments] : Array.prototype.slice.call(arguments);
+            results.forEach(function (a) {
+                var resp = a && a[0];
+                if (resp && (resp.success || resp.status === 'success' || resp.code === 200)) ok++;
+                else fail++;
+            });
+            $('#smsSend').prop('disabled', false).html('<i class="bx bx-send"></i> Send');
+            $('#smsModal').modal('hide');
+            if (window.Toast) {
+                if (fail === 0) Toast.success('SMS sent to ' + ok + ' recipient(s)');
+                else Toast.warning('Sent ' + ok + ', failed ' + fail);
+            }
+        });
+    }
+};
+</script>

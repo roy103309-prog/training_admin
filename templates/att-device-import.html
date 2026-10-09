@@ -1,0 +1,109 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Device Import</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <a href="admin/attendance/report" data-route class="btn btn-sm btn-outline-secondary"><i class="bx bx-bar-chart"></i> Attendance Report</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body">
+            <h6>Upload attendance file</h6>
+            <p class="text-muted small">Export from the attendance device and upload here. Accepted: <strong>.dat, .txt, .csv, .xlsx</strong>.
+                Each row needs the employee's <strong>Device ID</strong> and a date-time. Old <em>.xls</em> files must be saved as .xlsx or .csv first.</p>
+            <input type="file" class="form-control mb-3" id="aiFile" accept=".dat,.txt,.csv,.xlsx,.xls">
+            <button class="btn btn-primary" id="aiUpload"><i class="bx bx-upload"></i> Upload &amp; Process</button>
+            <div class="alert mt-3 d-none" id="aiResult"></div>
+        </div></div>
+
+        <div class="card"><div class="card-body small">
+            <h6>How the day is recorded</h6>
+            <ul class="mb-2">
+                <li>First punch of the day = <strong>In time</strong>, last punch = <strong>Out time</strong> in Daily Attendance.</li>
+                <li>1 punch in a day = <strong>Half Day</strong>; first punch later than in-time + late minutes = <strong>Late Present</strong>;
+                    last punch 30+ minutes before out-time = <strong>Early Leave</strong>; otherwise <strong>Present</strong>.</li>
+            </ul>
+            <p class="mb-0 text-muted">In / out time and late minutes come from <a href="admin/attendance/settings" data-route>Attendance Settings</a> for that weekday,
+                otherwise 09:00–18:00 with 15 minutes grace.</p>
+        </div></div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Employee Device IDs</h6>
+                <button class="btn btn-sm btn-primary" id="aiSaveIds"><i class="bx bx-save"></i> Save IDs</button>
+            </div>
+            <p class="text-muted small mb-2">The ID each employee has on the attendance device. Leave it as the employee ID if the device uses the same number.</p>
+            <input class="form-control form-control-sm mb-2" id="aiSearch" placeholder="Search employee...">
+            <div class="table-responsive" style="max-height:55vh;overflow:auto">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Employee</th><th>Code</th><th style="width:130px">Device ID</th></tr></thead>
+                    <tbody id="aiIds"><tr><td colspan="3" class="text-center">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div></div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    _items: [],
+    init: function() {
+        var self = this;
+        self._loadIds();
+        $('#aiUpload').off('click.ai').on('click.ai', function(){ self._upload($(this)); });
+        $('#aiSaveIds').off('click.ai').on('click.ai', function(){ self._saveIds(); });
+        $('#aiSearch').off('input.ai').on('input.ai', function(){ self._render(); });
+    },
+    destroy: function() { $('#aiUpload,#aiSaveIds,#aiSearch').off('.ai'); },
+    _loadIds: function() {
+        var self = this;
+        $.get('api/hr/employees-extra-list.php', function(r){
+            if (!r.success) { $('#aiIds').html('<tr><td colspan="3" class="text-center text-danger">' + NL.esc(r.message) + '</td></tr>'); return; }
+            self._items = r.data.items;
+            self._render();
+        });
+    },
+    _render: function() {
+        var q = ($('#aiSearch').val() || '').toLowerCase();
+        $('#aiIds').html(this._items.filter(function(e){ return !q || (e.name + ' ' + (e.employee_code || '')).toLowerCase().indexOf(q) !== -1; }).map(function(e){
+            return '<tr><td>' + NL.esc(e.name) + (e.isactive == 1 ? '' : ' <span class="badge bg-secondary">inactive</span>') + '<div class="small text-muted">ID ' + e.id + '</div></td>' +
+                '<td>' + NL.esc(e.employee_code || '-') + '</td>' +
+                '<td><input type="number" min="1" class="form-control form-control-sm ai-dev" data-id="' + e.id + '" data-orig="' + e.device_id + '" value="' + e.device_id + '"></td></tr>';
+        }).join('') || '<tr><td colspan="3" class="text-center text-muted">No employees in this branch</td></tr>');
+    },
+    _saveIds: function() {
+        var self = this, items = [];
+        $('#aiIds .ai-dev').each(function(){
+            var $i = $(this);
+            if (String($i.val()) !== String($i.data('orig'))) items.push({ user_id: $i.data('id'), device_id: $i.val() });
+        });
+        if (!items.length) { Toast.info('No changes to save'); return; }
+        $.ajax({ url: 'api/attendance/device-ids-save.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ items: items }) })
+        .done(function(r){ if (r.success) { Toast.success(r.message); self._loadIds(); } else Toast.error(r.message); });
+    },
+    _upload: function($btn) {
+        var f = $('#aiFile')[0].files[0];
+        if (!f) { Toast.error('Please choose an attendance file'); return; }
+        var fd = new FormData(); fd.append('attendance_file', f);
+        $btn.prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i> Processing...');
+        $.ajax({ url: 'api/attendance/device-import.php', method: 'POST', data: fd, processData: false, contentType: false })
+        .done(function(r){
+            var html = NL.esc(r.message);
+            if (r.success && r.data.status) {
+                html += '<div class="mt-2">' + Object.keys(r.data.status).map(function(k){
+                    return '<span class="badge bg-light text-dark border me-1">' + NL.esc(k) + ': ' + r.data.status[k] + '</span>';
+                }).join('') + '</div>';
+            }
+            $('#aiResult').removeClass('d-none alert-success alert-danger').addClass(r.success ? 'alert-success' : 'alert-danger').html(html);
+            if (r.success) { Toast.success('Attendance imported'); $('#aiFile').val(''); }
+        })
+        .fail(function(){ Toast.error('Upload failed'); })
+        .always(function(){ $btn.prop('disabled', false).html('<i class="bx bx-upload"></i> Upload &amp; Process'); });
+    }
+};
+</script>

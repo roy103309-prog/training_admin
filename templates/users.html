@@ -1,0 +1,199 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Users</div>
+        <nav aria-label="breadcrumb" class="mt-1">
+            <ol class="breadcrumb mb-0 p-0"></ol>
+    </nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <button class="btn btn-primary" id="btnAdd"><i class="bx bx-plus"></i> Add User</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <input type="text" class="form-control mb-3" id="searchInput" placeholder="Search users..." style="max-width: 300px;">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead><tr><th style="width:50px">#</th><th>Name</th><th>Mobile</th><th>Role</th><th>Branches</th><th>Super Admin</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="tableBody"><tr><td colspan="8" class="text-center">Loading...</td></tr></tbody>
+            </table>
+        </div>
+        <div id="pagination" class="d-flex justify-content-center mt-3"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="addEditModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 id="modalTitle">Add User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="itemId">
+                <div class="mb-3"><label>Name *</label><input type="text" class="form-control" id="itemName" required></div>
+                <div class="mb-3"><label>Mobile *</label><input type="text" class="form-control" id="itemMobile" required></div>
+                <div class="mb-3"><label>Password <small>(leave empty to keep current)</small></label><input type="password" class="form-control" id="itemPassword"></div>
+                <div class="mb-3"><label>Role</label><select class="form-select" id="itemRole"><option value="">Select Role</option></select></div>
+                <div class="mb-3">
+                    <label>Branch Permissions</label>
+                    <div class="small text-muted mb-1">Select one or more branches this user can access. Super Admin users get access to all branches automatically.</div>
+                    <div id="itemLocations" class="border rounded p-2" style="max-height:180px;overflow-y:auto;"><em class="text-muted">Loading...</em></div>
+                </div>
+                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="itemSuper"><label class="form-check-label" for="itemSuper">Super Admin</label></div></div>
+                <div class="mb-3"><label>Status</label><select class="form-select" id="itemStatus"><option value="1">Active</option><option value="0">Inactive</option></select></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSave">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    _currentPage: 1, _searchTerm: '', _roles: [], _locations: [], _items: [],
+    init: function () {
+        var self = this;
+        self._loadDropdowns(function () { self._loadData(); });
+        $('#searchInput').off('input.usr').on('input.usr', function () { self._searchTerm = $(this).val(); self._currentPage = 1; self._loadData(); });
+        $('#btnAdd').off('click.usr').on('click.usr', function () { self._openAdd(); });
+        $('#btnSave').off('click.usr').on('click.usr', function () { self._save(); });
+        $(document).off('click.usr-edit').on('click.usr-edit', '.btn-edit', function () { self._edit($(this).data('id')); });
+        $(document).off('click.usr-del').on('click.usr-del', '.btn-delete', function () { if (confirm('Delete this user?')) self._del($(this).data('id')); });
+    },
+    destroy: function () {
+        $('#searchInput,#btnAdd,#btnSave').off('.usr');
+        $(document).off('click.usr-edit click.usr-del click.usr-page');
+    },
+    _loadDropdowns: function (cb) {
+        var self = this, done = 0;
+        var check = function () { if (++done === 2 && cb) cb(); };
+        $.get('api/user/roles-list.php', function (r) {
+            if (r.success) {
+                self._roles = r.data.items || [];
+                var h = '<option value="">Select Role</option>';
+                self._roles.forEach(function (i) { h += '<option value="' + i.id + '">' + i.name + '</option>'; });
+                $('#itemRole').html(h);
+            }
+            check();
+        });
+        $.get('api/locations/locations-list.php', function (r) {
+            if (r.success) self._locations = r.data.items || [];
+            self._renderLocationChecks([]);
+            check();
+        });
+    },
+    _renderLocationChecks: function (selectedIds) {
+        selectedIds = (selectedIds || []).map(function (x) { return parseInt(x, 10); });
+        if (!this._locations.length) { $('#itemLocations').html('<em class="text-muted">No branches defined</em>'); return; }
+        var html = this._locations.map(function (l) {
+            var checked = selectedIds.indexOf(parseInt(l.id, 10)) !== -1 ? 'checked' : '';
+            var dis = l.isactive == 0 ? ' <span class="badge bg-secondary">Inactive</span>' : '';
+            return '<div class="form-check">' +
+                '<input class="form-check-input usr-loc" type="checkbox" value="' + l.id + '" id="loc_' + l.id + '" ' + checked + '>' +
+                '<label class="form-check-label" for="loc_' + l.id + '">' + l.name + dis + '</label></div>';
+        }).join('');
+        $('#itemLocations').html(html);
+    },
+    _loadData: function () {
+        var self = this;
+        $.get('api/user/users-list.php', { page: self._currentPage, search: self._searchTerm }, function (r) {
+            if (!r.success) { $('#tableBody').html('<tr><td colspan="8" class="text-danger text-center">' + r.message + '</td></tr>'); return; }
+            self._items = r.data.items || [];
+            self._renderTable();
+            self._renderPag(r.data.pagination);
+        });
+    },
+    _branchNames: function (ids) {
+        var map = {};
+        this._locations.forEach(function (l) { map[l.id] = l.name; });
+        return (ids || []).map(function (id) { return map[id] || ('#' + id); }).join(', ');
+    },
+    _renderTable: function () {
+        var self = this;
+        if (!self._items.length) { $('#tableBody').html('<tr><td colspan="8" class="text-center">No users found</td></tr>'); return; }
+        var startSerial = (self._currentPage - 1) * 10;
+        var html = self._items.map(function (i, idx) {
+            var branchLabel;
+            if (i.issuperadmin == 1) branchLabel = '<span class="badge bg-danger">All branches</span>';
+            else if ((i.location_ids || []).length) branchLabel = self._branchNames(i.location_ids);
+            else if (i.location_name) branchLabel = i.location_name;
+            else branchLabel = '<span class="text-muted">—</span>';
+            return '<tr><td class="text-muted">' + (startSerial + idx + 1) + '</td><td>' + i.name + '</td><td>' + i.mobile + '</td>' +
+                '<td>' + (i.role_name || '-') + '</td>' +
+                '<td>' + branchLabel + '</td>' +
+                '<td><span class="badge bg-' + (i.issuperadmin ? 'success' : 'secondary') + '">' + (i.issuperadmin ? 'Yes' : 'No') + '</span></td>' +
+                '<td><span class="badge bg-' + (i.isactive ? 'success' : 'danger') + '">' + (i.isactive ? 'Active' : 'Inactive') + '</span></td>' +
+                '<td><button class="btn btn-sm btn-primary btn-edit" data-id="' + i.id + '"><i class="bx bx-edit"></i></button> ' +
+                '<button class="btn btn-sm btn-danger btn-delete" data-id="' + i.id + '"><i class="bx bx-trash"></i></button></td></tr>';
+        }).join('');
+        $('#tableBody').html(html);
+    },
+    _renderPag: function (p) {
+        var self = this, h = '';
+        for (var i = 1; i <= p.pages; i++) h += '<button class="btn btn-sm ' + (i === self._currentPage ? 'btn-primary' : 'btn-outline-primary') + ' mx-1 page-btn" data-page="' + i + '">' + i + '</button>';
+        $('#pagination').html(h);
+        $('#pagination').off('click.usr-page').on('click.usr-page', '.page-btn', function () { self._currentPage = parseInt($(this).data('page')); self._loadData(); });
+    },
+    _openAdd: function () {
+        $('#modalTitle').text('Add User');
+        $('#itemId,#itemName,#itemMobile,#itemPassword').val('');
+        $('#itemRole').val('');
+        $('#itemSuper').prop('checked', false);
+        $('#itemStatus').val('1');
+        this._renderLocationChecks([]);
+        $('#addEditModal').modal('show');
+    },
+    _edit: function (id) {
+        var self = this;
+        var i = self._items.find(function (x) { return x.id == id; });
+        if (!i) return;
+        $('#itemId').val(i.id);
+        $('#itemName').val(i.name);
+        $('#itemMobile').val(i.mobile);
+        $('#itemPassword').val('');
+        $('#itemRole').val(i.role_id || '');
+        $('#itemSuper').prop('checked', !!i.issuperadmin);
+        $('#itemStatus').val(i.isactive);
+        var ids = (i.location_ids && i.location_ids.length) ? i.location_ids : (i.location_id ? [i.location_id] : []);
+        self._renderLocationChecks(ids);
+        $('#modalTitle').text('Edit User');
+        $('#addEditModal').modal('show');
+    },
+    _save: function () {
+        var self = this, id = $('#itemId').val();
+        var locationIds = $('#itemLocations .usr-loc:checked').map(function () { return parseInt(this.value, 10); }).get();
+        var d = {
+            id: id || undefined,
+            name: $('#itemName').val(),
+            mobile: $('#itemMobile').val(),
+            password: $('#itemPassword').val(),
+            role_id: parseInt($('#itemRole').val()) || 0,
+            location_ids: locationIds,
+            location_id: locationIds[0] || 0,
+            issuperadmin: $('#itemSuper').is(':checked') ? 1 : 0,
+            isactive: parseInt($('#itemStatus').val())
+        };
+        if (!d.password) delete d.password;
+        $.ajax({
+            url: id ? 'api/user/users-update.php' : 'api/user/users-create.php',
+            method: 'POST', contentType: 'application/json', data: JSON.stringify(d),
+            success: function (r) {
+                if (r.success) { $('#addEditModal').modal('hide'); self._loadData(); }
+                if (window.Toast) Toast.info(r.message); else alert(r.message);
+            }
+        });
+    },
+    _del: function (id) {
+        var self = this;
+        $.ajax({
+            url: 'api/user/users-delete.php', method: 'POST',
+            contentType: 'application/json', data: JSON.stringify({ id: id }),
+            success: function (r) {
+                if (r.success) self._loadData();
+                if (window.Toast) Toast.info(r.message); else alert(r.message);
+            }
+        });
+    }
+};
+</script>

@@ -1,0 +1,159 @@
+<div class="content">
+    <div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+        <div class="d-flex flex-column">
+            <div class="breadcrumb-title">SMS Settings</div>
+            <nav aria-label="breadcrumb" class="mt-1">
+                <ol class="breadcrumb mb-0 p-0"></ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="settingsForm">
+                        <div class="mb-3">
+                            <label class="form-label">Gateway Name</label>
+                            <input type="text" class="form-control" id="gatewayName" placeholder="e.g., Twilio, Nexmo" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">API Key</label>
+                            <input type="password" class="form-control" id="apiKey" placeholder="Enter API key" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">API Secret</label>
+                            <input type="password" class="form-control" id="apiSecret" placeholder="Enter API secret" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sender ID</label>
+                            <input type="text" class="form-control" id="senderId" placeholder="e.g., YourBrand" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">SMS Rate (per unit)</label>
+                            <input type="number" class="form-control" id="smsRate" placeholder="0.25" step="0.01" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">SMS Balance</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadBalance()"><i class="bx bx-refresh"></i></button>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3 pb-3 border-bottom">
+                        <p class="mb-1 text-muted small">Non-Masking Balance</p>
+                        <h3 class="mb-0 text-primary"><span id="balNonMasking">0.00</span> <small class="text-muted" style="font-size:0.6em">BDT</small></h3>
+                        <p class="mb-0 small text-muted">@ <span id="priceNonMasking">0.00</span>/sms · <span id="qtyNonMasking">0</span> SMS available</p>
+                    </div>
+                    <div>
+                        <p class="mb-1 text-muted small">Masking Balance</p>
+                        <h3 class="mb-0 text-success"><span id="balMasking">0.00</span> <small class="text-muted" style="font-size:0.6em">BDT</small></h3>
+                        <p class="mb-0 small text-muted">@ <span id="priceMasking">0.00</span>/sms · <span id="qtyMasking">0</span> SMS available</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">Tenant Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2"><strong>Tenant ID:</strong> <code id="balTenantId">-</code></div>
+                    <div class="mb-2"><strong>User ID:</strong> <code id="balUserId">-</code></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    loadSettings();
+    loadBalance();
+});
+
+function loadSettings() {
+    $.ajax({
+        url: 'api/sms/settings.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data.settings) {
+                var s = resp.data.settings;
+                $('#gatewayName').val(s.gateway_name || '');
+                $('#apiKey').val(s.api_key || '');
+                $('#apiSecret').val(s.api_secret || '');
+                $('#senderId').val(s.sender_id || '');
+                $('#smsRate').val(s.sms_rate || 0.25);
+            }
+        }
+    });
+}
+
+function loadBalance() {
+    $.ajax({
+        url: 'api/sms/balance.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data) {
+                var d = resp.data;
+                var balN  = parseFloat(d.non_masking || 0);
+                var priceN = parseFloat(d.non_masking_price || 0);
+                var qtyN   = priceN > 0 ? Math.floor(balN / priceN) : 0;
+                $('#balNonMasking').text(balN.toFixed(2));
+                $('#priceNonMasking').text(priceN.toFixed(2));
+                $('#qtyNonMasking').text(qtyN);
+
+                var balM  = parseFloat(d.masking || 0);
+                var priceM = parseFloat(d.masking_price || 0);
+                var qtyM   = priceM > 0 ? Math.floor(balM / priceM) : 0;
+                $('#balMasking').text(balM.toFixed(2));
+                $('#priceMasking').text(priceM.toFixed(2));
+                $('#qtyMasking').text(qtyM);
+
+                $('#balTenantId').text(d.tenant_id || '-');
+                $('#balUserId').text(d.user_id || '-');
+            } else {
+                console.warn('Balance load failed:', resp);
+            }
+        },
+        error: function(xhr) {
+            console.error('Balance API error:', xhr.responseText);
+        }
+    });
+}
+
+$('#settingsForm').submit(function(e) {
+    e.preventDefault();
+    var data = {
+        gateway_name: $('#gatewayName').val(),
+        api_key: $('#apiKey').val(),
+        api_secret: $('#apiSecret').val(),
+        sender_id: $('#senderId').val(),
+        sms_rate: parseFloat($('#smsRate').val())
+    };
+
+    $.ajax({
+        url: 'api/sms/settings.php',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success) {
+                alert('Settings saved successfully');
+                loadSettings();
+            } else {
+                alert('Error: ' + resp.message);
+            }
+        }
+    });
+});
+</script>

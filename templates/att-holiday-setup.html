@@ -1,0 +1,181 @@
+<style>
+    .hs-grid td, .hs-grid th { padding:5px 10px; font-size:12px; vertical-align:middle; }
+    .hs-quick { border:1px solid #ced4da; background:#fff; border-radius:999px; font-size:12px; padding:3px 12px; cursor:pointer; user-select:none; display:inline-flex; align-items:center; gap:5px; }
+    .hs-quick input { margin:0; }
+    .hs-weekend td { background:#fff7f7; }
+</style>
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Monthly Holiday Setup</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0"><a href="admin/attendance/holidays" data-route class="btn btn-sm btn-outline-secondary"><i class="bx bx-list-ul"></i> Holiday List</a></div>
+</div>
+
+<div class="card mb-3"><div class="card-body py-3">
+    <div class="d-flex gap-2 align-items-end flex-wrap">
+        <div><label class="form-label small mb-1">Year</label>
+            <input type="number" class="form-control form-control-sm" id="hsYear" style="width:110px;"></div>
+        <div><label class="form-label small mb-1">Month</label>
+            <select class="form-select form-select-sm" id="hsMonth" style="width:140px;">
+                <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+                <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+                <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+            </select></div>
+        <button class="btn btn-primary btn-sm" id="hsProcess"><i class="bx bx-cog"></i> Process</button>
+    </div>
+</div></div>
+
+<div class="card" id="hsResultCard" style="display:none;"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="small fw-semibold me-1">Quick mark all:</span>
+            <label class="hs-quick"><input type="checkbox" class="hs-wd" data-wd="5"> Friday</label>
+            <label class="hs-quick"><input type="checkbox" class="hs-wd" data-wd="6"> Saturday</label>
+            <label class="hs-quick"><input type="checkbox" class="hs-wd" data-wd="0"> Sunday</label>
+            <label class="hs-quick"><input type="checkbox" class="hs-wd" data-wd="1"> Monday</label>
+            <label class="hs-quick"><input type="checkbox" class="hs-wd" data-wd="2"> Tuesday</label>
+            <label class="hs-quick"><input type="checkbox" class="hs-wd" data-wd="3"> Wednesday</label>
+            <label class="hs-quick"><input type="checkbox" class="hs-wd" data-wd="4"> Thursday</label>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="form-label small mb-0">Default type:</label>
+            <select class="form-select form-select-sm" id="hsDefType" style="width:160px;"><option value="">--</option></select>
+        </div>
+    </div>
+
+    <div class="table-responsive"><table class="table table-bordered hs-grid">
+        <thead class="table-light"><tr>
+            <th style="width:34px;"><input type="checkbox" id="hsChkAll"></th>
+            <th>Date</th><th>Day</th><th>Holiday Type</th>
+        </tr></thead>
+        <tbody id="hsBody"></tbody>
+    </table></div>
+
+    <div class="d-flex justify-content-end mt-3">
+        <button class="btn btn-success" id="hsSave"><i class="bx bx-save"></i> Save Holidays</button>
+    </div>
+</div></div>
+
+<script>
+window.Page = {
+    _types: [],
+    _year: 0, _month: 0,
+    init: function () {
+        var self = this;
+        var now = new Date();
+        $('#hsYear').val(now.getFullYear());
+        $('#hsMonth').val(now.getMonth() + 1);
+
+        $.get('api/attendance/holiday-types-list.php', function (r) {
+            if (!r.success) return;
+            self._types = (r.data.items || []).filter(function (x) { return parseInt(x.isactive, 10) === 1; });
+            var opts = '<option value="">Select Type</option>' + self._types.map(function (t) {
+                return '<option value="' + t.id + '">' + t.name + '</option>';
+            }).join('');
+            $('#hsDefType').html(opts);
+        });
+
+        $('#hsProcess').off('click.hs').on('click.hs', function () { self._process(); });
+        $('#hsSave').off('click.hs').on('click.hs', function () { self._save(); });
+
+        $('#hsChkAll').off('change.hs').on('change.hs', function () {
+            $('#hsBody .hs-row').prop('checked', $(this).is(':checked'));
+        });
+        // Quick weekday toggle
+        $(document).off('change.hs-wd').on('change.hs-wd', '.hs-wd', function () {
+            var wd = $(this).data('wd'), on = $(this).is(':checked');
+            $('#hsBody tr[data-wd="' + wd + '"] .hs-row').prop('checked', on);
+        });
+        // Default type → apply to checked rows lacking a type
+        $('#hsDefType').off('change.hs').on('change.hs', function () {
+            var v = $(this).val();
+            if (!v) return;
+            $('#hsBody .hs-row:checked').closest('tr').find('.hs-type').val(v);
+        });
+        // When row checked + default type set, auto-assign type
+        $(document).off('change.hs-row').on('change.hs-row', '#hsBody .hs-row', function () {
+            if ($(this).is(':checked')) {
+                var dv = $('#hsDefType').val();
+                if (dv) $(this).closest('tr').find('.hs-type').val(dv);
+            }
+        });
+    },
+    destroy: function () {
+        $('#hsProcess,#hsSave,#hsChkAll,#hsDefType').off('.hs');
+        $(document).off('change.hs-wd change.hs-row');
+    },
+
+    _process: function () {
+        var self = this;
+        var year = parseInt($('#hsYear').val(), 10) || 0;
+        var month = parseInt($('#hsMonth').val(), 10) || 0;
+        if (year < 2000 || month < 1) { if (window.Toast) Toast.warning('Pick year & month'); return; }
+        self._year = year; self._month = month;
+
+        $.get('api/attendance/holidays-month-get.php', { year: year, month: month }, function (r) {
+            if (!r.success) { if (window.Toast) Toast.error(r.message); return; }
+            var existing = r.data.map || {};
+            var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            var typeOpts = '<option value="">--</option>' + self._types.map(function (t) {
+                return '<option value="' + t.id + '">' + t.name + '</option>';
+            }).join('');
+
+            var daysInMonth = new Date(year, month, 0).getDate();
+            var rows = '';
+            for (var d = 1; d <= daysInMonth; d++) {
+                var dateStr = year + '-' + String(month).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+                var dt = new Date(year, month - 1, d);
+                var wd = dt.getDay();
+                var ex = existing[dateStr];
+                var checked = ex ? 'checked' : '';
+                var sel = ex ? (ex.holiday_type_id || '') : '';
+                var weekendCls = (wd === 5 || wd === 6) ? 'hs-weekend' : '';
+                rows += '<tr data-wd="' + wd + '" data-date="' + dateStr + '" class="' + weekendCls + '">' +
+                    '<td><input type="checkbox" class="hs-row" ' + checked + '></td>' +
+                    '<td>' + dateStr + '</td>' +
+                    '<td>' + dayNames[wd] + '</td>' +
+                    '<td><select class="form-select form-select-sm hs-type">' + typeOpts + '</select></td>' +
+                '</tr>';
+                // apply existing selected type below after insertion
+            }
+            $('#hsBody').html(rows);
+            // set existing types
+            $('#hsBody tr').each(function () {
+                var ds = $(this).data('date');
+                if (existing[ds] && existing[ds].holiday_type_id) {
+                    $(this).find('.hs-type').val(existing[ds].holiday_type_id);
+                }
+            });
+            $('#hsChkAll').prop('checked', false);
+            $('.hs-wd').prop('checked', false);
+            $('#hsResultCard').show();
+        });
+    },
+
+    _save: function () {
+        var self = this;
+        if (!self._year) { if (window.Toast) Toast.warning('Process a month first'); return; }
+        var items = [];
+        $('#hsBody .hs-row:checked').each(function () {
+            var $tr = $(this).closest('tr');
+            items.push({
+                date: $tr.data('date'),
+                holiday_type_id: parseInt($tr.find('.hs-type').val(), 10) || 0
+            });
+        });
+        $('#hsSave').prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i> Saving...');
+        $.ajax({
+            url: 'api/attendance/holidays-bulk-save.php', method: 'POST', contentType: 'application/json',
+            data: JSON.stringify({ year: self._year, month: self._month, items: items })
+        }).done(function (r) {
+            $('#hsSave').prop('disabled', false).html('<i class="bx bx-save"></i> Save Holidays');
+            if (window.Toast) Toast.info(r.message); else alert(r.message);
+        }).fail(function () {
+            $('#hsSave').prop('disabled', false).html('<i class="bx bx-save"></i> Save Holidays');
+            if (window.Toast) Toast.error('Network error');
+        });
+    }
+};
+</script>

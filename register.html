@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" href="assets/images/hotel365-logo-fevicon.png" type="image/png" />
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="assets/css/icons.css" rel="stylesheet">
+    <link href="assets/css/auth.css" rel="stylesheet">
+    <title>Register - Hotel Management System</title>
+</head>
+<body>
+    <div class="auth-bg"></div>
+    <div class="auth-blob blob-1"></div>
+    <div class="auth-blob blob-2"></div>
+    <div class="auth-blob blob-3"></div>
+    <div class="auth-blob blob-4"></div>
+
+    <div class="auth-shell">
+        <div class="auth-grid reverse">
+            <!-- Brand panel -->
+            <div class="auth-brand brand-right">
+                <div class="brand-inner">
+                    <span class="logo-pill"><img src="assets/images/hotel365-logo-color.png" alt="Hotel 365"></span>
+                    <h1>Start your<br>30-day free trial</h1>
+                    <p>Register your hotel and unlock the full power of Hotel 365 — no credit card required.</p>
+                    <ul class="auth-feat">
+                        <li><i class="bx bx-check-shield"></i> Free for 30 days, cancel anytime</li>
+                        <li><i class="bx bx-rocket"></i> Setup in minutes</li>
+                        <li><i class="bx bx-support"></i> Dedicated onboarding support</li>
+                    </ul>
+                </div>
+                <small style="opacity:.7; position:relative; z-index:1;" class="mt-2" > &copy; 2025 - <span id="authYear"></span> Bogura Tech Hub | All rights reserved</small>
+                <script>document.getElementById('authYear').textContent=new Date().getFullYear();</script>
+            </div>
+
+            <!-- Form panel -->
+            <div class="auth-form">
+                <img src="assets/images/hotel365-logo-color.png" class="mini-logo" alt="Hotel 365">
+                <div class="form-head">
+                    <h2>Create your account</h2>
+                    <p class="sub">Register your hotel to get started</p>
+                </div>
+
+                <div id="errorMessage" class="alert alert-danger d-none"></div>
+                <div id="successMessage" class="alert alert-success d-none"></div>
+
+                <form id="signupForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="inputBusinessName" class="form-label">Business / Hotel Name</label>
+                            <input type="text" class="form-control" id="inputBusinessName" placeholder="Your hotel name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputName" class="form-label">Owner Name</label>
+                            <input type="text" class="form-control" id="inputName" placeholder="Your name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputMobile" class="form-label">Mobile Number</label>
+                            <input type="text" class="form-control" id="inputMobile" placeholder="Used for login" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputEmail" class="form-label">Email <span class="text-muted">(optional)</span></label>
+                            <input type="email" class="form-control" id="inputEmail" placeholder="Email address">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputChoosePassword" class="form-label">Password</label>
+                            <div class="input-group" id="show_hide_password">
+                                <input type="password" class="form-control" id="inputChoosePassword" placeholder="Password" required>
+                                <span class="input-group-text"><i class="bx bx-hide"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputConfirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="inputConfirmPassword" placeholder="Re-enter password" required>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" required>
+                                <label class="form-check-label" for="flexSwitchCheckChecked">I read and agree to Terms &amp; Conditions</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn-auth" id="btnRegister">
+                                <span id="registerText">Create Account</span>
+                                <span id="registerSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="switch-link">
+                        Already have an account? <a href="index.html">Sign in here</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#show_hide_password .input-group-text").on('click', function () {
+                var $inp = $('#show_hide_password input'), $i = $('#show_hide_password i');
+                if ($inp.attr('type') === 'password') { $inp.attr('type','text'); $i.removeClass('bx-hide').addClass('bx-show'); }
+                else { $inp.attr('type','password'); $i.removeClass('bx-show').addClass('bx-hide'); }
+            });
+
+            $('#signupForm').on('submit', function(e) {
+                e.preventDefault();
+                const businessName = $('#inputBusinessName').val().trim();
+                const ownerName = $('#inputName').val().trim();
+                const mobile = $('#inputMobile').val().trim();
+                const email = $('#inputEmail').val().trim();
+                const password = $('#inputChoosePassword').val();
+                const confirmPassword = $('#inputConfirmPassword').val();
+
+                if (!businessName || !ownerName || !mobile || !password || !confirmPassword) { showError('Please fill in all required fields'); return; }
+                if (password !== confirmPassword) { showError('Passwords do not match'); return; }
+                if (password.length < 6) { showError('Password must be at least 6 characters'); return; }
+
+                $('#registerText').addClass('d-none');
+                $('#registerSpinner').removeClass('d-none');
+                $('#btnRegister').prop('disabled', true);
+                hideMessages();
+
+                $.ajax({
+                    url: 'api/auth/register.php', method: 'POST', contentType: 'application/json',
+                    data: JSON.stringify({
+                        business_name: businessName, owner_name: ownerName, mobile: mobile,
+                        email: email, password: password, confirm_password: confirmPassword
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            showSuccess('Registration successful! Redirecting to login...');
+                            $('#signupForm')[0].reset();
+                            setTimeout(function() { window.location.href = 'index.html'; }, 2000);
+                        } else { showError(response.message || 'Registration failed'); resetButton(); }
+                    },
+                    error: function(xhr) { const r = xhr.responseJSON; showError(r && r.message ? r.message : 'Registration failed. Please try again.'); resetButton(); }
+                });
+            });
+
+            function showError(m){ $('#errorMessage').text(m).removeClass('d-none'); $('#successMessage').addClass('d-none'); }
+            function showSuccess(m){ $('#successMessage').text(m).removeClass('d-none'); $('#errorMessage').addClass('d-none'); }
+            function hideMessages(){ $('#errorMessage').addClass('d-none'); $('#successMessage').addClass('d-none'); }
+            function resetButton(){ $('#registerText').removeClass('d-none'); $('#registerSpinner').addClass('d-none'); $('#btnRegister').prop('disabled', false); }
+        });
+    </script>
+</body>
+</html>

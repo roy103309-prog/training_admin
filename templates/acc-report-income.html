@@ -1,0 +1,139 @@
+<style>
+    .report-table.inc-compact tbody td { padding: 4px 8px; font-size: 12px; }
+    .report-table.inc-compact tbody tr { background: #fff; }
+    .report-table.inc-compact tfoot td { background: #fff; font-weight: 700; border-top: 2px solid #444; padding: 6px 8px; }
+</style>
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Income Report</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+</div>
+
+<div class="report-page">
+    <div class="card filter-bar mb-3"><div class="card-body py-2">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2"><label class="form-label small mb-1">From Date</label>
+                <input type="date" class="form-control form-control-sm" id="irFrom"></div>
+            <div class="col-md-2"><label class="form-label small mb-1">To Date</label>
+                <input type="date" class="form-control form-control-sm" id="irTo"></div>
+            <div class="col-md-3"><label class="form-label small mb-1">Income Category</label>
+                <select class="form-select form-select-sm" id="irCat"><option value="">All</option></select></div>
+            <div class="col-md-3"><label class="form-label small mb-1">Asset Category</label>
+                <select class="form-select form-select-sm" id="irAsset"><option value="">All</option></select></div>
+            <div class="col-md-2 d-flex gap-1 justify-content-end">
+                <button class="btn btn-primary btn-sm"           id="irGen"><i class="bx bx-search"></i> Go</button>
+                <button class="btn btn-outline-secondary btn-sm" id="irPrint"><i class="bx bx-printer"></i></button>
+                <button class="btn btn-outline-secondary btn-sm" id="irReset"><i class="bx bx-refresh"></i></button>
+            </div>
+        </div>
+    </div></div>
+
+    <div id="reportPreview" class="report-preview" style="display:none;">
+        <div class="p-3 pb-0"><div id="reportHeader"></div></div>
+        <div class="px-3 pb-3" id="irBody"></div>
+        <div class="px-3 pb-3 text-center">
+            <small class="text-muted">Generated <span id="footerDate"></span> | Hotel365ERP | Bogura Tech Hub</small>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    init: function () {
+        var self = this;
+        var today = new Date();
+        var monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        $('#irFrom').val(monthStart.toISOString().slice(0,10));
+        $('#irTo').val(today.toISOString().slice(0,10));
+
+        $.when(
+            $.get('api/accounts/category-list.php', { kind: 'income' }),
+            $.get('api/accounts/assets-list.php')
+        ).done(function(c, a){
+            $('#irCat').html('<option value="">All</option>' + (c[0].data.items || []).map(function(x){
+                return '<option value="' + x.id + '">' + x.name + '</option>';
+            }).join(''));
+            $('#irAsset').html('<option value="">All</option>' + (a[0].data.items || []).map(function(x){
+                return '<option value="' + x.id + '">' + x.name + '</option>';
+            }).join(''));
+        });
+
+        $('#irGen').off('click.ir').on('click.ir', function () { self._generate(); });
+        $('#irReset').off('click.ir').on('click.ir', function () {
+            var t = new Date();
+            $('#irFrom').val(new Date(t.getFullYear(), t.getMonth(), 1).toISOString().slice(0,10));
+            $('#irTo').val(t.toISOString().slice(0,10));
+            $('#irCat').val(''); $('#irAsset').val('');
+            $('#reportPreview').hide();
+        });
+        $('#irPrint').off('click.ir').on('click.ir', function () {
+            if (typeof window.printReport === 'function') window.printReport();
+        });
+        setTimeout(function () { self._generate(); }, 60);
+    },
+    destroy: function () { $('#irGen,#irReset,#irPrint').off('.ir'); },
+
+    _money: function (v) {
+        return '৳' + (parseFloat(v) || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+    _fmtDate: function (v) {
+        if (!v) return '-';
+        var d = new Date(v);
+        return isNaN(d.getTime()) ? v : d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+    },
+
+    _generate: function () {
+        var self = this;
+        var from = $('#irFrom').val(), to = $('#irTo').val();
+        if (!from || !to) { if (window.Toast) Toast.warning('Pick both dates'); return; }
+        if (from > to)    { if (window.Toast) Toast.warning('From must be ≤ To'); return; }
+
+        $('#irBody').html('<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Loading...</div>');
+        $('#reportPreview').show();
+        if (typeof window.loadReportHeader === 'function') {
+            window.loadReportHeader('Income Report', from, to);
+        }
+
+        $.get('api/accounts/reports/income.php', {
+            from: from, to: to,
+            income_category_id: $('#irCat').val() || 0,
+            asset_category_id:  $('#irAsset').val() || 0
+        }, function (r) {
+            if (!r.success) { $('#irBody').html('<div class="alert alert-danger">' + (r.message || 'Failed') + '</div>'); return; }
+            var rows = r.data.rows;
+            if (!rows.length) { $('#irBody').html('<div class="alert alert-info">No income entries for selected filters.</div>'); return; }
+
+            var body = rows.map(function (r) {
+                return '<tr>' +
+                    '<td>' + self._fmtDate(r.voucher_date) + '</td>' +
+                    '<td>' + r.voucher_no + '</td>' +
+                    '<td>' + (r.asset_name || '-') + '</td>' +
+                    '<td>' + (r.collected_by || '-') + '</td>' +
+                    '<td>' + (r.income_category || '-') + '</td>' +
+                    '<td>' + (r.description || '-') + '</td>' +
+                    '<td>' + (r.payment_method || '-') + '</td>' +
+                    '<td class="text-right">' + self._money(r.amount) + '</td>' +
+                '</tr>';
+            }).join('');
+
+            $('#irBody').html(
+                '<div class="table-responsive"><table class="report-table inc-compact">' +
+                    '<thead><tr>' +
+                        '<th>Date</th><th>Voucher</th><th>Asset Cat.</th><th>Collected By</th>' +
+                        '<th>Income Category</th><th>Description</th><th>Payment Method</th>' +
+                        '<th class="text-right">Amount</th>' +
+                    '</tr></thead>' +
+                    '<tbody>' + body + '</tbody>' +
+                    '<tfoot><tr>' +
+                        '<td colspan="7" class="text-right">Total (' + r.data.summary.count + ' entries)</td>' +
+                        '<td class="text-right">' + self._money(r.data.summary.total) + '</td>' +
+                    '</tr></tfoot>' +
+                '</table></div>'
+            );
+        }).fail(function () {
+            $('#irBody').html('<div class="alert alert-danger">Network error</div>');
+        });
+    }
+};
+</script>

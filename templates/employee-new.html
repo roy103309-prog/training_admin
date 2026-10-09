@@ -1,0 +1,180 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Add Employee</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <a href="admin/employees" data-route class="btn btn-sm btn-outline-secondary"><i class="bx bx-list-ul"></i> Employee List</a>
+    </div>
+</div>
+
+<form id="empForm" novalidate>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-user"></i> Basic Information</h5>
+                <div class="row g-3">
+                    <div class="col-md-3"><label class="form-label">Employee ID</label><input class="form-control" id="empCode" readonly placeholder="Auto"></div>
+                    <div class="col-md-9"><label class="form-label">Name *</label><input class="form-control" id="empName"></div>
+                    <div class="col-md-4"><label class="form-label">Mobile *</label><input class="form-control" id="empMobile"></div>
+                    <div class="col-md-4"><label class="form-label">Email</label><input type="email" class="form-control" id="empEmail"></div>
+                    <div class="col-md-4"><label class="form-label">Gender</label>
+                        <select class="form-select" id="empGender">
+                            <option value="">--</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4"><label class="form-label">Joining Date</label><input type="date" class="form-control" id="empJoining"></div>
+                </div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-shield"></i> Login &amp; Access</h5>
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Role *</label><select class="form-select" id="empRole"><option value="">--</option></select>
+                        <small class="text-muted">Permissions auto-applied from role on login.</small>
+                    </div>
+                    <div class="col-md-6"><label class="form-label">Username</label><input class="form-control" id="empUsername" placeholder="Optional, defaults to mobile"></div>
+                    <div class="col-md-6"><label class="form-label">Password *</label><input type="text" class="form-control" id="empPassword"></div>
+                    <div class="col-md-6"><label class="form-label">Status</label>
+                        <select class="form-select" id="empStatus">
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-briefcase"></i> Work Information</h5>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Shift</label>
+                        <select class="form-select" id="empShift">
+                            <option value="">--</option>
+                            <option value="morning">Morning</option>
+                            <option value="day">Day</option>
+                            <option value="evening">Evening</option>
+                            <option value="night">Night</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4"><label class="form-label">Grade *</label><select class="form-select" id="empGrade"><option value="">--</option></select></div>
+                    <div class="col-md-4"><label class="form-label">Salary Type *</label>
+                        <select class="form-select" id="empSalaryType">
+                            <option value="monthly">Monthly</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="daily">Daily</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6"><label class="form-label">Basic Salary</label><input type="number" step="0.01" min="0" class="form-control" id="empBasic" readonly><small class="text-muted">Auto-loaded from Role + Grade + Salary Type.</small></div>
+                    <div class="col-md-6"><label class="form-label">Salary Status</label>
+                        <select class="form-select" id="empSalaryStatus">
+                            <option value="1">Active</option>
+                            <option value="0">On Hold</option>
+                        </select>
+                    </div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 90px;"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-info-circle"></i> Summary</h5>
+                <dl class="row mb-2 small">
+                    <dt class="col-5">Role</dt><dd class="col-7 text-end" id="sumRole">—</dd>
+                    <dt class="col-5">Grade</dt><dd class="col-7 text-end" id="sumGrade">—</dd>
+                    <dt class="col-5">Salary Type</dt><dd class="col-7 text-end" id="sumType">monthly</dd>
+                    <dt class="col-5">Basic</dt><dd class="col-7 text-end" id="sumBasic">৳0.00</dd>
+                </dl>
+                <button type="submit" class="btn btn-primary w-100" id="empSubmit"><i class="bx bx-check"></i> Save Employee</button>
+                <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="empReset">Reset</button>
+            </div></div>
+        </div>
+    </div>
+</form>
+
+<script>
+window.Page = {
+    init: function() {
+        var self = this;
+        self._loadRoles();
+        self._loadGrades();
+        $('#empRole,#empGrade,#empSalaryType').off('change.emp').on('change.emp', function(){ self._lookupSalary(); });
+        $('#empReset').off('click.emp').on('click.emp', function(){ self._reset(); });
+        $('#empForm').off('submit.emp').on('submit.emp', function(e){ e.preventDefault(); self._submit(); });
+    },
+    destroy: function() {
+        $('#empRole,#empGrade,#empSalaryType,#empReset,#empForm').off('.emp');
+    },
+    _loadRoles: function() {
+        $.get('api/user/roles-list.php', function(r){
+            if (!r.success) return;
+            $('#empRole').html('<option value="">-- Role --</option>' + (r.data.items||[]).map(function(x){ return '<option value="'+x.id+'">'+x.name+'</option>'; }).join(''));
+        });
+    },
+    _loadGrades: function() {
+        $.get('api/hr/grades-list.php', { limit: 200 }, function(r){
+            if (!r.success) return;
+            $('#empGrade').html('<option value="">-- Grade --</option>' + (r.data.items||[]).filter(function(g){return parseInt(g.isactive,10)===1;}).map(function(g){ return '<option value="'+g.id+'">'+g.name+'</option>'; }).join(''));
+        });
+    },
+    _lookupSalary: function() {
+        var roleId = parseInt($('#empRole').val(),10)  || 0;
+        var gradeId= parseInt($('#empGrade').val(),10) || 0;
+        var type   = $('#empSalaryType').val();
+        $('#sumRole').text($('#empRole option:selected').text());
+        $('#sumGrade').text($('#empGrade option:selected').text());
+        $('#sumType').text(type);
+        if (!roleId || !gradeId) { $('#empBasic').val(''); $('#sumBasic').text('৳0.00'); return; }
+        $.get('api/hr/salary-setup-lookup.php', { role_id: roleId, grade_id: gradeId, salary_type: type }, function(r){
+            if (!r.success) return;
+            var amt = parseFloat(r.data.amount) || 0;
+            $('#empBasic').val(amt.toFixed(2));
+            $('#sumBasic').text('৳' + amt.toFixed(2));
+        });
+    },
+    _reset: function() {
+        $('#empForm')[0].reset();
+        $('#empCode').val(''); $('#empBasic').val('');
+        $('#sumRole').text('—'); $('#sumGrade').text('—'); $('#sumType').text('monthly'); $('#sumBasic').text('৳0.00');
+    },
+    _submit: function() {
+        var payload = {
+            name:         $('#empName').val().trim(),
+            mobile:       $('#empMobile').val().trim(),
+            email:        $('#empEmail').val().trim(),
+            gender:       $('#empGender').val(),
+            joining_date: $('#empJoining').val(),
+            role_id:      parseInt($('#empRole').val(),10) || 0,
+            username:     $('#empUsername').val().trim(),
+            password:     $('#empPassword').val(),
+            shift:        $('#empShift').val(),
+            grade_id:     parseInt($('#empGrade').val(),10) || 0,
+            salary_type:  $('#empSalaryType').val(),
+            basic_salary: parseFloat($('#empBasic').val()) || 0,
+            salary_status:parseInt($('#empSalaryStatus').val(),10),
+            isactive:     parseInt($('#empStatus').val(),10)
+        };
+        if (!payload.name || !payload.mobile || !payload.password || !payload.role_id) {
+            if (window.Toast) Toast.warning('Name, mobile, password and role required'); else alert('Name, mobile, password and role required');
+            return;
+        }
+        $('#empSubmit').prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i> Saving...');
+        $.ajax({ url:'api/hr/employees-create.php', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
+        .done(function(r){
+            $('#empSubmit').prop('disabled', false).html('<i class="bx bx-check"></i> Save Employee');
+            if (r.success) {
+                $('#empCode').val(r.data.employee_code || '');
+                if (window.Toast) Toast.success(r.message + ' (' + r.data.employee_code + ')');
+                if (window.HotelApp && window.HotelApp.navigate) setTimeout(function(){ window.HotelApp.navigate('admin/employees'); }, 800);
+            } else {
+                if (window.Toast) Toast.error(r.message); else alert(r.message);
+            }
+        }).fail(function(){
+            $('#empSubmit').prop('disabled', false).html('<i class="bx bx-check"></i> Save Employee');
+            if (window.Toast) Toast.error('Network error'); else alert('Failed');
+        });
+    }
+};
+</script>

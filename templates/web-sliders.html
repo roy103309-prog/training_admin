@@ -1,0 +1,86 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Hero Sliders</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0"><button class="btn btn-primary d-none" id="slAdd"><i class="bx bx-plus"></i> Add Slide</button></div>
+</div>
+
+<div class="card"><div class="card-body">
+    <p class="text-muted small">Slides of the website's hero section, shown in sort order. Only active slides appear on the website.</p>
+    <div class="row g-3" id="slGrid"><div class="col-12 text-center">Loading...</div></div>
+</div></div>
+
+<div class="modal fade" id="slModal"><div class="modal-dialog"><div class="modal-content">
+<form id="slForm" onsubmit="return false">
+    <div class="modal-header"><h5 id="slTitle">Add Slide</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" name="id">
+        <div class="mb-2 text-center"><img id="slPreview" src="" style="max-height:160px;max-width:100%;display:none" class="rounded"></div>
+        <div class="mb-3"><label class="form-label">Image *</label><input type="file" class="form-control" name="image" id="slImage" accept="image/*"></div>
+        <div class="mb-3"><label class="form-label">Title</label><input class="form-control" name="title"></div>
+        <div class="mb-3"><label class="form-label">Subtitle</label><input class="form-control" name="subtitle"></div>
+        <div class="row">
+            <div class="col-6 mb-3"><label class="form-label">Sort Order</label><input type="number" class="form-control" name="sort_order" value="0"></div>
+            <div class="col-6 mb-3 d-flex align-items-end"><div class="form-check form-switch"><input type="checkbox" class="form-check-input" name="is_active" value="1" id="slActive" checked><label class="form-check-label" for="slActive">Active</label></div></div>
+        </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="slSave">Save</button></div>
+</form>
+</div></div></div>
+
+<script>
+window.Page = {
+    _items: [],
+    init: function() {
+        var self = this, app = window.NL;
+        self._canEdit = app.hasPermission('edit'); self._canDelete = app.hasPermission('delete');
+        $('#slAdd').toggleClass('d-none', !app.hasPermission('add'));
+        self._load();
+        $('#slAdd').off('click.sl').on('click.sl', function(){ self._open(null); });
+        $('#slSave').off('click.sl').on('click.sl', function(){ self._save(); });
+        $('#slImage').off('change.sl').on('change.sl', function(){ if (this.files[0]) $('#slPreview').attr('src', URL.createObjectURL(this.files[0])).show(); });
+        $('#slGrid').off('click.sl').on('click.sl', '.sl-edit', function(){ var id = $(this).data('id'); self._open(self._items.find(function(x){ return x.id == id; })); })
+            .on('click.sl', '.sl-del', function(){ if (confirm('Delete this slide?')) self._del($(this).data('id')); });
+    },
+    destroy: function() { $('#slAdd,#slSave,#slImage,#slGrid').off('.sl'); },
+    _load: function() {
+        var self = this;
+        $.get('api/web-sliders-list.php', function(r){
+            if (!r.success) return;
+            self._items = r.data.items;
+            $('#slGrid').html(r.data.items.map(function(s){
+                var act = (self._canEdit ? '<button class="btn btn-sm btn-primary sl-edit" data-id="' + s.id + '"><i class="bx bx-edit"></i></button> ' : '') +
+                          (self._canDelete ? '<button class="btn btn-sm btn-danger sl-del" data-id="' + s.id + '"><i class="bx bx-trash"></i></button>' : '');
+                return '<div class="col-sm-6 col-lg-4 col-xl-3"><div class="card h-100 mb-0 border"><img src="' + NL.esc(NL.media(s.image_url)) + '" class="card-img-top" style="height:140px;object-fit:cover" loading="lazy">' +
+                    '<div class="card-body p-2"><div class="fw-semibold text-truncate">' + (NL.esc(s.title) || '<span class="text-muted">No title</span>') + '</div>' +
+                    '<div class="small text-muted text-truncate">' + NL.esc(s.subtitle) + '</div>' +
+                    '<div class="d-flex justify-content-between align-items-center mt-2"><span class="badge bg-' + (s.is_active == 1 ? 'success' : 'secondary') + '">' + (s.is_active == 1 ? 'Active' : 'Hidden') + '</span>' +
+                    '<small class="text-muted">#' + s.sort_order + '</small><span>' + act + '</span></div></div></div></div>';
+            }).join('') || '<div class="col-12 text-center text-muted">No slides</div>');
+        });
+    },
+    _open: function(s) {
+        var f = $('#slForm')[0];
+        f.reset();
+        f.id.value = s ? s.id : ''; f.title.value = s ? s.title : ''; f.subtitle.value = s ? s.subtitle : ''; f.sort_order.value = s ? s.sort_order : 0;
+        $('#slActive').prop('checked', s ? s.is_active == 1 : true);
+        if (s) $('#slPreview').attr('src', NL.media(s.image_url)).show(); else $('#slPreview').hide();
+        $('#slTitle').text(s ? 'Edit Slide' : 'Add Slide');
+        $('#slModal').modal('show');
+    },
+    _save: function() {
+        var self = this, fd = new FormData($('#slForm')[0]);
+        fd.set('is_active', $('#slActive').is(':checked') ? 1 : 0);
+        var $btn = $('#slSave').prop('disabled', true);
+        $.ajax({ url: 'api/web-sliders-save.php', method: 'POST', data: fd, processData: false, contentType: false })
+        .done(function(r){ if (r.success) { $('#slModal').modal('hide'); self._load(); Toast.success(r.message); } else Toast.error(r.message); })
+        .always(function(){ $btn.prop('disabled', false); });
+    },
+    _del: function(id) {
+        var self = this;
+        $.ajax({ url: 'api/web-sliders-delete.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ id: id }) })
+        .done(function(r){ if (r.success) { self._load(); Toast.success(r.message); } else Toast.error(r.message); });
+    }
+};
+</script>

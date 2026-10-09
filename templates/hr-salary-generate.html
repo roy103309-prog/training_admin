@@ -1,0 +1,212 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Generate Salary</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0">
+        <a href="admin/hr/salaries" data-route class="btn btn-sm btn-outline-secondary"><i class="bx bx-history"></i> Salary History</a>
+    </div>
+</div>
+
+<form id="sgForm" novalidate>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-calendar"></i> Period</h5>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Period Type *</label>
+                        <select class="form-select" id="sgPeriodType">
+                            <option value="monthly">Monthly</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="daily">Daily</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4"><label class="form-label">Period Label *</label><input class="form-control" id="sgPeriodLabel" placeholder="e.g. 2026-05 or W-21"></div>
+                    <div class="col-md-2"><label class="form-label">Start</label><input type="date" class="form-control" id="sgStart"></div>
+                    <div class="col-md-2"><label class="form-label">End</label><input type="date" class="form-control" id="sgEnd"></div>
+                </div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-user"></i> Employee</h5>
+                <div class="row g-3">
+                    <div class="col-md-8"><label class="form-label">Employee *</label><select class="form-select" id="sgEmployee"><option value="">--</option></select></div>
+                    <div class="col-md-4"><label class="form-label">Basic Salary</label><input class="form-control" id="sgBasic" readonly></div>
+                </div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-plus-circle text-success"></i> Allowances</h5>
+                <small class="text-muted d-block mb-2">Select one or more (from <a href="admin/hr/allowances" data-route>Allowance / Deduction setup</a>).</small>
+                <div id="allowList" class="row g-2"></div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-minus-circle text-danger"></i> Deductions</h5>
+                <small class="text-muted d-block mb-2">Select one or more.</small>
+                <div id="deductList" class="row g-2"></div>
+            </div></div>
+
+            <div class="card mb-3"><div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Status</label>
+                        <select class="form-select" id="sgStatus">
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6"><label class="form-label">Note</label><input class="form-control" id="sgNote"></div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 90px;"><div class="card-body">
+                <h5 class="mb-3"><i class="bx bx-receipt"></i> Pay Slip Preview</h5>
+                <dl class="row mb-2">
+                    <dt class="col-7">Basic Salary</dt>     <dd class="col-5 text-end" id="pvBasic">৳0.00</dd>
+                    <dt class="col-7 text-success">Total Allowance</dt> <dd class="col-5 text-end text-success" id="pvAllow">৳0.00</dd>
+                    <dt class="col-7 text-danger">Total Deduction</dt>  <dd class="col-5 text-end text-danger" id="pvDeduct">৳0.00</dd>
+                </dl>
+                <hr>
+                <div class="d-flex justify-content-between mb-3"><strong>Net Pay</strong><strong id="pvNet">৳0.00</strong></div>
+                <button type="submit" class="btn btn-primary w-100" id="sgSubmit"><i class="bx bx-check"></i> Generate Salary</button>
+            </div></div>
+        </div>
+    </div>
+</form>
+
+<script>
+window.Page = {
+    _employees: [], _allowances: [],
+    init: function() {
+        var self = this;
+        self._defaultPeriod();
+        self._loadEmployees();
+        self._loadAllowances();
+        $('#sgEmployee').off('change.sg').on('change.sg', function(){ self._onEmployee(); });
+        $(document).off('change.sg-pick').on('change.sg-pick', '.sg-pick', function(){ self._recalc(); });
+        $('#sgForm').off('submit.sg').on('submit.sg', function(e){ e.preventDefault(); self._submit(); });
+    },
+    destroy: function() {
+        $('#sgEmployee,#sgForm').off('.sg');
+        $(document).off('change.sg-pick');
+    },
+    _defaultPeriod: function() {
+        var d = new Date();
+        $('#sgPeriodLabel').val(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'));
+        $('#sgStart').val(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01');
+        var last = new Date(d.getFullYear(), d.getMonth()+1, 0);
+        $('#sgEnd').val(last.toISOString().slice(0,10));
+    },
+    _loadEmployees: function() {
+        var self = this;
+        $.get('api/hr/employees-list.php', { limit: 500 }, function(r){
+            if (!r.success) return;
+            self._employees = r.data.items || [];
+            var opts = '<option value="">-- Employee --</option>' + self._employees.map(function(e){
+                return '<option value="'+e.id+'" data-basic="'+(e.basic_salary||0)+'">'+e.name+' / '+(e.employee_code||'')+'</option>';
+            }).join('');
+            $('#sgEmployee').html(opts);
+        });
+    },
+    _onEmployee: function() {
+        var basic = parseFloat($('#sgEmployee option:selected').data('basic')) || 0;
+        $('#sgBasic').val(basic.toFixed(2));
+        this._recalc();
+    },
+    _loadAllowances: function() {
+        var self = this;
+        $.get('api/hr/allowances-list.php', function(r){
+            if (!r.success) return;
+            self._allowances = (r.data.items || []).filter(function(a){ return parseInt(a.isactive,10) === 1; });
+            self._renderPicker('allowance', '#allowList');
+            self._renderPicker('deduction', '#deductList');
+        });
+    },
+    _renderPicker: function(kind, target) {
+        var rows = this._allowances.filter(function(a){ return a.type === kind; });
+        if (!rows.length) {
+            $(target).html('<div class="col-12 text-muted small">No ' + kind + ' entries defined.</div>');
+            return;
+        }
+        var html = rows.map(function(a){
+            var label = a.name + ' — ' + (a.value_type === 'percentage'
+                ? (parseFloat(a.amount).toFixed(2) + '%')
+                : ('৳' + parseFloat(a.amount).toFixed(2)));
+            return '<div class="col-md-6">' +
+                       '<label class="form-check">' +
+                           '<input type="checkbox" class="form-check-input sg-pick" ' +
+                                  'data-kind="' + kind + '" ' +
+                                  'data-id="' + a.id + '" ' +
+                                  'data-name="' + String(a.name).replace(/"/g,'&quot;') + '" ' +
+                                  'data-value-type="' + a.value_type + '" ' +
+                                  'data-amount="' + a.amount + '">' +
+                           '<span class="form-check-label">' + label + '</span>' +
+                       '</label>' +
+                   '</div>';
+        }).join('');
+        $(target).html(html);
+    },
+    _collectPicks: function(kind) {
+        var rows = [];
+        $('.sg-pick[data-kind="' + kind + '"]:checked').each(function(){
+            var $c = $(this);
+            rows.push({
+                name:       $c.data('name'),
+                value_type: $c.data('value-type'),
+                amount:     parseFloat($c.data('amount')) || 0
+            });
+        });
+        return rows;
+    },
+    _recalc: function() {
+        var basic = parseFloat($('#sgBasic').val()) || 0;
+        var allow = 0, deduct = 0;
+        this._collectPicks('allowance').forEach(function(a){
+            var amt = a.amount; if (a.value_type === 'percentage') amt = basic * amt / 100;
+            allow += amt;
+        });
+        this._collectPicks('deduction').forEach(function(d){
+            var amt = d.amount; if (d.value_type === 'percentage') amt = basic * amt / 100;
+            deduct += amt;
+        });
+        var net = basic + allow - deduct;
+        $('#pvBasic').text('৳' + basic.toFixed(2));
+        $('#pvAllow').text('৳' + allow.toFixed(2));
+        $('#pvDeduct').text('৳' + deduct.toFixed(2));
+        $('#pvNet').text('৳' + net.toFixed(2));
+    },
+    _submit: function() {
+        var payload = {
+            user_id:      parseInt($('#sgEmployee').val(), 10) || 0,
+            period_type:  $('#sgPeriodType').val(),
+            period_label: $('#sgPeriodLabel').val().trim(),
+            period_start: $('#sgStart').val(),
+            period_end:   $('#sgEnd').val(),
+            status:       $('#sgStatus').val(),
+            note:         $('#sgNote').val(),
+            allowances:   this._collectPicks('allowance'),
+            deductions:   this._collectPicks('deduction')
+        };
+        if (!payload.user_id || !payload.period_label) {
+            if (window.Toast) Toast.warning('Employee and period required'); else alert('Employee and period required');
+            return;
+        }
+        $('#sgSubmit').prop('disabled', true).html('<i class="bx bx-loader bx-spin"></i> Generating...');
+        $.ajax({ url:'api/hr/salary-generate.php', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
+        .done(function(r){
+            $('#sgSubmit').prop('disabled', false).html('<i class="bx bx-check"></i> Generate Salary');
+            if (r.success) {
+                if (window.Toast) Toast.success(r.message); else alert(r.message);
+                if (window.HotelApp && window.HotelApp.navigate) setTimeout(function(){ window.HotelApp.navigate('admin/hr/salaries'); }, 600);
+            } else {
+                if (window.Toast) Toast.error(r.message); else alert(r.message);
+            }
+        }).fail(function(){
+            $('#sgSubmit').prop('disabled', false).html('<i class="bx bx-check"></i> Generate Salary');
+            if (window.Toast) Toast.error('Network error'); else alert('Failed');
+        });
+    }
+};
+</script>

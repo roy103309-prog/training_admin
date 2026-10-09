@@ -1,0 +1,466 @@
+<div class="content">
+    <div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+        <div class="d-flex flex-column">
+            <div class="breadcrumb-title">SMS Campaigns</div>
+            <nav aria-label="breadcrumb" class="mt-1">
+                <ol class="breadcrumb mb-0 p-0"></ol>
+            </nav>
+        </div>
+        <div class="ms-auto ms-md-0">
+            <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#voiceCampaignModal"><i class="bx bx-microphone"></i> Voice Campaign</button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCampaignModal"><i class="bx bx-plus"></i> SMS Campaign</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h6 class="mb-0">SMS Campaigns</h6></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Total Contacts</th>
+                            <th>Sent</th>
+                            <th>Send Mode</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="campaignsTableBody">
+                        <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header"><h6 class="mb-0">Voice Campaigns</h6></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Audio</th>
+                            <th>Contacts</th>
+                            <th>Sent</th>
+                            <th>Status</th>
+                            <th>Scheduled</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="voiceTableBody">
+                        <tr><td colspan="7" class="text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Campaign Modal -->
+<div class="modal fade" id="addCampaignModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="campaignForm">
+                <div class="modal-body">
+                    <input type="hidden" id="campaignId" />
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="campaignName" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Template</label>
+                        <select class="form-select" id="campaignTemplate">
+                            <option value="">-- Select Template --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contact Group</label>
+                        <select class="form-select" id="campaignGroup">
+                            <option value="">-- Select Group --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Send Mode</label>
+                        <select class="form-select" id="campaignMode">
+                            <option value="Instant">Instant</option>
+                            <option value="Scheduled">Scheduled</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="scheduledAtWrap" style="display:none;">
+                        <label class="form-label">Schedule Date/Time</label>
+                        <input type="datetime-local" class="form-control" id="campaignScheduledAt" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Campaign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Voice Campaign Modal -->
+<div class="modal fade" id="voiceCampaignModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Voice Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="voiceForm">
+                <div class="modal-body">
+                    <input type="hidden" id="voiceId" />
+                    <div class="mb-3">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="voiceName" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Audio <span class="text-danger">*</span></label>
+                        <select class="form-select" id="voiceAudioSelect" required>
+                            <option value="">-- Select Audio --</option>
+                        </select>
+                        <small class="text-muted">Manage audios on the <em>Voice Audio Library</em> page.</small>
+                    </div>
+                    <div class="mb-3" id="voiceAudioPreviewWrap" style="display:none">
+                        <audio id="voiceAudioPreview" controls class="w-100"></audio>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contact Group</label>
+                        <select class="form-select" id="voiceGroup">
+                            <option value="">-- Select Group --</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="voiceStatus">
+                                <option value="Draft">Draft</option>
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Active">Active</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Scheduled At</label>
+                            <input type="datetime-local" class="form-control" id="voiceScheduledAt" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    loadCampaigns();
+    loadVoiceCampaigns();
+    loadDropdowns();
+    loadAudios();
+    setupForm();
+    setupVoiceForm();
+});
+
+function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+}
+
+function loadAudios() {
+    $.ajax({
+        url: 'api/sms/audios.php', method: 'GET', dataType: 'json',
+        success: function(resp) {
+            if (!resp.success || !resp.data.audios) return;
+            var opts = '<option value="">-- Select Audio --</option>' +
+                resp.data.audios.map(function(a) {
+                    return '<option value="' + a.id + '" data-url="' + a.file_url + '" data-name="' + escapeHtml(a.file_name || '') + '">' + escapeHtml(a.name) + '</option>';
+                }).join('');
+            $('#voiceAudioSelect').html(opts);
+        }
+    });
+}
+
+function loadVoiceCampaigns() {
+    $.ajax({
+        url: 'api/sms/voice.php', method: 'GET', dataType: 'json',
+        success: function(resp) {
+            if (!resp.success || !resp.data.campaigns) return;
+            var html = resp.data.campaigns.map(function(c) {
+                var statusCls = c.status === 'Active' ? 'success' : (c.status === 'Scheduled' ? 'warning' : 'secondary');
+                var audio = c.audio_url ? '<a href="' + c.audio_url + '" target="_blank">' + escapeHtml(c.audio_name || 'Listen') + '</a>' : '-';
+                return '<tr>' +
+                    '<td>' + escapeHtml(c.name) + '</td>' +
+                    '<td>' + audio + '</td>' +
+                    '<td>' + (c.total_contacts || 0) + '</td>' +
+                    '<td>' + (c.total_sent || 0) + '</td>' +
+                    '<td><span class="badge bg-' + statusCls + '">' + c.status + '</span></td>' +
+                    '<td>' + (c.scheduled_at || '-') + '</td>' +
+                    '<td>' +
+                        '<a href="javascript:void(0);" class="btn btn-sm btn-primary edit-voice" data-id="' + c.id + '"><i class="bx bx-edit"></i></a> ' +
+                        '<a href="javascript:void(0);" class="btn btn-sm btn-danger delete-voice" data-id="' + c.id + '"><i class="bx bx-trash"></i></a>' +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
+            $('#voiceTableBody').html(html || '<tr><td colspan="7" class="text-center">No voice campaigns</td></tr>');
+        }
+    });
+}
+
+function setupVoiceForm() {
+    // Group dropdown shared with SMS campaign — populate voice group too
+    $.ajax({
+        url: 'api/sms/groups.php', method: 'GET', dataType: 'json',
+        success: function(resp) {
+            if (!resp.success || !resp.data.groups) return;
+            var opts = '<option value="">-- Select Group --</option>' +
+                resp.data.groups.map(function(g) { return '<option value="' + g.uid + '">' + escapeHtml(g.name) + '</option>'; }).join('');
+            $('#voiceGroup').html(opts);
+        }
+    });
+
+    $('#voiceAudioSelect').on('change', function() {
+        var url = $(this).find(':selected').data('url') || '';
+        if (url) { $('#voiceAudioPreview').attr('src', url); $('#voiceAudioPreviewWrap').show(); }
+        else { $('#voiceAudioPreview').removeAttr('src'); $('#voiceAudioPreviewWrap').hide(); }
+    });
+
+    $('#voiceForm').submit(function(e) {
+        e.preventDefault();
+        var $sel = $('#voiceAudioSelect');
+        if (!$sel.val()) { alert('Please select an audio'); return; }
+        var id = $('#voiceId').val();
+        var data = {
+            id: id,
+            name: $('#voiceName').val(),
+            audio_url: $sel.find(':selected').data('url') || '',
+            audio_name: $sel.find(':selected').data('name') || $sel.find(':selected').text(),
+            audio_id: $sel.val(),
+            group_uid: $('#voiceGroup').val(),
+            status: $('#voiceStatus').val(),
+            scheduled_at: $('#voiceScheduledAt').val() || null
+        };
+        $.ajax({
+            url: 'api/sms/voice.php',
+            method: id ? 'PUT' : 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data), dataType: 'json',
+            success: function(resp) {
+                if (resp.success) {
+                    $('#voiceCampaignModal').modal('hide');
+                    $('#voiceForm')[0].reset();
+                    $('#voiceId').val('');
+                    loadVoiceCampaigns();
+                } else {
+                    alert('Error: ' + resp.message);
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '.edit-voice', function() {
+        var id = $(this).data('id');
+        $.ajax({
+            url: 'api/sms/voice.php?id=' + encodeURIComponent(id),
+            method: 'GET', dataType: 'json',
+            success: function(resp) {
+                if (resp.success && resp.data.campaigns && resp.data.campaigns.length) {
+                    var c = resp.data.campaigns[0];
+                    $('#voiceId').val(c.id);
+                    $('#voiceName').val(c.name);
+                    var matched = '';
+                    $('#voiceAudioSelect option').each(function() {
+                        if ($(this).data('url') === c.audio_url) matched = $(this).val();
+                    });
+                    $('#voiceAudioSelect').val(matched).trigger('change');
+                    $('#voiceGroup').val(c.group_uid || '');
+                    $('#voiceStatus').val(c.status || 'Draft');
+                    $('#voiceScheduledAt').val(c.scheduled_at ? c.scheduled_at.replace(' ', 'T') : '');
+                    $('#voiceCampaignModal').modal('show');
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '.delete-voice', function() {
+        var id = $(this).data('id');
+        if (!confirm('Delete this voice campaign?')) return;
+        $.ajax({
+            url: 'api/sms/voice.php', method: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify({id: id}), dataType: 'json',
+            success: function(resp) { if (resp.success) loadVoiceCampaigns(); else alert('Error: ' + resp.message); }
+        });
+    });
+
+    $('#voiceCampaignModal').on('hidden.bs.modal', function() {
+        $('#voiceForm')[0].reset();
+        $('#voiceId').val('');
+        $('#voiceAudioPreviewWrap').hide();
+        $('#voiceAudioPreview').removeAttr('src');
+    });
+}
+
+function loadCampaigns() {
+    $.ajax({
+        url: 'api/sms/campaigns.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data.campaigns) {
+                var html = resp.data.campaigns.map(function(c) {
+                    return '<tr>' +
+                        '<td>' + c.name + '</td>' +
+                        '<td><span class="badge bg-' + (c.status === 'Active' ? 'success' : (c.status === 'Scheduled' ? 'warning' : 'secondary')) + '">' + c.status + '</span></td>' +
+                        '<td>' + (c.total_contacts || 0) + '</td>' +
+                        '<td>' + (c.total_sent || 0) + '</td>' +
+                        '<td>' + c.send_mode + '</td>' +
+                        '<td>' +
+                        '<a href="javascript:void(0);" class="btn btn-sm btn-primary edit-campaign" data-id="' + c.id + '"><i class="bx bx-edit"></i></a>' +
+                        '<a href="javascript:void(0);" class="btn btn-sm btn-danger delete-campaign" data-id="' + c.id + '"><i class="bx bx-trash"></i></a>' +
+                        '</td>' +
+                        '</tr>';
+                }).join('');
+                $('#campaignsTableBody').html(html || '<tr><td colspan="6" class="text-center">No campaigns found</td></tr>');
+            }
+        }
+    });
+}
+
+function loadDropdowns() {
+    $.ajax({
+        url: 'api/sms/templates.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data.templates) {
+                var opts = '<option value="">-- Select Template --</option>' +
+                    resp.data.templates.map(function(t) {
+                        return '<option value="' + t.uid + '">' + t.name + '</option>';
+                    }).join('');
+                $('#campaignTemplate').html(opts);
+            }
+        }
+    });
+    $.ajax({
+        url: 'api/sms/groups.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.data.groups) {
+                var opts = '<option value="">-- Select Group --</option>' +
+                    resp.data.groups.map(function(g) {
+                        return '<option value="' + g.uid + '">' + g.name + '</option>';
+                    }).join('');
+                $('#campaignGroup').html(opts);
+            }
+        }
+    });
+}
+
+function setupForm() {
+    $('#campaignMode').on('change', function() {
+        $('#scheduledAtWrap').toggle(this.value === 'Scheduled');
+    });
+
+    $('#campaignForm').submit(function(e) {
+        e.preventDefault();
+        var id = $('#campaignId').val();
+        var data = {
+            id: id,
+            name: $('#campaignName').val(),
+            template_uid: $('#campaignTemplate').val(),
+            group_uid: $('#campaignGroup').val(),
+            send_mode: $('#campaignMode').val(),
+            scheduled_at: $('#campaignScheduledAt').val()
+        };
+
+        var method = id ? 'PUT' : 'POST';
+        $.ajax({
+            url: 'api/sms/campaigns.php',
+            method: method,
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            success: function(resp) {
+                if (resp.success) {
+                    $('#addCampaignModal').modal('hide');
+                    $('#campaignForm')[0].reset();
+                    $('#campaignId').val('');
+                    $('#scheduledAtWrap').hide();
+                    loadCampaigns();
+                    alert('Campaign saved successfully');
+                } else {
+                    alert('Error: ' + resp.message);
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '.edit-campaign', function() {
+        var id = $(this).data('id');
+        $.ajax({
+            url: 'api/sms/campaigns.php?id=' + encodeURIComponent(id),
+            method: 'GET',
+            dataType: 'json',
+            success: function(resp) {
+                if (resp.success && resp.data.campaigns && resp.data.campaigns.length > 0) {
+                    var c = resp.data.campaigns[0];
+                    $('#campaignId').val(c.id);
+                    $('#campaignName').val(c.name);
+                    $('#campaignTemplate').val(c.template_uid || '');
+                    $('#campaignGroup').val(c.group_uid || '');
+                    $('#campaignMode').val(c.send_mode || 'Instant');
+                    if (c.send_mode === 'Scheduled' && c.scheduled_at) {
+                        $('#campaignScheduledAt').val(c.scheduled_at.replace(' ', 'T'));
+                        $('#scheduledAtWrap').show();
+                    } else {
+                        $('#scheduledAtWrap').hide();
+                    }
+                    $('#addCampaignModal').modal('show');
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '.delete-campaign', function() {
+        var id = $(this).data('id');
+        if (confirm('Are you sure you want to delete this campaign?')) {
+            $.ajax({
+                url: 'api/sms/campaigns.php',
+                method: 'DELETE',
+                contentType: 'application/json',
+                data: JSON.stringify({id: id}),
+                dataType: 'json',
+                success: function(resp) {
+                    if (resp.success) {
+                        loadCampaigns();
+                        alert('Campaign deleted successfully');
+                    } else {
+                        alert('Error: ' + resp.message);
+                    }
+                }
+            });
+        }
+    });
+
+    $('#addCampaignModal').on('hidden.bs.modal', function() {
+        $('#campaignForm')[0].reset();
+        $('#campaignId').val('');
+        $('#scheduledAtWrap').hide();
+    });
+}
+</script>

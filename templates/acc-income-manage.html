@@ -1,0 +1,139 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Income Manage</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0"><button class="btn btn-primary" id="btnAdd"><i class="bx bx-plus"></i> Add Income</button></div>
+</div>
+
+<div class="card mb-3"><div class="card-body">
+    <div class="table-responsive"><table class="table table-striped align-middle">
+        <thead><tr><th>ID</th><th>Date</th><th>Voucher</th><th>Asset Cat.</th><th>Collected By</th><th class="text-end">Amount</th><th class="text-end">Actions</th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="7" class="text-center">Loading...</td></tr></tbody>
+    </table></div>
+</div></div>
+
+<div class="modal fade" id="vModal"><div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header"><h5>New Income</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <div class="row g-2 mb-3">
+            <div class="col-md-4"><label class="form-label">Date *</label><input type="date" class="form-control" id="vDate"></div>
+            <div class="col-md-4"><label class="form-label">Voucher</label><input class="form-control" value="Auto" readonly></div>
+            <div class="col-md-4"><label class="form-label">Asset Category *</label><select class="form-select" id="vAsset"></select></div>
+        </div>
+
+        <h6 class="mb-2">Income Details</h6>
+        <div class="table-responsive"><table class="table table-sm align-middle" id="itemsTable">
+            <thead><tr><th>Income Category *</th><th>Description</th><th>Payment Method</th><th class="text-end">Amount</th><th></th></tr></thead>
+            <tbody></tbody>
+        </table></div>
+        <button type="button" class="btn btn-sm btn-outline-success mb-3" id="addRow"><i class="bx bx-plus"></i> Add Row</button>
+
+        <div class="row g-2 mb-2">
+            <div class="col-md-6"><label class="form-label">Note</label><input class="form-control" id="vNote"></div>
+            <div class="col-md-3"><label class="form-label">Receipt?</label>
+                <select class="form-select" id="vReceipt"><option value="0">No</option><option value="1">Yes</option></select>
+            </div>
+            <div class="col-md-3 text-end align-self-end"><strong>Total: ৳<span id="vTotal">0.00</span></strong></div>
+        </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" id="vSave">Submit</button></div>
+</div></div></div>
+
+<script>
+window.Page = (function(){
+    var KIND = 'income';
+    var TITLE = 'New Income';
+    var CATEGORY_KIND = 'income';
+    var assetOpts = '', catOpts = '', pmOpts = '';
+
+    function rowHtml() {
+        return '<tr>' +
+            '<td><select class="form-select form-select-sm row-cat">' + catOpts + '</select></td>' +
+            '<td><input class="form-control form-control-sm row-desc"></td>' +
+            '<td><select class="form-select form-select-sm row-pm">' + pmOpts + '</select></td>' +
+            '<td class="text-end"><input type="number" step="0.01" class="form-control form-control-sm text-end row-amt" value="0"></td>' +
+            '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger row-del"><i class="bx bx-x"></i></button></td>' +
+        '</tr>';
+    }
+
+    function recalc() {
+        var t = 0;
+        $('#itemsTable tbody .row-amt').each(function(){ t += parseFloat($(this).val()) || 0; });
+        $('#vTotal').text(t.toFixed(2));
+    }
+
+    return {
+        init: function(){
+            var self = this;
+            self._loadList();
+            $.when(
+                $.get('api/accounts/assets-list.php'),
+                $.get('api/accounts/category-list.php', { kind: CATEGORY_KIND }),
+                $.get('api/payment/methods-list.php', { limit: 100 })
+            ).done(function(a, c, p){
+                assetOpts = '<option value="">--</option>' + (a[0].data.items||[]).filter(function(x){return parseInt(x.isactive,10)===1;}).map(function(x){ return '<option value="'+x.id+'">'+x.name+' ('+x.type.replace('_',' ')+')</option>'; }).join('');
+                catOpts   = '<option value="">--</option>' + (c[0].data.items||[]).filter(function(x){return parseInt(x.isactive,10)===1;}).map(function(x){ return '<option value="'+x.id+'">'+x.name+'</option>'; }).join('');
+                pmOpts    = '<option value="">--</option>' + ((p[0].data||{}).items||[]).map(function(x){ return '<option value="'+x.id+'">'+x.name+'</option>'; }).join('');
+                $('#vAsset').html(assetOpts);
+            });
+            $('#btnAdd').off('click.v').on('click.v', function(){ self._openAdd(); });
+            $('#addRow').off('click.v').on('click.v', function(){ $('#itemsTable tbody').append(rowHtml()); });
+            $(document).off('click.v-row-del').on('click.v-row-del', '#itemsTable .row-del', function(){ $(this).closest('tr').remove(); recalc(); });
+            $(document).off('input.v-row').on('input.v-row', '#itemsTable .row-amt', recalc);
+            $('#vSave').off('click.v').on('click.v', function(){ self._save(); });
+            $(document).off('click.v-del').on('click.v-del', '.v-del', function(){ if(confirm('Delete?')) self._del($(this).data('id')); });
+        },
+        destroy: function(){ $('#btnAdd,#addRow,#vSave').off('.v'); $(document).off('click.v-row-del input.v-row click.v-del'); },
+        _loadList: function(){
+            $.get('api/accounts/voucher-list.php', { type: KIND }, function(r){
+                if (!r.success) return;
+                if (!r.data.items.length) { $('#tableBody').html('<tr><td colspan="7" class="text-center">No data</td></tr>'); return; }
+                $('#tableBody').html(r.data.items.map(function(v){
+                    return '<tr><td>'+v.id+'</td><td>'+v.voucher_date+'</td><td>'+v.voucher_no+'</td><td>'+(v.asset_name||'-')+'</td>' +
+                           '<td>'+(v.collected_by||'-')+'</td><td class="text-end">৳'+parseFloat(v.total).toFixed(2)+'</td>' +
+                           '<td class="text-end"><button class="btn btn-sm btn-danger v-del" data-id="'+v.id+'"><i class="bx bx-trash"></i></button></td></tr>';
+                }).join(''));
+            });
+        },
+        _openAdd: function(){
+            $('#vDate').val(new Date().toISOString().slice(0,10));
+            $('#vAsset').val(''); $('#vNote').val(''); $('#vReceipt').val(0);
+            $('#itemsTable tbody').html(rowHtml());
+            recalc();
+            $('#vModal').modal('show');
+        },
+        _save: function(){
+            var self = this;
+            var items = [];
+            $('#itemsTable tbody tr').each(function(){
+                var $r = $(this);
+                items.push({
+                    category_id: parseInt($r.find('.row-cat').val(),10) || 0,
+                    description: $r.find('.row-desc').val(),
+                    payment_method_id: parseInt($r.find('.row-pm').val(),10) || 0,
+                    amount: parseFloat($r.find('.row-amt').val()) || 0
+                });
+            });
+            var payload = {
+                type: KIND,
+                voucher_date: $('#vDate').val(),
+                asset_category_id: parseInt($('#vAsset').val(),10) || 0,
+                want_receipt: parseInt($('#vReceipt').val(),10),
+                note: $('#vNote').val(),
+                items: items
+            };
+            $.ajax({ url:'api/accounts/voucher-save.php', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
+            .done(function(r){
+                if (r.success) { $('#vModal').modal('hide'); self._loadList(); }
+                if (window.Toast) Toast.info(r.message); else alert(r.message);
+            });
+        },
+        _del: function(id){
+            var self = this;
+            $.ajax({ url:'api/accounts/voucher-delete.php', method:'POST', contentType:'application/json', data: JSON.stringify({id:id}) })
+            .done(function(r){ if (r.success) self._loadList(); if (window.Toast) Toast.info(r.message); else alert(r.message); });
+        }
+    };
+})();
+</script>

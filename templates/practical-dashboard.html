@@ -1,0 +1,119 @@
+<style>
+.pd-hero { background: linear-gradient(120deg, #0f5c52, #12332f); color: #fff; border-radius: 12px; padding: 18px 22px; }
+.pd-hero .tag { display: inline-block; border: 1px solid rgba(255,255,255,.35); border-radius: 6px; padding: 1px 8px; font-size: 12px; }
+.pd-hero h4 { color: #fff; margin: 6px 0 2px; font-weight: 800; text-transform: uppercase; }
+.pd-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; background: #fff; height: 100%; }
+.pd-card .t { font-size: 11px; text-transform: uppercase; color: #6c757d; letter-spacing: .3px; }
+.pd-card .v { font-size: 22px; font-weight: 700; }
+.pd-card .s { font-size: 12px; color: #6c757d; }
+.pd-card.due { background: #fffbeb; border-color: #fde68a; }
+.pd-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; margin: 0 6px 6px 0; background: #fff; }
+.pd-chip b { background: #f1f5f9; border-radius: 20px; padding: 0 8px; }
+.pd-chip.on b { background: #0f766e; color: #fff; }
+.pd-action { display: flex; align-items: center; gap: 12px; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; color: inherit; }
+.pd-action:hover { background: #f8fafc; color: inherit; }
+.pd-action .ic { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; }
+.pd-action .d { font-size: 12px; color: #6c757d; }
+</style>
+
+<div class="pd-hero mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+        <span class="tag">ড্যাশবোর্ড ওভারভিউ (PRACTICAL)</span> <span class="small opacity-75" id="pdDate"></span>
+        <h4 id="pdInstitute">Practical Testing Center</h4>
+        <div class="small opacity-75">প্র্যাকটিক্যাল টেস্ট ও ম্যানেজমেন্ট সিস্টেম <a href="javascript:;" class="text-white" id="pdRefresh" title="Refresh"><i class="bx bx-refresh"></i></a></div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="admin/practical/jobs?new=1" class="btn btn-info text-white nl-link"><i class="bx bx-plus"></i> New Student Job</a>
+        <a href="admin/students/admission" data-route class="btn btn-outline-light"><i class="bx bx-user-plus"></i> Register Student</a>
+    </div>
+</div>
+
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-4 col-xl-2"><div class="pd-card"><div class="t">Total Registered Students</div><div class="v" id="pdStudents">0</div><div class="s" id="pdActive"></div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="pd-card"><div class="t">Today's Active Jobs</div><div class="v" id="pdTodayJobs">0</div><div class="s" id="pdTodayPayable"></div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="pd-card"><div class="t">Total Contract Value</div><div class="v" id="pdContract">৳0</div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="pd-card"><div class="t">Total Received Deposit</div><div class="v text-success" id="pdDeposit">৳0</div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="pd-card due"><div class="t">Total Course Due</div><div class="v text-danger" id="pdDue">৳0</div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="pd-card"><div class="t">All-Time Jobs</div><div class="v" id="pdAllJobs">0</div><div class="s" id="pdOutToday"></div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8"><div class="card h-100 mb-0"><div class="card-body">
+        <div class="d-flex justify-content-between mb-1">
+            <div><h6 class="mb-0">Today's Category Job Summary</h6><div class="small text-muted">আজকের প্র্যাকটিক্যাল টেস্ট প্লেটের ক্যাটাগরিভিত্তিক হিসাব</div></div>
+            <a href="admin/practical/jobs" data-route class="small">Daily Register <i class="bx bx-right-arrow-alt"></i></a>
+        </div>
+        <div class="mt-3" id="pdCats"></div>
+        <div class="small text-muted mt-2" id="pdReturns"></div>
+    </div></div></div>
+    <div class="col-lg-4"><div class="card h-100 mb-0"><div class="card-body">
+        <h6 class="mb-0">Quick Actions</h6><div class="small text-muted mb-3">দৈনিক কাজের শর্টকাট</div>
+        <a href="admin/practical/jobs?new=1" class="pd-action nl-link"><span class="ic" style="background:#0f766e"><i class="bx bx-plus"></i></span><span class="flex-fill"><b>New Student Job</b><div class="d">Issue test token for registered student</div></span><i class="bx bx-chevron-right"></i></a>
+        <a href="admin/practical/out?new=1" class="pd-action nl-link"><span class="ic" style="background:#ea580c"><i class="bx bx-user-voice"></i></span><span class="flex-fill"><b>Out of Student Job</b><div class="d">Quick slip for external candidates</div></span><i class="bx bx-chevron-right"></i></a>
+        <a href="admin/practical/returns" data-route class="pd-action"><span class="ic" style="background:#2563eb"><i class="bx bx-revision"></i></span><span class="flex-fill"><b>Job Return / Retrain</b><div class="d">Today's retrain / plate return entry</div></span><i class="bx bx-chevron-right"></i></a>
+        <a href="admin/students/admission" data-route class="pd-action mb-0"><span class="ic" style="background:#334155"><i class="bx bx-user-plus"></i></span><span class="flex-fill"><b>Add New Student</b><div class="d">Register new trainee &amp; contract</div></span><i class="bx bx-chevron-right"></i></a>
+    </div></div></div>
+</div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between mb-2">
+        <div><h6 class="mb-0">Recent Job Entries</h6><div class="small text-muted">সর্বশেষ ইস্যু করা প্র্যাকটিক্যাল জব (টোকেন আবার প্রিন্ট করা যায়)</div></div>
+        <a href="admin/practical/jobs" data-route class="small">View All Register <i class="bx bx-right-arrow-alt"></i></a>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Date</th><th>Job No</th><th>Student Name</th><th>Student ID</th><th>Category</th><th class="text-end">Payable</th><th class="text-end">Actions</th></tr></thead>
+            <tbody id="pdRecent"><tr><td colspan="7" class="text-center">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div></div>
+
+<script>
+window.Page = {
+    init: function() {
+        var self = this;
+        // The header loads the institute name by AJAX, so it may arrive a moment later
+        var setName = function(){ $('#pdInstitute').text(NL.instituteName() || 'Practical Testing Center'); };
+        setName();
+        self._nameTimer = setTimeout(setName, 1500);
+        self._load();
+        $('#pdRefresh').off('click.pd').on('click.pd', function(){ self._load(); });
+        $(document).off('click.pd-tok').on('click.pd-tok', '.pd-tok', function(){
+            var win = PracticalPrint.prepare();
+            $.get('api/practical-jobs-get.php', { id: $(this).data('id') }, function(r){
+                if (r.success) PracticalPrint.token(r.data.job, win); else { if (win) win.close(); Toast.error(r.message); }
+            });
+        });
+    },
+    destroy: function() {
+        clearTimeout(this._nameTimer);
+        $('#pdRefresh').off('.pd');
+        $(document).off('click.pd-tok');
+    },
+    _load: function() {
+        $.get('api/practical-dashboard.php', function(r){
+            if (!r.success) { Toast.error(r.message); return; }
+            var d = r.data, c = d.cards, m = function(v){ return '৳' + NL.money(v); };
+            $('#pdDate').text('· ' + PracticalPrint.dmy(d.today));
+            $('#pdStudents').text(c.students); $('#pdActive').text(c.active_students + ' active');
+            $('#pdTodayJobs').text(c.today_jobs); $('#pdTodayPayable').text(c.today_jobs ? m(c.today_payable) + ' from deposit' : '');
+            $('#pdContract').text(m(c.contract)); $('#pdDeposit').text(m(c.deposit)); $('#pdDue').text(m(c.due));
+            $('#pdAllJobs').text(c.all_jobs); $('#pdOutToday').text('Out student today: ' + c.today_out + (c.today_out ? ' (' + m(c.today_out_paid) + ')' : ''));
+            var chips = d.today_categories.map(function(x){
+                return '<span class="pd-chip' + (x.count > 0 ? ' on' : '') + '">' + NL.esc(x.name) + ' <b>' + x.count + '</b></span>';
+            }).join('');
+            $('#pdCats').html(!d.today_categories.length ? '<div class="text-muted small">No job categories yet. Add them in Job Price &amp; Limits.</div>' :
+                chips + (c.today_jobs ? '' : '<div class="text-center text-muted fst-italic small py-3">আজ এখনো কোনো জব এন্ট্রি হয়নি। "New Student Job" দিয়ে জব ইস্যু করুন।</div>'));
+            var rt = d.today_returns;
+            $('#pdReturns').text(rt.retrain + rt.plate_returned + rt.failed > 0 ? 'আজকের রিটার্ন: Retrain ' + rt.retrain + ' · Plate Returned ' + rt.plate_returned + ' · Failed ' + rt.failed : '');
+            $('#pdRecent').html(d.recent.map(function(j){
+                return '<tr><td>' + PracticalPrint.dmy(j.job_date) + '</td><td class="font-monospace">' + NL.esc(j.job_no) + '</td>' +
+                    '<td><a href="admin/students/view?id=' + j.student_id + '" class="nl-link">' + NL.esc(j.student_name || '(deleted)') + '</a></td>' +
+                    '<td class="font-monospace text-success">' + NL.esc(j.student_code) + '</td><td><span class="badge bg-light text-dark border">' + NL.esc(j.category_name) + '</span></td>' +
+                    '<td class="text-end fw-semibold">' + m(j.payable) + '</td>' +
+                    '<td class="text-end"><button class="btn btn-sm btn-outline-secondary pd-tok" data-id="' + j.id + '"><i class="bx bx-printer"></i> Token</button></td></tr>';
+            }).join('') || '<tr><td colspan="7" class="text-center text-muted py-4">No jobs yet.</td></tr>');
+        });
+    }
+};
+</script>

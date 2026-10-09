@@ -1,0 +1,651 @@
+/* ============================================================
+   UI Color Theme — CSS variables + selector overrides
+   Defaults match the existing visual look. Variables are set
+   from JS (assets/js/ui-theme.js) when user customizes colors.
+   ============================================================ */
+
+:root {
+    /* Common */
+    --ui-root-primary:        #8B0000;
+    --ui-root-primary-hover:  #720000;
+    --ui-root-primary-soft:   rgba(139, 0, 0, 0.10);
+    --ui-root-primary-light:  #b71c1c;
+    --ui-root-primary-gradient:        linear-gradient(135deg, #8B0000 0%, #b71c1c 100%);
+    --ui-root-primary-gradient-hover:  linear-gradient(135deg, #720000 0%, #8B0000 100%);
+
+    /* Sidebar */
+    --ui-sidebar-bg:           #ffffff;
+    --ui-sidebar-text:         #404142;
+    --ui-sidebar-active-bg:    rgba(139, 0, 0, 0.08);
+    --ui-sidebar-active-text:  #8B0000;
+    --ui-sidebar-submenu-bg:   #ffffff;
+
+    /* Header */
+    --ui-header-bg:        #ffffff;
+    --ui-header-text:      #404142;
+    --ui-header-border:    #e5e7eb;
+
+    /* Header buttons */
+    --ui-header-button-bg:        var(--ui-root-primary);
+    --ui-header-button-hover-bg:  var(--ui-root-primary-hover);
+    --ui-header-button-text:      #ffffff;
+    --ui-header-button-border:    var(--ui-root-primary);
+
+    /* Footer */
+    --ui-footer-bg:      #ffffff;
+    --ui-footer-text:    #6c757d;
+    --ui-footer-border:  #e5e7eb;
+    --ui-footer-accent:  var(--ui-root-primary);
+
+    /* Forms */
+    --ui-form-border:         #8B0000;
+    --ui-form-focus-border:  var(--ui-root-primary);
+    --ui-form-focus-ring:    rgba(139, 0, 0, 0.20);
+
+    /* Tables */
+    --ui-table-header-bg:    var(--ui-root-primary);
+    --ui-table-header-text:  #ffffff;
+    --ui-table-border:       var(--ui-root-primary);
+    --ui-table-row-hover:    rgba(139, 0, 0, 0.06);
+    --ui-table-text:         #212b36;
+
+    /* Reports */
+    --ui-report-header-bg:        #f4f4f4;
+    --ui-report-header-text:      #111111;
+    --ui-report-title:            #1b2850;
+    --ui-report-summary-box-bg:   #ffffff;
+    --ui-report-summary-text:     #212b36;
+    --ui-report-table-head-bg:    var(--ui-root-primary);
+    --ui-report-table-head-text:  #ffffff;
+    --ui-report-row-alt:          #f9f9f9;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar-wrapper                              { background: var(--ui-sidebar-bg) !important; }
+.sidebar-wrapper .metismenu                   { background: transparent !important; }
+.sidebar-wrapper .metismenu ul                { background: var(--ui-sidebar-submenu-bg) !important; }
+.sidebar-wrapper .metismenu a                 { color: var(--ui-sidebar-text); }
+.sidebar-wrapper .metismenu .menu-label       { color: var(--ui-sidebar-text) !important; opacity: .75; }
+.sidebar-wrapper .metismenu a:hover,
+.sidebar-wrapper .metismenu a:focus,
+.sidebar-wrapper .metismenu .mm-active > a,
+.sidebar-wrapper .metismenu a:active          {
+    color: var(--ui-sidebar-active-text) !important;
+    background-color: var(--ui-sidebar-active-bg) !important;
+}
+
+/* Sidebar header (logo strip) */
+.sidebar-header { background: var(--ui-sidebar-bg) !important; }
+.sidebar-header .logo-text,
+.sidebar-header .toggle-icon { color: var(--ui-sidebar-text) !important; }
+
+/* Night mode: stop custom colors, use dark theme defaults */
+html.dark-theme .sidebar-wrapper { background: #12181a !important; }
+html.dark-theme .sidebar-header { background: #12181a !important; }
+html.dark-theme .sidebar-header .logo-text,
+html.dark-theme .sidebar-header .toggle-icon { color: #e7e9ec !important; }
+html.dark-theme .sidebar-wrapper .metismenu .menu-label { color: #e4e5e6 !important; opacity: .75; }
+/* Dark-mode defaults — set as CSS vars so UI Settings header color (inline style on html) can still override */
+html.dark-theme {
+    --ui-header-bg:     #12181a;
+    --ui-header-border: rgba(237, 237, 237, 0.12);
+    --ui-header-text:   #e4e5e6;
+}
+html.dark-theme .topbar .navbar .nav-link,
+html.dark-theme .topbar .navbar .dropdown-toggle:not(.header-location-btn),
+html.dark-theme .topbar .user-info .user-name,
+html.dark-theme .topbar .user-info .designattion,
+html.dark-theme .topbar .navbar .navbar-nav .nav-link i { color: #e4e5e6 !important; }
+html.dark-theme .topbar .header-location-btn,
+html.dark-theme .topbar .header-location-btn #currentLocationName,
+html.dark-theme .topbar .header-location-btn i,
+html.dark-theme .topbar .header-sms-btn,
+html.dark-theme .topbar .header-sms-btn i { color: #e4e5e6 !important; }
+
+/* Night mode header buttons keep dark background */
+html.dark-theme .topbar .header-location-btn,
+html.dark-theme .topbar .header-sms-btn,
+html.dark-theme .topbar .btn-header {
+    background-color: #12181a !important;
+    border-color: #232b2e !important;
+    color: #e4e5e6 !important;
+}
+html.dark-theme .topbar .header-location-btn:hover,
+html.dark-theme .topbar .header-sms-btn:hover,
+html.dark-theme .topbar .btn-header:hover {
+    background-color: #1a2124 !important;
+    border-color: #232b2e !important;
+}
+
+/* Night mode sidebar submenu background */
+html.dark-theme .sidebar-wrapper .metismenu ul { background: rgb(255 255 255 / 0%) !important; }
+
+/* Sidebar website button uses primary color */
+#websiteLink {
+    background-color: var(--ui-root-primary) !important;
+    border-color: var(--ui-root-primary) !important;
+    color: #fff !important;
+}
+#websiteLink:hover {
+    background-color: var(--ui-root-primary-hover) !important;
+    border-color: var(--ui-root-primary-hover) !important;
+    color: #fff !important;
+}
+html.dark-theme #websiteLink {
+    background-color: var(--ui-root-primary) !important;
+    border-color: var(--ui-root-primary) !important;
+    color: #fff !important;
+}
+html.dark-theme #websiteLink:hover {
+    background-color: var(--ui-root-primary-hover) !important;
+    border-color: var(--ui-root-primary-hover) !important;
+    color: #fff !important;
+}
+
+/* Night mode dropdowns — keep primary accent */
+html.dark-theme .dropdown-menu { border-color: var(--ui-root-primary) !important; }
+html.dark-theme .dropdown-menu .dropdown-header { color: var(--ui-root-primary) !important; }
+html.dark-theme .dropdown-menu .dropdown-divider { border-top-color: var(--ui-root-primary-soft) !important; }
+html.dark-theme .dropdown-menu .dropdown-item { color: #e4e5e6; }
+html.dark-theme .dropdown-menu .dropdown-item.active,
+html.dark-theme .dropdown-menu .dropdown-item:active { background-color: var(--ui-root-primary) !important; color: #fff !important; }
+html.dark-theme .dropdown-menu .dropdown-item:hover,
+html.dark-theme .dropdown-menu .dropdown-item:focus { background-color: var(--ui-root-primary) !important; color: #fff !important; }
+html.dark-theme .dropdown-toggle::after { border-top-color: var(--ui-root-primary) !important; }
+
+/* ---------- Header (top bar) ---------- */
+.topbar,
+.topbar .navbar                      { background: var(--ui-header-bg) !important; border-bottom: 1px solid var(--ui-header-border) !important; }
+.topbar .navbar .nav-link,
+.topbar .navbar .dropdown-toggle:not(.header-location-btn),
+.topbar .user-info .user-name,
+.topbar .user-info .designattion          { color: var(--ui-header-text) !important; }
+.topbar .navbar .navbar-nav .nav-link i { color: var(--ui-header-text) !important; }
+
+/* Location & SMS buttons use button text color, not header text color */
+.topbar .header-location-btn,
+.topbar .header-location-btn #currentLocationName,
+.topbar .header-location-btn i,
+.topbar .header-sms-btn,
+.topbar .header-sms-btn i { color: var(--ui-header-button-text) !important; }
+
+/* Header primary action buttons (location pill, SMS, etc.) */
+.topbar .header-location-btn,
+.topbar .header-sms-btn,
+.btn-header {
+    background-color: var(--ui-header-button-bg) !important;
+    border-color:     var(--ui-header-button-border) !important;
+    color:            var(--ui-header-button-text) !important;
+}
+.topbar .header-location-btn:hover,
+.topbar .header-sms-btn:hover,
+.btn-header:hover {
+    background-color: var(--ui-header-button-hover-bg) !important;
+    border-color:     var(--ui-header-button-hover-bg) !important;
+    color:            var(--ui-header-button-text) !important;
+}
+
+/* ---------- POS top-bar (mirrors header colors) ---------- */
+.pos-topbar {
+    background: var(--ui-header-bg) !important;
+    color:      var(--ui-header-text) !important;
+    border-bottom: 1px solid var(--ui-header-border);
+}
+.pos-topbar .brand,
+.pos-topbar .brand-name,
+.pos-topbar .pos-topbar-right,
+.pos-topbar .pos-topbar-right span,
+.pos-topbar .pos-topbar-right i,
+.pos-topbar .topbar-title,
+.pos-topbar .topbar-back            { color: var(--ui-header-text) !important; }
+.pos-topbar .topbar-back            { background: rgba(0,0,0,.08); }
+.pos-topbar .topbar-back:hover      { background: rgba(0,0,0,.18); color: var(--ui-header-text) !important; }
+
+/* ---------- POS categories & item cards (use primary) ---------- */
+.pos-cats .cat-btn:hover:not(.active) { color: var(--ui-root-primary) !important; }
+.pos-cats .cat-btn.active {
+    background: var(--ui-root-primary) !important;
+    color: #fff !important;
+    border-color: var(--ui-root-primary) !important;
+}
+.pos-item:hover            { border-color: var(--ui-root-primary) !important; }
+.pos-item .p-price         { color: var(--ui-root-primary) !important; }
+
+/* ---------- Dropdowns (Bootstrap) ---------- */
+/* .dropdown-menu {
+    border-color: var(--ui-root-primary) !important;
+}
+.dropdown-menu .dropdown-header {
+    color: var(--ui-root-primary) !important;
+}
+.dropdown-menu .dropdown-divider {
+    border-top-color: var(--ui-root-primary-soft) !important;
+}
+.dropdown-menu .dropdown-item {
+    color: var(--ui-header-text, #404142);
+}
+.dropdown-menu .dropdown-item.active,
+.dropdown-menu .dropdown-item:active {
+    background-color: var(--ui-root-primary) !important;
+    color: #fff !important;
+}
+html .dropdown-menu .dropdown-item:hover,
+html .dropdown-menu .dropdown-item:focus,
+html .dropdown-menu .dropdown-item.active,
+html .dropdown-menu .dropdown-item:active,
+html .dropdown-large .dropdown-menu .dropdown-item:hover,
+html .dropdown-large .dropdown-menu .dropdown-item:focus {
+    background-color: var(--ui-root-primary) !important;
+    color: #fff !important;
+}
+html .dropdown-menu .dropdown-item:hover *,
+html .dropdown-menu .dropdown-item:focus *,
+html .dropdown-menu .dropdown-item.active *,
+html .dropdown-menu .dropdown-item:active * { color: #fff !important; }
+.dropdown-toggle::after {
+    border-top-color: var(--ui-root-primary) !important;
+}
+
+/* ---------- Native <select> <option> colors (light + dark) ---------- */
+/* Fixes invisible option text in dark mode and inconsistent rendering on
+   selects that use class="form-control" (e.g. SMS templates, login branch). */
+select.form-control option,
+select.form-select option,
+#locationSelect option {
+    color: #212529;
+    background-color: #ffffff;
+}
+html.dark-theme select.form-control option,
+html.dark-theme select.form-select option,
+html.dark-theme #locationSelect option {
+    color: #e4e5e6 !important;
+    background-color: #12181a !important;
+}
+/* Selected/disabled option fallbacks */
+select.form-control option:checked,
+select.form-select option:checked,
+#locationSelect option:checked {
+    background-color: var(--ui-root-primary-soft) !important;
+    color: var(--ui-root-primary) !important;
+}
+html.dark-theme select.form-control option:checked,
+html.dark-theme select.form-select option:checked,
+html.dark-theme #locationSelect option:checked {
+    background-color: var(--ui-root-primary) !important;
+    color: #ffffff !important;
+}
+
+/* ---------- <select class="form-select"> + Select2 theming ---------- */
+.form-select:focus {
+    border-color: var(--ui-root-primary) !important;
+    box-shadow: 0 0 0 0.2rem var(--ui-root-primary-soft) !important;
+}
+
+/* Select2 single-select trigger to look like Bootstrap form-select */
+.select2-container--default .select2-selection--single {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    border: 1px solid var(--ui-form-border) !important;
+    border-radius: 0.25rem !important;
+    padding: 0.25rem 0.5rem !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5 !important; padding-left: 0 !important; color: inherit !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow { height: 100% !important; }
+.select2-container--default.select2-container--open .select2-selection,
+.select2-container--default.select2-container--focus .select2-selection {
+    border-color: var(--ui-root-primary) !important;
+    box-shadow: 0 0 0 0.2rem var(--ui-root-primary-soft) !important;
+}
+/* sm form-control sizing */
+.form-select-sm + .select2-container .select2-selection--single,
+.input-group-sm .select2-container .select2-selection--single {
+    height: calc(1.5em + 0.5rem + 2px) !important; font-size: .875rem !important;
+}
+
+/* ============================================================
+   Modal scroll — cap body height so long forms scroll inside
+   the modal instead of overflowing the viewport.
+   ============================================================ */
+.modal-body {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.modal-body::-webkit-scrollbar { width: 8px; }
+.modal-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.22); border-radius: 4px; }
+.modal-body::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.35); }
+.modal-body::-webkit-scrollbar-track { background: transparent; }
+/* Firefox */
+.modal-body { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.25) transparent; }
+/* Fullscreen modals shouldn't be capped */
+.modal-fullscreen .modal-body { max-height: none; }
+
+/* Dropdown panel — option hover/active uses primary */
+.select2-container--default .select2-results__option--highlighted[aria-selected],
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: var(--ui-root-primary) !important;
+    color: #fff !important;
+}
+.select2-container--default .select2-results__option[aria-selected=true],
+.select2-container--default .select2-results__option--selected {
+    background-color: var(--ui-root-primary-soft) !important;
+    color: var(--ui-root-primary) !important;
+}
+.select2-dropdown {
+    border-color: var(--ui-root-primary) !important;
+}
+.select2-search--dropdown .select2-search__field:focus {
+    border-color: var(--ui-root-primary) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 0.15rem var(--ui-root-primary-soft) !important;
+}
+
+/* Multi-select pills */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: var(--ui-root-primary) !important;
+    border-color: var(--ui-root-primary) !important;
+    color: #fff !important;
+}
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove { color: #fff !important; }
+
+/* Dark theme variants */
+html.dark-theme .select2-container--default .select2-selection--single,
+html.dark-theme .select2-dropdown {
+    background: #12181a !important; border-color: #232b2e !important; color: #e4e5e6 !important;
+}
+html.dark-theme .select2-container--default .select2-selection--single .select2-selection__rendered { color: #e4e5e6 !important; }
+html.dark-theme .select2-container--default .select2-results__option { color: #e4e5e6; }
+html.dark-theme .select2-container--default .select2-results__option--highlighted[aria-selected],
+html.dark-theme .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: var(--ui-root-primary) !important; color: #fff !important;
+}
+html.dark-theme .select2-search--dropdown .select2-search__field {
+    background: #1a2124 !important; color: #e4e5e6 !important; border-color: #232b2e !important;
+}
+
+/* ---------- Footer ---------- */
+.page-footer,
+.footer {
+    background: var(--ui-footer-bg) !important;
+    color:      var(--ui-footer-text) !important;
+    border-top: 1px solid var(--ui-footer-border) !important;
+}
+.page-footer a,
+.footer a { color: var(--ui-footer-accent) !important; }
+
+/* Night mode footer */
+html.dark-theme .page-footer,
+html.dark-theme .footer {
+    background: #12181a !important;
+    color: #6c757d !important;
+    border-top-color: rgb(237 237 237 / 12%) !important;
+}
+html.dark-theme .page-footer a,
+html.dark-theme .footer a { color: #6c757d !important; }
+
+/* ---------- Forms (global — covers login, register, admin) ---------- */
+.form-control,
+.form-select,
+input.form-control,
+textarea.form-control,
+select.form-select,
+.form-check-input {
+    border-color: var(--ui-form-border) !important;
+}
+.form-control:focus,
+.form-select:focus,
+input.form-control:focus,
+textarea.form-control:focus,
+select.form-select:focus,
+.form-check-input:focus {
+    border-color: var(--ui-form-focus-border) !important;
+    box-shadow: 0 0 0 0.2rem var(--ui-form-focus-ring) !important;
+}
+
+/* Input-group text borders must match form-control */
+.input-group-text {
+    border-color: var(--ui-form-border) !important;
+    background: #fff !important;
+}
+.input-group .form-control:focus + .input-group-text,
+.input-group .form-control:focus ~ .input-group-text {
+    border-color: var(--ui-form-focus-border) !important;
+}
+
+/* ---------- Tables ---------- */
+.table thead th,
+.table thead td,
+table.dataTable thead th,
+table.dataTable thead td {
+    background-color: var(--ui-table-header-bg) !important;
+    color:            var(--ui-table-header-text) !important;
+    border-color:     var(--ui-table-border) !important;
+}
+.table tbody td,
+.table tbody th { color: var(--ui-table-text); border-color: var(--ui-table-border); }
+.table tbody tr:hover { background-color: var(--ui-table-row-hover); }
+
+/* Night mode table body text */
+html.dark-theme .table tbody td,
+html.dark-theme .table tbody th { color: #e4e5e6 !important; }
+
+/* ---------- Reports ---------- */
+.report-header                        { background: var(--ui-report-header-bg); color: var(--ui-report-header-text); }
+.report-name, .report-identity h3     { color: var(--ui-report-title) !important; }
+.report-summary-card                  { background: var(--ui-report-summary-box-bg) !important; color: var(--ui-report-summary-text) !important; }
+.report-table thead th                { background: var(--ui-report-table-head-bg) !important; color: var(--ui-report-table-head-text) !important; }
+.report-table tbody tr:nth-child(even){ background: var(--ui-report-row-alt); }
+
+/* ---------- Primary buttons site-wide (gradient) ---------- */
+.btn-primary {
+    background: var(--ui-root-primary-gradient) !important;
+    background-color: var(--ui-root-primary) !important;
+    border-color:     var(--ui-root-primary) !important;
+    color: #fff !important;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary:not(:disabled):not(.disabled):active {
+    background: var(--ui-root-primary-gradient-hover) !important;
+    background-color: var(--ui-root-primary-hover) !important;
+    border-color:     var(--ui-root-primary-hover) !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 0.15rem var(--ui-root-primary-soft) !important;
+}
+.btn-outline-primary {
+    color: var(--ui-root-primary) !important;
+    border-color: var(--ui-root-primary) !important;
+    background: transparent !important;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    background: var(--ui-root-primary-gradient) !important;
+    border-color: var(--ui-root-primary) !important;
+    color: #fff !important;
+}
+.text-primary { color: var(--ui-root-primary) !important; }
+.bg-primary   { background: var(--ui-root-primary-gradient) !important; }
+.border-primary { border-color: var(--ui-root-primary) !important; }
+
+/* Header gradient buttons */
+.topbar .header-location-btn,
+.topbar .header-sms-btn,
+.btn-header {
+    background: var(--ui-root-primary-gradient) !important;
+}
+.topbar .header-location-btn:hover,
+.topbar .header-sms-btn:hover,
+.btn-header:hover {
+    background: var(--ui-root-primary-gradient-hover) !important;
+}
+
+/* Sidebar website button gradient */
+#websiteLink,
+html.dark-theme #websiteLink { background: var(--ui-root-primary-gradient) !important; }
+#websiteLink:hover,
+html.dark-theme #websiteLink:hover { background: var(--ui-root-primary-gradient-hover) !important; }
+
+/* Table headers gradient */
+.table thead th,
+.table thead td,
+table.dataTable thead th,
+table.dataTable thead td,
+.report-table thead th {
+    background: var(--ui-root-primary-gradient) !important;
+    color: #fff !important;
+}
+
+/* Login / register page accents */
+body .auth-cover-right .btn-primary,
+body .auth-cover-right .text-primary { color: #fff; }
+body .auth-cover-right a.text-primary { color: var(--ui-root-primary) !important; }
+body .form-check-input:checked {
+    background-color: var(--ui-root-primary) !important;
+    border-color: var(--ui-root-primary) !important;
+}
+body .form-control:focus,
+body .form-select:focus {
+    border-color: var(--ui-form-focus-border) !important;
+    box-shadow: 0 0 0 0.2rem var(--ui-form-focus-ring) !important;
+}
+
+/* Custom scrollbar (subtle gradient) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ui-root-primary) transparent;
+}
+*::-webkit-scrollbar        { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track  { background: transparent; }
+*::-webkit-scrollbar-thumb  {
+    background: var(--ui-root-primary-gradient);
+    border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--ui-root-primary-gradient-hover); }
+
+/* Pagination active state */
+.page-item.active .page-link {
+    background: var(--ui-root-primary-gradient) !important;
+    border-color: var(--ui-root-primary) !important;
+    color: #fff !important;
+}
+.page-link { color: var(--ui-root-primary) !important; }
+.page-link:hover { color: var(--ui-root-primary-hover) !important; }
+
+/* Links */
+a { color: var(--ui-root-primary); }
+a:hover { color: var(--ui-root-primary-hover); }
+
+/* ---------- Modals ---------- */
+.modal-header {
+    background: var(--ui-root-primary-gradient) !important;
+    color: #fff !important;
+    border-bottom: 0 !important;
+    border-top-left-radius: calc(.3rem - 1px);
+    border-top-right-radius: calc(.3rem - 1px);
+}
+.modal-header .modal-title,
+.modal-header h1, .modal-header h2, .modal-header h3,
+.modal-header h4, .modal-header h5, .modal-header h6 { color: #fff !important; }
+.modal-header .btn-close { filter: brightness(0) invert(1); opacity: .9; }
+.modal-header .btn-close:hover { opacity: 1; }
+
+/* ---------- Sidebar scrollbar (simplebar) ---------- */
+.sidebar-wrapper .simplebar-scrollbar:before {
+    background: var(--ui-root-primary-gradient) !important;
+    opacity: .8 !important;
+}
+.sidebar-wrapper .simplebar-track.simplebar-vertical { width: 6px !important; }
+
+/* ---------- Hide Visit Website button when sidebar is collapsed ---------- */
+@media screen and (min-width: 1025px) {
+    .wrapper.toggled:not(.sidebar-hovered) .sidebar-wrapper #websiteLink,
+    .wrapper.toggled:not(.sidebar-hovered) .sidebar-wrapper #websiteLink + *,
+    .wrapper.toggled:not(.sidebar-hovered) .sidebar-wrapper .border-top:has(#websiteLink) {
+        display: none !important;
+    }
+}
+
+/* ---------- Sidebar logo — show full when expanded, hide when collapsed ---------- */
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+.sidebar-logo .logo-icon {
+    display: none;
+}
+.sidebar-logo .logo-full {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    max-height: 54px;
+}
+@media screen and (min-width: 1025px) {
+    .wrapper.toggled:not(.sidebar-hovered) .sidebar-logo .logo-icon {
+        display: block !important;
+    }
+    .wrapper.toggled:not(.sidebar-hovered) .sidebar-logo .logo-full {
+        display: none !important;
+    }
+}
+
+/* ---------- Form input border — final override (login/register/admin) ---------- */
+html body input.form-control,
+html body textarea.form-control,
+html body select.form-control,
+html body select.form-select,
+html body .form-control,
+html body .form-select,
+html body .form-check-input,
+html body #locationSelect {
+    border: 1px solid var(--ui-form-border) !important;
+}
+html body input.form-control:focus,
+html body textarea.form-control:focus,
+html body select.form-control:focus,
+html body select.form-select:focus,
+html body .form-control:focus,
+html body .form-select:focus,
+html body .form-check-input:focus,
+html body #locationSelect:focus {
+    border-color: var(--ui-form-focus-border) !important;
+    box-shadow: 0 0 0 0.2rem var(--ui-form-focus-ring) !important;
+}
+html body .input-group-text {
+    border: 1px solid var(--ui-form-border) !important;
+    background: #fff !important;
+}
+html body .input-group .form-control:focus + .input-group-text,
+html body .input-group .form-control:focus ~ .input-group-text {
+    border-color: var(--ui-form-focus-border) !important;
+}
+
+/* ---------- Table borders — use primary color ---------- */
+.table,
+.table > :not(caption) > * > *,
+table.dataTable,
+table.dataTable > :not(caption) > * > *,
+.report-table,
+.report-table > :not(caption) > * > * {
+    border-color: var(--ui-root-primary) !important;
+}
+.table-bordered,
+.table-bordered > :not(caption) > *,
+.table-bordered > :not(caption) > * > * {
+    border-color: var(--ui-root-primary) !important;
+}
+
+/* ---------- Footer dynamic hotel name ---------- */
+.page-footer #footerHotelName,
+.footer #footerHotelName {
+    color: var(--ui-root-primary) !important;
+    font-weight: 600;
+}
+html.dark-theme .page-footer #footerHotelName,
+html.dark-theme .footer #footerHotelName {
+    color: var(--ui-root-primary-light) !important;
+}
