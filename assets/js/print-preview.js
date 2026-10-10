@@ -103,7 +103,7 @@
             '</head><body class="', escapeHtml(bodyClass), '">',
             '<div class="pp-content">',
                 html,
-                '<div class="pp-poweredby">Printed: ', escapeHtml(_printedAt()), ' &nbsp;|&nbsp; Powered by Hotel365ERP | Bogura Tech Hub</div>',
+                '<div class="pp-poweredby">Printed: ', escapeHtml(_printedAt()), ' &nbsp;|&nbsp; Powered by Training Admin | naim islam | 01607025924</div>',
             '</div>',
             '<div class="pp-actions-bottom no-print">',
                 '<button class="pp-btn pp-btn-cancel" onclick="window.close()">Cancel</button>',

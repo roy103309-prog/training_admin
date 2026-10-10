@@ -111,7 +111,7 @@ var Router = {
         }
 
         // Update document title
-        document.title = route.title + ' - Hotel 365';
+        document.title = route.title + ' - Training Admin';
 
         // Update page name for permission system
         if (window.HotelApp && window.HotelApp._setCurrentPage) {

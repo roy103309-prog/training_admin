@@ -529,7 +529,7 @@
                     '<div class="px-3 pb-3" id="reportTableArea"></div>' +
                     '<div class="px-3 pb-3 text-center">' +
                         '<small class="text-muted">' +
-                            'Generated <span id="footerDate"></span> | Hotel365ERP | Bogura Tech Hub' +
+                            'Generated <span id="footerDate"></span> | Training Admin | naim islam | 01607025924' +
                         '</small>' +
                     '</div>' +
                 '</div>'

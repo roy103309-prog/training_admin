@@ -1,5 +1,5 @@
 /**
- * Hotel Management System - SPA Core
+ * Training Management System - SPA Core
  * Single Page Application with AJAX content loading
  */
 
@@ -22,7 +22,7 @@
     var websiteUrl = '';
     var tenantId = null;
     var tenantDatabase = '';
-    var currentHotelName = 'Hotel Management';
+    var currentHotelName = 'Training Management';
     // Old script tracking removed — now handled by PageLoader module
 
     /* =========================================================
@@ -88,7 +88,7 @@
 
     function loadHotelName() {
         function applyHotelName(name) {
-            currentHotelName = name || 'Hotel Management';
+            currentHotelName = name || 'Training Management';
             $('#hotelNameDisplay').text(currentHotelName);
             $('#footerHotelName').text(currentHotelName);
         }
@@ -100,11 +100,11 @@
                 if (r.success && r.data && r.data.business_name) {
                     applyHotelName(r.data.business_name);
                 } else {
-                    applyHotelName('Hotel Management');
+                    applyHotelName('Training Management');
                 }
             },
             error: function() {
-                applyHotelName('Hotel Management');
+                applyHotelName('Training Management');
             }
         });
     }
@@ -159,7 +159,7 @@
 
                 // Institute ID in sidebar
                 if (tenantDatabase) {
-                    var serial = tenantDatabase.replace('hotel_', '');
+                    var serial = tenantDatabase.replace('training_', '');
                     $('#sidebarInstituteId').text('ID: ' + serial);
                 }
 

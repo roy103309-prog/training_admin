@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 96" width="300" height="96">
+  <defs>
+    <linearGradient id="tlg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c62828"/>
+      <stop offset="1" stop-color="#7f0d0d"/>
+    </linearGradient>
+  </defs>
+  <!-- icon -->
+  <g transform="translate(4 8) scale(1.25)">
+    <rect width="64" height="64" rx="14" fill="url(#tlg)"/>
+    <polygon points="32,13 58,25 32,37 6,25" fill="#ffffff"/>
+    <path d="M16 30.5V41c0 4.4 7.2 8.5 16 8.5s16-4.1 16-8.5V30.5L32 38z" fill="#ffffff" fill-opacity="0.88"/>
+    <path d="M51 27v13" stroke="#ffd54f" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="51" cy="42.5" r="3" fill="#ffd54f"/>
+  </g>
+  <!-- name -->
+  <text x="98" y="52" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="40" font-weight="800" fill="#8e1414">Training</text>
+  <text x="100" y="80" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="19" font-weight="700" letter-spacing="9" fill="#3d3d3d">ADMIN</text>
+</svg>

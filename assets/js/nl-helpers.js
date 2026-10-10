@@ -54,7 +54,7 @@
 
         instituteName: function () {
             var name = $.trim($('#hotelNameDisplay').text());
-            return name === 'Hotel Management' ? '' : name;
+            return name === 'Training Management' ? '' : name;
         },
 
         can: function () { return true; },
