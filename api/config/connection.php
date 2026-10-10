@@ -16,6 +16,9 @@ define('MASTER_DB_NAME', 'training_master');
 define('TENANT_DB_PREFIX', 'training_');
 define('TENANT_DB_BASE', 100000);
 
+// Institute database the public website (site.php, /site) shows
+define('WEBSITE_TENANT_DB', 'training_100001');
+
 /* ------------------------------------------------------------------
  *  New Life modules: their tables live in the institute's own database
  *  (training_100001 ...), in the "NEW LIFE MODULES" block of
@@ -25,7 +28,7 @@ define('TENANT_DB_BASE', 100000);
  * ------------------------------------------------------------------ */
 
 // Bump after changing the NEW LIFE MODULES block of database/tenant_schema.sql
-define('NL_SCHEMA_VERSION', 5);
+define('NL_SCHEMA_VERSION', 6);
 
 // CREATE TABLE statements of the NEW LIFE MODULES block (it must not contain ';' inside values)
 function nlSchemaStatements() {

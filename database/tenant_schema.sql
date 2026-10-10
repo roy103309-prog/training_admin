@@ -990,6 +990,21 @@ CREATE TABLE IF NOT EXISTS web_settings (
   PRIMARY KEY (setting_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Team section of the website (category: leadership, management, marketing, instructors, technical)
+CREATE TABLE IF NOT EXISTS web_team (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name VARCHAR(150) NOT NULL,
+  designation VARCHAR(150) NOT NULL DEFAULT '',
+  category VARCHAR(30) NOT NULL DEFAULT 'technical',
+  phone VARCHAR(40) NOT NULL DEFAULT '',
+  email VARCHAR(150) NOT NULL DEFAULT '',
+  image VARCHAR(500) NOT NULL DEFAULT '',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- HR extras (employees themselves stay in the TrainingAdmin users table)
 -- ------------------------------------------------------------

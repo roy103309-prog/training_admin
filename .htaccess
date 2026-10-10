@@ -28,6 +28,12 @@ RewriteRule ^login/?$ index.html [L]
 RewriteRule ^admin/?$ app.html [L]
 RewriteRule ^admin/.+$ app.html [L]
 
+# Public website (New Life) -> site*.php
+RewriteRule ^site/?$ site.php [L,QSA]
+RewriteRule ^site/certificate/?$ site-certificate.php [L,QSA]
+RewriteRule ^site/new-certificate/?$ site-new-certificate.php [L,QSA]
+RewriteRule ^site/programs/([A-Za-z0-9_-]+)/?$ site-program.php?id=$1 [L,QSA]
+
 # Skip rewrites for real files/folders
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

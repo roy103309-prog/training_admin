@@ -115,7 +115,8 @@
     ROUTES[ADMIN + '/practical/companies']  = { template: TPL + '/practical-companies.html',  title: 'Companies',            menu: 'practical-companies',  scripts: NL_JS };
     ROUTES[ADMIN + '/practical/analytics']  = { template: TPL + '/practical-analytics.html',  title: 'Analytics & Reports',  menu: 'practical-analytics',  scripts: NL_PRACTICAL_JS };
 
-    // Website content
+    // Website content (Settings -> General Settings)
+    ROUTES[ADMIN + '/website/branding']    = { template: TPL + '/web-branding.html', title: 'Logo & Branding',  menu: 'web-branding', scripts: NL_JS };
     ROUTES[ADMIN + '/website/sliders']     = { template: TPL + '/web-sliders.html',  title: 'Hero Sliders',     menu: 'web-sliders',  scripts: NL_JS };
     ROUTES[ADMIN + '/website/videos']      = { template: TPL + '/web-videos.html',   title: 'Videos',           menu: 'web-videos',   scripts: NL_JS };
     ROUTES[ADMIN + '/website/reviews']     = { template: TPL + '/web-reviews.html',  title: 'Reviews',          menu: 'web-reviews',  scripts: NL_JS };
@@ -125,7 +126,7 @@
     // Additions to HR / Attendance / Settings
     ROUTES[ADMIN + '/hr/employee-documents'] = { template: TPL + '/hr-employee-documents.html', title: 'Employee Documents', menu: 'employee-documents', scripts: NL_JS };
     ROUTES[ADMIN + '/attendance/import']     = { template: TPL + '/att-device-import.html',  title: 'Device Import',      menu: 'att-import',         scripts: NL_JS };
-    ROUTES[ADMIN + '/general-settings']      = { template: TPL + '/settings-general.html',   title: 'General Settings',   menu: 'general-settings',   scripts: NL_JS };
+    ROUTES[ADMIN + '/general-settings']      = { template: TPL + '/settings-general.html',   title: 'General Configuration', menu: 'general-settings',   scripts: NL_JS };
 
     window.ROUTES = ROUTES;
     window.DEFAULT_ROUTE = ADMIN + '/dashboard';

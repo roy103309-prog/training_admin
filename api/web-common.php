@@ -7,7 +7,7 @@ require_once __DIR__ . '/newlife-common.php';
  * so keep their columns.
  */
 
-// Website settings editable on General Settings -> Website
+// Website settings editable on Settings -> General Settings -> Logo & Branding (templates/web-branding.html)
 const WEB_SETTING_KEYS = [
     'site_name', 'site_tagline', 'site_tagline_bn', 'site_title', 'site_description', 'site_keywords',
     'phone_primary', 'phone_secondary', 'call_number', 'email', 'address_bn', 'address_en',
