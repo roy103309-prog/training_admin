@@ -1,0 +1,100 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Website Texts</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0 d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="site" target="_blank" rel="noopener"><i class="bx bx-link-external"></i> Visit Website</a>
+        <button class="btn btn-primary" id="wtSave"><i class="bx bx-save"></i> Save Texts</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p class="text-muted small mb-3">Fixed texts of the public website in Bangla and English (the English text shows when a visitor switches the language).
+            <span class="badge bg-warning text-dark">Edited</span> marks a text changed from the original; <b>Reset</b> puts the original text back (saved with Save Texts).</p>
+        <ul class="nav nav-tabs" id="wtTabs" role="tablist"></ul>
+        <div class="tab-content pt-3" id="wtPanes">
+            <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.Page = {
+    _tabs: [],
+    init: function() {
+        var self = this;
+        self._load();
+        $('#wtSave').off('click.wt').on('click.wt', function(){ self._save(); });
+        $('#wtPanes').off('.wt')
+            .on('click.wt', '.wt-reset', function(){
+                var $row = $(this).closest('.wt-row');
+                $row.find('[data-lang]').each(function(){ $(this).val($(this).attr('data-default')); });
+                self._mark($row);
+            })
+            .on('input.wt', '[data-lang]', function(){ self._mark($(this).closest('.wt-row')); });
+    },
+    destroy: function() { $('#wtSave,#wtPanes').off('.wt'); },
+    // "about.content.paragraph1" -> "Content › Paragraph 1"
+    _label: function(key) {
+        return key.split('.').slice(1).map(function(p){
+            p = p.replace(/([a-z])([A-Z0-9])/g, '$1 $2');
+            return p.charAt(0).toUpperCase() + p.slice(1);
+        }).join(' › ') || key;
+    },
+    _field: function(item, lang) {
+        var val = item[lang], def = item[lang + '_default'];
+        var attrs = ' class="form-control form-control-sm" data-lang="' + lang + '" data-default="' + NL.esc(def) + '" placeholder="' + NL.esc(def) + '"';
+        return (def.length > 70 || /\n/.test(def))
+            ? '<textarea rows="3"' + attrs + '>' + NL.esc(val) + '</textarea>'
+            : '<input type="text"' + attrs + ' value="' + NL.esc(val) + '">';
+    },
+    _render: function() {
+        var self = this, tabs = '', panes = '';
+        self._tabs.forEach(function(t, i){
+            tabs += '<li class="nav-item" role="presentation"><button class="nav-link' + (i ? '' : ' active') + '" data-bs-toggle="tab" data-bs-target="#wt-pane-' + t.id + '" type="button" role="tab">' + NL.esc(t.title) + '</button></li>';
+            panes += '<div class="tab-pane fade' + (i ? '' : ' show active') + '" id="wt-pane-' + t.id + '" role="tabpanel">' +
+                '<div class="row g-2 small text-muted fw-semibold d-none d-md-flex mb-1"><div class="col-md-2">Text</div><div class="col-md-5">Bangla</div><div class="col-md-5">English</div></div>' +
+                t.items.map(function(it){
+                    return '<div class="row g-2 align-items-start py-2 border-bottom wt-row" data-key="' + NL.esc(it.key) + '">' +
+                        '<div class="col-md-2"><div class="fw-semibold small">' + NL.esc(self._label(it.key)) + '</div>' +
+                        '<span class="badge bg-warning text-dark wt-edited d-none">Edited</span> <a href="javascript:;" class="small wt-reset d-none">Reset</a></div>' +
+                        '<div class="col-md-5">' + self._field(it, 'bn') + '</div>' +
+                        '<div class="col-md-5">' + self._field(it, 'en') + '</div></div>';
+                }).join('') + '</div>';
+        });
+        $('#wtTabs').html(tabs);
+        $('#wtPanes').html(panes);
+        $('#wtPanes .wt-row').each(function(){ self._mark($(this)); });
+    },
+    _mark: function($row) {
+        var edited = false;
+        $row.find('[data-lang]').each(function(){ var v = $.trim($(this).val()); if (v !== '' && v !== $.trim($(this).attr('data-default'))) edited = true; });
+        $row.find('.wt-edited,.wt-reset').toggleClass('d-none', !edited);
+    },
+    _load: function() {
+        var self = this;
+        $.get('api/web-texts-get.php', function(r){
+            if (!r.success) { $('#wtPanes').html('<div class="alert alert-danger">' + NL.esc(r.message) + '</div>'); return; }
+            var active = $('#wtTabs .nav-link.active').data('bs-target');
+            self._tabs = r.data.tabs;
+            self._render();
+            if (active) $('#wtTabs [data-bs-target="' + active + '"]').tab('show');
+        });
+    },
+    _save: function() {
+        var self = this, texts = {};
+        $('#wtPanes .wt-row').each(function(){
+            var key = $(this).data('key');
+            texts[key] = {};
+            $(this).find('[data-lang]').each(function(){ texts[key][$(this).data('lang')] = $(this).val(); });
+        });
+        var $btn = $('#wtSave').prop('disabled', true);
+        $.ajax({ url: 'api/web-texts-save.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ texts: texts }) })
+        .done(function(r){ if (r.success) { Toast.success(r.message); self._load(); } else Toast.error(r.message); })
+        .fail(function(){ Toast.error('Save failed. Please try again.'); })
+        .always(function(){ $btn.prop('disabled', false); });
+    }
+};
+</script>

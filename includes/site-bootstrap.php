@@ -134,12 +134,18 @@ function setting(string $key, string $default = ''): string
     return isset($s[$key]) && $s[$key] !== '' ? (string)$s[$key] : $default;
 }
 
-/** Language strings */
+/** Language strings: defaults from site-lang.php, replaced by texts edited in Admin -> Website Texts
+ *  (web_settings keys "text_bn:<key>" / "text_en:<key>"). */
 function lang(): array
 {
     static $l = null;
     if ($l === null) {
         $l = require __DIR__ . '/site-lang.php';
+        foreach (settings() as $k => $v) {
+            if ($v !== '' && $v !== null && preg_match('/^text_(bn|en):(.+)$/', $k, $m) && isset($l[$m[1]][$m[2]])) {
+                $l[$m[1]][$m[2]] = (string)$v;
+            }
+        }
     }
     return $l;
 }

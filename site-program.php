@@ -7,7 +7,7 @@ if (!$program) {
 }
 $navSolid = true;
 $extraCss = ['assets/css/site-app-pages.css'];
-$pageTitle = ($program ? $program['title'] . ' | ' : 'Program not found | ') . 'New Life Welding Training Center';
+$pageTitle = ($program ? $program['title'] . ' | ' : 'Program not found | ') . tr('brand.full');
 require __DIR__ . '/includes/site-header.php';
 $others = db_all('SELECT * FROM programs WHERE is_active = 1 AND show_on_home = 1 AND slug <> ? ORDER BY sort_order LIMIT 3', [$slug]);
 $waNumber = setting('whatsapp_number', '8801748003338');

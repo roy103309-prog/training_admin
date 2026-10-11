@@ -1,12 +1,11 @@
 <?php defined('SITE_ROOT') || exit; ?>
 <?php
 $logo = asset_url(setting('logo', 'assets/images/site-logo.png'));
-$footerPrograms = [
-    ['bn' => 'অ্যাডভান্সড MIG/TIG', 'en' => 'Advanced MIG/TIG', 'slug' => 'advanced-mig-tig'],
-    ['bn' => 'পাইপ ওয়েল্ডিং', 'en' => 'Pipe Welding', 'slug' => 'pipe-welding'],
-    ['bn' => 'স্টিল ফিটিংস', 'en' => 'Steel Fittings', 'slug' => 'steel-fittings'],
-    ['bn' => 'কনস্ট্রাকশন ট্রেনিং', 'en' => 'Construction Training', 'slug' => 'construction-training'],
-];
+// Footer Programs: active programs not shown on the home page (else the first 4 active ones)
+$footerPrograms = array_values(array_filter(programs(), fn($p) => (int)$p['show_on_home'] === 0));
+if (!$footerPrograms) {
+    $footerPrograms = array_slice(programs(), 0, 4);
+}
 $footerCompany = [
     ['key' => 'footer.aboutUs', 'href' => url('#about')],
     ['key' => 'footer.ourTeam', 'href' => url('#team')],
@@ -27,7 +26,7 @@ $phones = trim(setting('phone_primary', '01712-577508') . (setting('phone_second
    <div class="lg:col-span-2">
     <a href="<?= e(url('')) ?>">
      <div class="flex items-center gap-4 mb-8 cursor-pointer hv-scale102">
-      <div class="relative w-20 h-20 rounded-2xl overflow-hidden shadow-2xl border-2 border-emerald-500/30 bg-white/10 backdrop-blur-sm p-1"><img alt="New Life Logo" class="object-contain" style="position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent" src="<?= e($logo) ?>"></div>
+      <div class="relative w-20 h-20 rounded-2xl overflow-hidden shadow-2xl border-2 border-emerald-500/30 bg-white/10 backdrop-blur-sm p-1"><img alt="<?= e(setting('site_name', 'Logo')) ?>" class="object-contain" style="position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent" src="<?= e($logo) ?>"></div>
       <div>
        <div class="text-2xl font-bold text-white"><?= e(setting('site_name', 'New Life')) ?></div>
        <div class="text-sm text-emerald-400 font-medium lb"><?= t('footer.brandSub') ?></div>
@@ -66,8 +65,8 @@ $phones = trim(setting('phone_primary', '01712-577508') . (setting('phone_second
    <div>
     <h3 class="text-lg font-bold mb-6 text-white flex items-center gap-3 lb"><span class="w-10 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></span><?= t('footer.programs') ?></h3>
     <ul class="space-y-4">
-     <?php foreach ($footerPrograms as $p): ?>
-     <li><a href="<?= e(url('programs/' . $p['slug'])) ?>"><div class="text-gray-400 hover:text-emerald-400 transition-all flex items-center gap-2 group lb hv-x8"><?= icon('arrow-right', 'w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-emerald-400') ?><?= tx($p['bn'], $p['en']) ?></div></a></li>
+     <?php foreach (array_slice($footerPrograms, 0, 6) as $p): ?>
+     <li><a href="<?= e(url('programs/' . $p['slug'])) ?>"><div class="text-gray-400 hover:text-emerald-400 transition-all flex items-center gap-2 group lb hv-x8"><?= icon('arrow-right', 'w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-emerald-400') ?><?= $p['title_bn'] !== '' ? tx($p['title_bn'], $p['title']) : e($p['title']) ?></div></a></li>
      <?php endforeach; ?>
     </ul>
    </div>
@@ -83,7 +82,7 @@ $phones = trim(setting('phone_primary', '01712-577508') . (setting('phone_second
   </div>
   <div class="border-t border-white/10 py-6">
    <div class="flex flex-col items-center gap-4 text-center">
-    <p class="text-gray-500 text-sm lb">© <?= date('Y') ?> New Life Welding Training Center. <?= t('footer.rights') ?></p>
+    <p class="text-gray-500 text-sm lb">© <?= date('Y') ?> <?= t('brand.full') ?>. <?= t('footer.rights') ?></p>
     <div class="flex items-center gap-2 text-sm text-gray-500"><span><?= t('footer.poweredBy') ?></span><a href="<?= e(setting('developer_url', 'https://zyrotech.io')) ?>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-semibold transition-colors hv-scale105"><?= e(setting('developer_name', 'Zyrotech Bangladesh')) ?><?= icon('external-link', 'w-3.5 h-3.5') ?></a></div>
    </div>
   </div>

@@ -2,7 +2,7 @@
 require __DIR__ . '/includes/site-bootstrap.php';
 $navSolid = true;
 $extraCss = ['assets/css/site-app-pages.css'];
-$pageTitle = 'Old Certificate Verification | New Life Welding Training Center';
+$pageTitle = tr('cert.oldTitle') . ' | ' . tr('brand.full');
 require __DIR__ . '/includes/site-header.php';
 ?>
 <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 pt-32 pb-20">
@@ -12,22 +12,22 @@ require __DIR__ . '/includes/site-header.php';
     <div class="flex items-center gap-4">
      <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center"><?= icon('file-check', 'w-7 h-7') ?></div>
      <div>
-      <h1 class="text-3xl font-bold">Old Certificate Verification</h1>
-      <p class="text-emerald-100 text-sm">Enter Roll &amp; Registration Number</p>
+      <h1 class="text-3xl font-bold"><?= t('cert.oldTitle') ?></h1>
+      <p class="text-emerald-100 text-sm"><?= t('cert.oldSubtitle') ?></p>
      </div>
     </div>
    </div>
    <div class="p-8">
     <form class="space-y-6" id="oldCertForm" data-endpoint="<?= e(asset_url('api/site-old-certificate.php')) ?>">
      <div class="grid md:grid-cols-2 gap-6">
-      <div><label class="block text-sm font-semibold mb-1">Roll Number</label><input name="rollNumber" required class="w-full px-4 py-3 border rounded-xl" placeholder="Enter Roll Number"></div>
-      <div><label class="block text-sm font-semibold mb-1">Registration Number</label><input name="regNumber" required class="w-full px-4 py-3 border rounded-xl" placeholder="Enter Registration Number"></div>
+      <div><label class="block text-sm font-semibold mb-1"><?= t('cert.rollNumber') ?></label><input name="rollNumber" required class="w-full px-4 py-3 border rounded-xl" placeholder="Enter Roll Number"></div>
+      <div><label class="block text-sm font-semibold mb-1"><?= t('cert.regNumber') ?></label><input name="regNumber" required class="w-full px-4 py-3 border rounded-xl" placeholder="Enter Registration Number"></div>
      </div>
      <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600" data-error hidden></div>
-     <button type="submit" class="w-full flex items-center justify-center gap-2 py-4 bg-emerald-600 text-white rounded-xl font-semibold" data-submit><span data-idle class="flex items-center gap-2"><?= icon('search', 'w-5 h-5') ?>Search Certificate</span><span data-busy hidden>Searching…</span></button>
+     <button type="submit" class="w-full flex items-center justify-center gap-2 py-4 bg-emerald-600 text-white rounded-xl font-semibold" data-submit><span data-idle class="flex items-center gap-2"><?= icon('search', 'w-5 h-5') ?><?= t('cert.search') ?></span><span data-busy hidden><?= t('cert.searching') ?></span></button>
     </form>
     <div class="mt-10 space-y-8" data-result hidden>
-     <h2 class="text-2xl font-bold flex items-center gap-2"><?= icon('award', 'w-6 h-6 text-emerald-600') ?>Student Details</h2>
+     <h2 class="text-2xl font-bold flex items-center gap-2"><?= icon('award', 'w-6 h-6 text-emerald-600') ?><?= t('cert.studentDetails') ?></h2>
      <div class="grid md:grid-cols-2 gap-6">
       <div class="p-4 bg-emerald-50 rounded-xl"><?= icon('user', 'inline w-4 h-4 mr-2') ?><span data-f="name"></span></div>
       <div class="p-4 bg-blue-50 rounded-xl"><?= icon('calendar', 'inline w-4 h-4 mr-2') ?><span data-f="dob"></span></div>

@@ -1,0 +1,110 @@
+<div class="page-breadcrumb mb-3 d-flex justify-content-between flex-column flex-md-row">
+    <div class="d-flex flex-column">
+        <div class="breadcrumb-title">Team Members</div>
+        <nav aria-label="breadcrumb" class="mt-1"><ol class="breadcrumb mb-0 p-0"></ol></nav>
+    </div>
+    <div class="ms-auto ms-md-0"><button class="btn btn-primary d-none" id="tmAdd"><i class="bx bx-plus"></i> Add Member</button></div>
+</div>
+
+<div class="card"><div class="card-body">
+    <p class="text-muted small">People shown in the "Our Expert Team" section of the website, grouped by section and ordered by Sort.</p>
+    <div class="row g-2 mb-3">
+        <div class="col-md-4"><input class="form-control" id="tmSearch" placeholder="Search name, designation, phone..."></div>
+        <div class="col-md-3"><select class="form-select no-select2" id="tmFilter"><option value="">All sections</option></select></div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Photo</th><th>Name</th><th>Designation</th><th>Section</th><th>Phone / Email</th><th>Sort</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+            <tbody id="tableBody"><tr><td colspan="8" class="text-center">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div></div>
+
+<div class="modal fade" id="tmModal"><div class="modal-dialog"><div class="modal-content">
+<form id="tmForm" onsubmit="return false">
+    <div class="modal-header"><h5 id="tmTitle">Add Member</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" name="id">
+        <div class="mb-3"><label class="form-label">Name *</label><input class="form-control" name="name"></div>
+        <div class="row">
+            <div class="col-6 mb-3"><label class="form-label">Designation</label><input class="form-control" name="designation"></div>
+            <div class="col-6 mb-3"><label class="form-label">Section *</label><select class="form-select no-select2" name="category" id="tmCategory"></select></div>
+        </div>
+        <div class="row">
+            <div class="col-6 mb-3"><label class="form-label">Phone</label><input class="form-control" name="phone"></div>
+            <div class="col-6 mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email"></div>
+        </div>
+        <div class="row">
+            <div class="col-6 mb-3"><label class="form-label">Sort</label><input type="number" class="form-control" name="sort_order" value="0"></div>
+            <div class="col-6 mb-3 d-flex align-items-end"><div class="form-check form-switch"><input type="checkbox" class="form-check-input" id="tmActive" checked><label class="form-check-label" for="tmActive">Show on website</label></div></div>
+        </div>
+        <div class="mb-2"><label class="form-label">Photo</label><input type="file" class="form-control" name="image" accept="image/*"></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input" name="remove_image" value="1" id="tmRemove"><label class="form-check-label" for="tmRemove">Remove current photo</label></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="tmSave">Save</button></div>
+</form>
+</div></div></div>
+
+<script>
+window.Page = {
+    _items: [], _cats: {}, _timer: null,
+    init: function() {
+        var self = this, app = window.NL;
+        self._canEdit = app.hasPermission('edit'); self._canDelete = app.hasPermission('delete');
+        $('#tmAdd').toggleClass('d-none', !app.hasPermission('add'));
+        self._load();
+        $('#tmSearch').off('input.tm').on('input.tm', function(){ clearTimeout(self._timer); self._timer = setTimeout(function(){ self._render(); }, 200); });
+        $('#tmFilter').off('change.tm').on('change.tm', function(){ self._render(); });
+        $('#tmAdd').off('click.tm').on('click.tm', function(){ self._open(null); });
+        $('#tmSave').off('click.tm').on('click.tm', function(){ self._save(); });
+        $('#tableBody').off('click.tm').on('click.tm', '.tm-edit', function(){ var id = $(this).data('id'); self._open(self._items.find(function(x){ return x.id == id; })); })
+            .on('click.tm', '.tm-del', function(){ if (confirm('Delete this team member?')) self._del($(this).data('id')); });
+    },
+    destroy: function() { clearTimeout(this._timer); $('#tmSearch,#tmFilter,#tmAdd,#tmSave,#tableBody').off('.tm'); },
+    _load: function() {
+        var self = this;
+        $.get('api/web-team-list.php', function(r){
+            if (!r.success) { Toast.error(r.message); return; }
+            self._items = r.data.items; self._cats = r.data.categories;
+            var opts = Object.keys(self._cats).map(function(k){ return '<option value="' + NL.esc(k) + '">' + NL.esc(self._cats[k]) + '</option>'; }).join('');
+            var cur = $('#tmFilter').val();
+            $('#tmFilter').html('<option value="">All sections</option>' + opts).val(cur);
+            $('#tmCategory').html(opts);
+            self._render();
+        });
+    },
+    _render: function() {
+        var self = this, q = ($('#tmSearch').val() || '').toLowerCase(), cat = $('#tmFilter').val();
+        $('#tableBody').html(self._items.filter(function(v){
+            return (!cat || v.category === cat) && (!q || (v.name + ' ' + v.designation + ' ' + v.phone + ' ' + v.email).toLowerCase().indexOf(q) !== -1);
+        }).map(function(v){
+            var photo = v.image ? '<img src="' + NL.esc(NL.media(v.image)) + '" width="40" height="40" class="rounded-circle" style="object-fit:cover">' : '<i class="bx bx-user-circle fs-3 text-muted"></i>';
+            var act = (self._canEdit ? '<button class="btn btn-sm btn-primary tm-edit" data-id="' + v.id + '"><i class="bx bx-edit"></i></button> ' : '') +
+                      (self._canDelete ? '<button class="btn btn-sm btn-danger tm-del" data-id="' + v.id + '"><i class="bx bx-trash"></i></button>' : '');
+            return '<tr><td>' + photo + '</td><td>' + NL.esc(v.name) + '</td><td>' + NL.esc(v.designation) + '</td><td>' + NL.esc(self._cats[v.category] || v.category) + '</td>' +
+                '<td>' + NL.esc(v.phone) + (v.email ? '<div class="small text-muted">' + NL.esc(v.email) + '</div>' : '') + '</td>' +
+                '<td>' + v.sort_order + '</td><td><span class="badge bg-' + (v.is_active == 1 ? 'success' : 'secondary') + '">' + (v.is_active == 1 ? 'Active' : 'Hidden') + '</span></td>' +
+                '<td class="text-end text-nowrap">' + act + '</td></tr>';
+        }).join('') || '<tr><td colspan="8" class="text-center">No team members</td></tr>');
+    },
+    _open: function(v) {
+        var f = $('#tmForm')[0];
+        f.reset();
+        ['id', 'name', 'designation', 'phone', 'email', 'sort_order'].forEach(function(k){ f[k].value = v ? v[k] : (k === 'sort_order' ? 0 : ''); });
+        f.category.value = v ? v.category : ($('#tmFilter').val() || 'technical');
+        $('#tmActive').prop('checked', v ? v.is_active == 1 : true);
+        $('#tmTitle').text(v ? 'Edit Member' : 'Add Member'); $('#tmModal').modal('show');
+    },
+    _save: function() {
+        var self = this, fd = new FormData($('#tmForm')[0]);
+        fd.set('is_active', $('#tmActive').is(':checked') ? 1 : 0);
+        $.ajax({ url: 'api/web-team-save.php', method: 'POST', data: fd, processData: false, contentType: false })
+        .done(function(r){ if (r.success) { $('#tmModal').modal('hide'); self._load(); Toast.success(r.message); } else Toast.error(r.message); });
+    },
+    _del: function(id) {
+        var self = this;
+        $.ajax({ url: 'api/web-team-delete.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ id: id }) })
+        .done(function(r){ if (r.success) { self._load(); Toast.success(r.message); } else Toast.error(r.message); });
+    }
+};
+</script>

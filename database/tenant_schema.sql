@@ -1005,6 +1005,23 @@ CREATE TABLE IF NOT EXISTS web_team (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Facilities section of the website (specs = one point per line)
+CREATE TABLE IF NOT EXISTS web_facilities (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  title_bn VARCHAR(255) NOT NULL DEFAULT '',
+  title_en VARCHAR(255) NOT NULL DEFAULT '',
+  description_bn TEXT NULL,
+  description_en TEXT NULL,
+  specs_bn TEXT NULL,
+  specs_en TEXT NULL,
+  icon VARCHAR(30) NOT NULL DEFAULT 'star',
+  image VARCHAR(500) NOT NULL DEFAULT '',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- HR extras (employees themselves stay in the TrainingAdmin users table)
 -- ------------------------------------------------------------

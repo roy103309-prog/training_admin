@@ -23,8 +23,9 @@ $photo = function (array $m, string $initialsClass): string {
     }
     return '<div class="flex h-full w-full items-center justify-center bg-emerald-50 text-emerald-700 ' . $initialsClass . ' font-bold">' . e(initials($m['name'])) . '</div>';
 };
+// $title / $subtitle are text keys (Admin -> Website Texts)
 $groupHead = function (string $iconName, string $title, string $subtitle): string {
-    return '<div class="text-center mb-10 md:mb-16" data-from="o:0;y:20"><div class="inline-flex items-center gap-2 md:gap-4 mb-4"><div>' . icon($iconName, 'w-6 h-6 md:w-8 md:h-8 text-emerald-500') . '</div><h3 class="text-2xl md:text-4xl lg:text-5xl font-bold font-display text-emerald-600">' . e($title) . '</h3><div>' . icon($iconName, 'w-6 h-6 md:w-8 md:h-8 text-emerald-500') . '</div></div><p class="text-base md:text-xl text-emerald-500 font-semibold">' . e($subtitle) . '</p></div>';
+    return '<div class="text-center mb-10 md:mb-16" data-from="o:0;y:20"><div class="inline-flex items-center gap-2 md:gap-4 mb-4"><div>' . icon($iconName, 'w-6 h-6 md:w-8 md:h-8 text-emerald-500') . '</div><h3 class="text-2xl md:text-4xl lg:text-5xl font-bold font-display text-emerald-600">' . t($title) . '</h3><div>' . icon($iconName, 'w-6 h-6 md:w-8 md:h-8 text-emerald-500') . '</div></div><p class="text-base md:text-xl text-emerald-500 font-semibold">' . t($subtitle) . '</p></div>';
 };
 ?>
 <section id="team" class="relative py-32 bg-gradient-to-b from-gray-50 via-white to-emerald-50 overflow-hidden">
@@ -34,16 +35,16 @@ $groupHead = function (string $iconName, string $title, string $subtitle): strin
  </div>
  <div class="container-custom relative z-10">
   <div class="text-center mb-16 md:mb-24" data-from="o:0" data-section>
-   <div class="inline-flex items-center gap-2 md:gap-3 mb-4 md:mb-6 px-4 md:px-8 py-2 md:py-3 bg-gradient-to-r from-emerald-100 via-emerald-50 to-emerald-100 border border-emerald-300 rounded-full" data-from="s:0" data-ease="spring" data-dur="1"><?= icon('flame', 'w-5 h-5 md:w-6 md:h-6 text-emerald-500 animate-pulse') ?><span class="text-emerald-600 font-bold text-sm md:text-lg">Our Expert Team</span><?= icon('flame', 'w-5 h-5 md:w-6 md:h-6 text-emerald-500 animate-pulse') ?></div>
-   <h2 class="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-black mb-4 md:mb-8 font-display leading-tight" data-from="o:0;y:30"><span class="inline-block bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 bg-clip-text text-transparent">Meet The Masters</span></h2>
-   <p class="text-base md:text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4" data-from="o:0" data-delay=".3">The passionate professionals behind Bangladesh's premier welding training institution</p>
+   <div class="inline-flex items-center gap-2 md:gap-3 mb-4 md:mb-6 px-4 md:px-8 py-2 md:py-3 bg-gradient-to-r from-emerald-100 via-emerald-50 to-emerald-100 border border-emerald-300 rounded-full" data-from="s:0" data-ease="spring" data-dur="1"><?= icon('flame', 'w-5 h-5 md:w-6 md:h-6 text-emerald-500 animate-pulse') ?><span class="text-emerald-600 font-bold text-sm md:text-lg"><?= t('teamSection.badge') ?></span><?= icon('flame', 'w-5 h-5 md:w-6 md:h-6 text-emerald-500 animate-pulse') ?></div>
+   <h2 class="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-black mb-4 md:mb-8 font-display leading-tight" data-from="o:0;y:30"><span class="inline-block bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 bg-clip-text text-transparent"><?= t('teamSection.title') ?></span></h2>
+   <p class="text-base md:text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4" data-from="o:0" data-delay=".3"><?= t('teamSection.subtitle') ?></p>
    <div class="mt-8 md:mt-12 flex justify-center" data-from="o:0;s:.9" data-delay=".5" data-ease="spring">
-    <div class="relative p-3 md:p-4 rounded-2xl md:rounded-3xl bg-white border border-emerald-200 shadow-xl"><img alt="New Life Welding logo" width="280" height="140" class="object-contain w-[200px] md:w-[280px] h-auto" src="<?= e(asset_url(setting('logo', 'assets/images/site-logo.png'))) ?>" style="color: transparent;"></div>
+    <div class="relative p-3 md:p-4 rounded-2xl md:rounded-3xl bg-white border border-emerald-200 shadow-xl"><img alt="<?= e(setting('site_name', 'Logo')) ?>" width="280" height="140" class="object-contain w-[200px] md:w-[280px] h-auto" src="<?= e(asset_url(setting('logo', 'assets/images/site-logo.png'))) ?>" style="color: transparent;"></div>
    </div>
   </div>
 
   <div class="mb-32" data-from="o:0" data-section>
-   <?= $groupHead('award', 'Leadership', 'Visionary Leaders') ?>
+   <?= $groupHead('award', 'teamSection.leadership', 'teamSection.leadershipSub') ?>
    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
     <?php foreach ($byCat['leadership'] as $i => $m): ?>
     <div class="group relative h-full" data-from="o:0;s:.8" data-delay="<?= 0.2 * $i ?>">
@@ -73,7 +74,7 @@ $groupHead = function (string $iconName, string $title, string $subtitle): strin
   </div>
 
   <div class="mb-32" data-from="o:0" data-section>
-   <?= $groupHead('briefcase', 'Management', 'Strategic Minds') ?>
+   <?= $groupHead('briefcase', 'teamSection.management', 'teamSection.managementSub') ?>
    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
     <?php foreach ($byCat['management'] as $i => $m): ?>
     <div class="group relative hv-lift" data-from="o:0;y:50" data-delay="<?= 0.15 * $i ?>">
@@ -93,7 +94,7 @@ $groupHead = function (string $iconName, string $title, string $subtitle): strin
   </div>
 
   <div class="mb-32" data-from="o:0" data-section>
-   <?= $groupHead('star', 'Marketing', 'Brand Champions') ?>
+   <?= $groupHead('star', 'teamSection.marketing', 'teamSection.marketingSub') ?>
    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
     <?php foreach ($byCat['marketing'] as $i => $m): ?>
     <div class="group" data-from="o:0;x:<?= $i % 2 === 0 ? -50 : 50 ?>" data-delay="<?= 0.2 * $i ?>">
@@ -118,7 +119,7 @@ $groupHead = function (string $iconName, string $title, string $subtitle): strin
   </div>
 
   <div class="mb-32" data-from="o:0" data-section>
-   <?= $groupHead('flame', 'Master Instructors', 'Skill Forgers') ?>
+   <?= $groupHead('flame', 'teamSection.instructors', 'teamSection.instructorsSub') ?>
    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
     <?php foreach ($byCat['instructors'] as $i => $m): ?>
     <div class="group h-full hv-instructor" data-from="o:0;s:.5" data-delay="<?= 0.1 * $i ?>" data-ease="spring">
@@ -141,7 +142,7 @@ $groupHead = function (string $iconName, string $title, string $subtitle): strin
   </div>
 
   <div data-from="o:0" data-section>
-   <?= $groupHead('briefcase', 'Technical Staff', 'Workshop Experts') ?>
+   <?= $groupHead('briefcase', 'teamSection.technical', 'teamSection.technicalSub') ?>
    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
     <?php foreach ($byCat['technical'] as $i => $m): ?>
     <div class="group hv-lift" data-from="o:0;y:30" data-delay="<?= 0.2 * $i ?>">

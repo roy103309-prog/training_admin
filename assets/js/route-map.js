@@ -117,9 +117,12 @@
 
     // Website content (Settings -> General Settings)
     ROUTES[ADMIN + '/website/branding']    = { template: TPL + '/web-branding.html', title: 'Logo & Branding',  menu: 'web-branding', scripts: NL_JS };
+    ROUTES[ADMIN + '/website/texts']       = { template: TPL + '/web-texts.html',    title: 'Website Texts',    menu: 'web-texts',    scripts: NL_JS };
     ROUTES[ADMIN + '/website/sliders']     = { template: TPL + '/web-sliders.html',  title: 'Hero Sliders',     menu: 'web-sliders',  scripts: NL_JS };
     ROUTES[ADMIN + '/website/videos']      = { template: TPL + '/web-videos.html',   title: 'Videos',           menu: 'web-videos',   scripts: NL_JS };
     ROUTES[ADMIN + '/website/reviews']     = { template: TPL + '/web-reviews.html',  title: 'Reviews',          menu: 'web-reviews',  scripts: NL_JS };
+    ROUTES[ADMIN + '/website/facilities']  = { template: TPL + '/web-facilities.html', title: 'Facilities',    menu: 'web-facilities', scripts: NL_JS };
+    ROUTES[ADMIN + '/website/team']        = { template: TPL + '/web-team.html',     title: 'Team Members',     menu: 'web-team',     scripts: NL_JS };
     ROUTES[ADMIN + '/website/programs']    = { template: TPL + '/web-programs.html', title: 'Programs',         menu: 'web-programs', scripts: NL_JS };
     ROUTES[ADMIN + '/website/messages']    = { template: TPL + '/web-messages.html', title: 'Contact Messages', menu: 'web-messages', scripts: NL_JS };
 

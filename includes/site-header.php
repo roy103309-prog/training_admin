@@ -1,7 +1,7 @@
 <?php defined('SITE_ROOT') || exit; ?>
 <?php
 /** @var string $pageTitle  @var bool $navSolid  @var array $extraCss */
-$pageTitle = $pageTitle ?? setting('site_title', 'New Life Welding Training Center');
+$pageTitle = $pageTitle ?? setting('site_title', tr('brand.full'));
 $navSolid = $navSolid ?? false;
 $extraCss = $extraCss ?? [];
 $logo = asset_url(setting('logo', 'assets/images/site-logo.png'));
@@ -17,14 +17,14 @@ $l = lang();
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($pageTitle) ?></title>
 <meta name="description" content="<?= e(setting('site_description')) ?>">
-<meta name="author" content="New Life Welding Training Center">
+<meta name="author" content="<?= e(tr('brand.full')) ?>">
 <meta name="keywords" content="<?= e(setting('site_keywords')) ?>">
-<meta property="og:title" content="New Life Welding Training Center">
-<meta property="og:description" content="Premier welding education and certification programs">
+<meta property="og:title" content="<?= e(setting('site_title', tr('brand.full'))) ?>">
+<meta property="og:description" content="<?= e(setting('site_description')) ?>">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="New Life Welding Training Center">
-<meta name="twitter:description" content="Premier welding education and certification programs">
+<meta name="twitter:title" content="<?= e(setting('site_title', tr('brand.full'))) ?>">
+<meta name="twitter:description" content="<?= e(setting('site_description')) ?>">
 <link rel="icon" href="<?= e(asset_url(setting('favicon', 'assets/images/site-favicon.png'))) ?>">
 <link rel="preload" href="<?= e(asset_url('assets/fonts/1f95d4beca86b0f6-s.p.55651a95.woff2')) ?>" as="font" crossorigin type="font/woff2">
 <link rel="preload" href="<?= e(asset_url('assets/fonts/7ca7a04daf1e7f98-s.p.4c5efc22.woff2')) ?>" as="font" crossorigin type="font/woff2">
@@ -50,7 +50,7 @@ $l = lang();
   <div class="flex items-center justify-between h-20">
    <a href="<?= e(url('')) ?>">
     <div class="flex items-center gap-3 cursor-pointer hv-scale105">
-     <div class="relative w-12 h-12 rounded-xl overflow-hidden shadow-lg border-2 border-emerald-500/30 bg-white/5 backdrop-blur-sm hv-rot5"><img alt="New Life Logo" class="object-contain p-1" style="position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent" src="<?= e($logo) ?>"></div>
+     <div class="relative w-12 h-12 rounded-xl overflow-hidden shadow-lg border-2 border-emerald-500/30 bg-white/5 backdrop-blur-sm hv-rot5"><img alt="<?= e(setting('site_name', 'Logo')) ?>" class="object-contain p-1" style="position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent" src="<?= e($logo) ?>"></div>
      <div>
       <div class="text-xl font-bold transition-colors duration-300 nav-brand"><?= e(setting('site_name', 'New Life')) ?></div>
       <div class="text-xs transition-colors duration-300 nav-brand-sub"><?= e(setting('site_tagline', 'Welding Training Center')) ?></div>
@@ -65,7 +65,7 @@ $l = lang();
        ['key' => 'nav.videos', 'href' => url('#videos')],
        ['key' => 'nav.team', 'href' => url('#team')],
        ['key' => 'nav.contact', 'href' => url('#contact')],
-       ['label' => 'Certificate', 'href' => url('certificate'), 'sub' => [['label' => 'Old Certificate', 'href' => url('certificate')], ['label' => 'New Certificate', 'href' => url('new-certificate')]]],
+       ['key' => 'nav.certificate', 'href' => url('certificate'), 'sub' => [['key' => 'nav.oldCertificate', 'href' => url('certificate')], ['key' => 'nav.newCertificate', 'href' => url('new-certificate')]]],
    ];
    ?>
    <div class="hidden lg:flex items-center gap-2">
@@ -75,7 +75,7 @@ $l = lang();
      <?php if (!empty($item['sub'])): ?>
      <div class="nav-dropdown absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-emerald-100 overflow-hidden z-50">
       <?php foreach ($item['sub'] as $j => $sub): ?>
-      <a href="<?= e($sub['href']) ?>"><div class="nav-dd-item px-6 py-3 text-gray-700 hover:text-emerald-600 text-sm border-b border-emerald-50 last:border-0 transition-all cursor-pointer lb" style="--i:<?= $j ?>"><?= e($sub['label']) ?></div></a>
+      <a href="<?= e($sub['href']) ?>"><div class="nav-dd-item px-6 py-3 text-gray-700 hover:text-emerald-600 text-sm border-b border-emerald-50 last:border-0 transition-all cursor-pointer lb" style="--i:<?= $j ?>"><?= isset($sub['key']) ? t($sub['key']) : e($sub['label']) ?></div></a>
       <?php endforeach; ?>
      </div>
      <?php endif; ?>
@@ -100,7 +100,7 @@ $l = lang();
      <div class="overflow-hidden bg-emerald-50/50 m-sub">
       <div class="pl-6 pr-4 py-2 space-y-1">
        <?php foreach ($item['sub'] as $sub): ?>
-       <a href="<?= e($sub['href']) ?>" data-close-menu><div class="py-3 px-4 text-sm text-gray-600 hover:text-emerald-600 hover:bg-white/50 rounded-lg transition-all lb"><?= e($sub['label']) ?></div></a>
+       <a href="<?= e($sub['href']) ?>" data-close-menu><div class="py-3 px-4 text-sm text-gray-600 hover:text-emerald-600 hover:bg-white/50 rounded-lg transition-all lb"><?= isset($sub['key']) ? t($sub['key']) : e($sub['label']) ?></div></a>
        <?php endforeach; ?>
       </div>
      </div>
